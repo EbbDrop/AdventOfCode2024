@@ -9,7 +9,7 @@ fn u32_from_bytes(&[a, b, c, d, e]: &[u8; 5]) -> u32 {
 }
 
 #[aoc(day1, part1)]
-fn part1(s: &str) -> u32 {
+pub fn part1(s: &str) -> u32 {
     let mut a: Vec<u32> = Vec::with_capacity(1000);
     let mut b: Vec<u32> = Vec::with_capacity(1000);
 

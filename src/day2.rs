@@ -2,7 +2,7 @@ use aoc_runner_derive::aoc;
 use itertools::Itertools;
 
 #[aoc(day2, part1)]
-fn part1(s: &str) -> u64 {
+pub fn part1(s: &str) -> u64 {
     let mut good_lines = 0;
     for line in s.lines() {
         let ok = line
@@ -34,7 +34,7 @@ fn part1(s: &str) -> u64 {
 }
 
 #[aoc(day2, part2)]
-fn part2(s: &str) -> u64 {
+pub fn part2(s: &str) -> u64 {
     let mut good_lines = 0;
 
     for line in s.lines() {
