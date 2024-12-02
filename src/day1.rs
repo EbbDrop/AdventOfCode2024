@@ -32,21 +32,18 @@ fn part1(s: &str) -> u32 {
 #[aoc(day1, part2)]
 pub fn part2(s: &str) -> u32 {
     let mut a: Vec<u32> = Vec::with_capacity(1000);
-    // let mut b: FxHashMap<u32, u32> = FxHashMap::default();
     let mut b: [u8; 99999 - 10000] = [0; 99999 - 10000];
 
     for line in s.as_bytes().chunks(14) {
         a.push(u32_from_bytes(&line[0..5].try_into().unwrap()));
         let b_num = u32_from_bytes(&line[8..13].try_into().unwrap());
 
-        // *b.entry(b_num).or_insert(0) += 1;
         b[(b_num - 10000) as usize] += 1;
     }
 
     let mut sum = 0;
 
     for a in a {
-        // sum += a * b.get(&a).cloned().unwrap_or(0);
         sum += a * b[(a - 10000) as usize] as u32;
     }
 
