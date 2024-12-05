@@ -83,10 +83,10 @@ pub fn part1(s: &str) -> u32 {
     let mut sum = 0;
     let mut marks = Marks::new();
 
-    'line: for line in s[i..].split_inclusive(|b| *b == b'\n') {
+    'line: for line in s[i..].split(|b| *b == b'\n') {
         marks.reset();
         let mut v = ArrayVec::<[u8; 23]>::new();
-        for num in line.chunks_exact(3) {
+        for num in line.chunks(3) {
             let num = to_index(num[0], num[1]);
             v.push(num);
 
@@ -121,7 +121,7 @@ pub fn part2(s: &str) -> u32 {
     let mut sum = 0;
     let mut marks = Marks::new();
 
-    for line in s[i..].split_inclusive(|b| *b == b'\n') {
+    for line in s[i..].split(|b| *b == b'\n') {
         marks.reset();
         let mut v = ArrayVec::<[u8; 23]>::new();
 
