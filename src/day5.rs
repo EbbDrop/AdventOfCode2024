@@ -3,6 +3,7 @@ use std::cmp::Ordering;
 use aoc_runner_derive::aoc;
 use tinyvec::ArrayVec;
 
+#[inline(always)]
 fn to_index(a: u8, b: u8) -> u8 {
     a.wrapping_mul(10)
         .wrapping_add(b)
@@ -16,6 +17,7 @@ struct Graph {
 }
 
 impl Graph {
+    #[inline(always)]
     fn new() -> Self {
         Self {
             connections: const {
@@ -30,6 +32,7 @@ impl Graph {
         }
     }
 
+    #[inline(always)]
     fn add_relation(&mut self, r: &[u8]) {
         let to = to_index(r[0], r[1]) as usize;
         let from = to_index(r[3], r[4]) as usize;
@@ -44,15 +47,18 @@ struct Marks {
 }
 
 impl Marks {
+    #[inline(always)]
     fn new() -> Self {
         Self { marks: 0 }
     }
 
+    #[inline(always)]
     fn reset(&mut self) {
         self.marks = 0;
     }
 
     // Returns true if that index was already marked, marks all predecesors
+    #[inline(always)]
     fn mark(&mut self, graph: &Graph, id: u8) -> bool {
         if (self.marks & 1 << id) != 0 {
             return true;
