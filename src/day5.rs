@@ -1,59 +1,64 @@
 use std::cmp::Ordering;
 
 use aoc_runner_derive::aoc;
-use bitvec::array::BitArray;
 use tinyvec::ArrayVec;
 
 fn to_index(a: u8, b: u8) -> u8 {
     a.wrapping_mul(10)
         .wrapping_add(b)
         .wrapping_sub(b'0'.wrapping_mul(10).wrapping_add(b'0'))
-        .wrapping_sub(9)
+        .wrapping_sub(10)
 }
 
 #[derive(Clone, Debug)]
 struct Graph {
-    connections: [ArrayVec<[u8; 30]>; 91],
+    connections: [u128; 90],
 }
 
 impl Graph {
     fn new() -> Self {
         Self {
-            connections: [const { ArrayVec::from_array_empty([0; 30]) }; 91],
+            connections: const {
+                let mut indexes = [0; 90];
+                let mut i = 0;
+                while i < 90 {
+                    indexes[i] |= 1 << i;
+                    i += 1;
+                }
+                indexes
+            },
         }
     }
 
     fn add_relation(&mut self, r: &[u8]) {
-        let to = to_index(r[0], r[1]);
-        let from = to_index(r[3], r[4]);
-        self.connections[from as usize].push(to);
+        let to = to_index(r[0], r[1]) as usize;
+        let from = to_index(r[3], r[4]) as usize;
+
+        self.connections[from] |= 1 << to;
     }
 }
 
 #[derive(Clone, Debug)]
 struct Marks {
-    marks: [bool; 91],
+    marks: u128,
 }
 
 impl Marks {
     fn new() -> Self {
-        Self { marks: [false; 91] }
+        Self { marks: 0 }
     }
 
     fn reset(&mut self) {
-        self.marks.fill(false);
+        self.marks = 0;
     }
 
     // Returns true if that index was already marked, marks all predecesors
-    fn mark(&mut self, graph: &[ArrayVec<[u8; 30]>; 91], id: u8) -> bool {
-        if self.marks[id as usize] {
+    fn mark(&mut self, graph: &Graph, id: u8) -> bool {
+        if (self.marks & 1 << id) != 0 {
             return true;
         }
 
-        self.marks[id as usize] = true;
-        for con in &graph[id as usize] {
-            self.marks[*con as usize] = true;
-        }
+        self.marks |= graph.connections[id as usize];
         return false;
     }
 }
@@ -85,52 +90,29 @@ pub fn part1(s: &str) -> u32 {
             let num = to_index(num[0], num[1]);
             v.push(num);
 
-            if marks.mark(&graph.connections, num) {
+            if marks.mark(&graph, num) {
                 continue 'line;
             }
         }
 
-        sum += v[v.len() / 2] as u32 + 9;
+        sum += v[v.len() / 2] as u32 + 10;
     }
 
     sum
-}
-
-#[derive(Clone, Debug)]
-struct Graph2 {
-    connections: [ArrayVec<[u8; 30]>; 91],
-    connections2: BitArray<[u64; 130]>,
-}
-
-impl Graph2 {
-    fn new() -> Self {
-        Self {
-            connections: [const { ArrayVec::from_array_empty([0; 30]) }; 91],
-            connections2: BitArray::default(),
-        }
-    }
-
-    fn add_relation(&mut self, r: &[u8]) {
-        let to = to_index(r[0], r[1]) as usize;
-        let from = to_index(r[3], r[4]) as usize;
-
-        self.connections[from as usize].push(to as u8);
-        self.connections2.set(to * 91 + from, true);
-    }
 }
 
 #[aoc(day5, part2)]
 pub fn part2(s: &str) -> u32 {
     let s = s.as_bytes();
 
-    let mut graph2 = Graph2::new();
+    let mut graph = Graph::new();
 
     let mut i = 0;
     loop {
         if s[i + 2] != b'|' {
             break;
         }
-        graph2.add_relation(&s[i..i + 5]);
+        graph.add_relation(&s[i..i + 5]);
         i += 6;
     }
     // Skip the newline
@@ -149,7 +131,7 @@ pub fn part2(s: &str) -> u32 {
             let num = to_index(num[0], num[1]);
             v.push(num);
 
-            if good && marks.mark(&graph2.connections, num) {
+            if good && marks.mark(&graph, num) {
                 good = false;
             }
         }
@@ -157,14 +139,14 @@ pub fn part2(s: &str) -> u32 {
             let k = v.len() / 2;
             sum += *v
                 .select_nth_unstable_by(k, |a, b| {
-                    if graph2.connections2[(*a as usize * 91) + *b as usize] {
+                    if (graph.connections[*a as usize] & 1 << *b) != 0 {
                         Ordering::Greater
                     } else {
                         Ordering::Less
                     }
                 })
                 .1 as u32
-                + 9;
+                + 10;
         }
     }
 
