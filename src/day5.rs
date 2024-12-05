@@ -82,20 +82,26 @@ pub fn part1(s: &str) -> u32 {
 
     let mut sum = 0;
     let mut marks = Marks::new();
-
-    'line: for line in s[i..].split(|b| *b == b'\n') {
-        marks.reset();
-        let mut v = ArrayVec::<[u8; 23]>::new();
-        for num in line.chunks(3) {
-            let num = to_index(num[0], num[1]);
-            v.push(num);
-
-            if marks.mark(&graph, num) {
-                continue 'line;
+    let mut v = ArrayVec::<[u8; 23]>::new();
+    while i + 2 < s.len() {
+        let num = to_index(s[i], s[i + 1]);
+        v.push(num);
+        if marks.mark(&graph, num) {
+            if let Some(new_i) = memchr::memchr(b'\n', &s[i..]) {
+                i += new_i + 1;
+                marks.reset();
+                v.clear();
+                continue;
+            } else {
+                break;
             }
         }
-
-        sum += v[v.len() / 2] as u32 + 10;
+        if s[i + 2] == b'\n' {
+            sum += v[v.len() / 2] as u32 + 10;
+            marks.reset();
+            v.clear();
+        }
+        i += 3;
     }
 
     sum
@@ -120,34 +126,34 @@ pub fn part2(s: &str) -> u32 {
 
     let mut sum = 0;
     let mut marks = Marks::new();
+    let mut v = ArrayVec::<[u8; 23]>::new();
+    let mut good = true;
 
-    for line in s[i..].split(|b| *b == b'\n') {
-        marks.reset();
-        let mut v = ArrayVec::<[u8; 23]>::new();
-
-        let mut good = true;
-
-        for num in line.chunks(3) {
-            let num = to_index(num[0], num[1]);
-            v.push(num);
-
-            if good && marks.mark(&graph, num) {
-                good = false;
+    while i + 2 < s.len() {
+        let num = to_index(s[i], s[i + 1]);
+        v.push(num);
+        if good && marks.mark(&graph, num) {
+            good = false;
+        }
+        if s[i + 2] == b'\n' {
+            if !good {
+                let k = v.len() / 2;
+                sum += *v
+                    .select_nth_unstable_by(k, |a, b| {
+                        if (graph.connections[*a as usize] & 1 << *b) != 0 {
+                            Ordering::Greater
+                        } else {
+                            Ordering::Less
+                        }
+                    })
+                    .1 as u32
+                    + 10;
             }
+            good = true;
+            marks.reset();
+            v.clear();
         }
-        if !good {
-            let k = v.len() / 2;
-            sum += *v
-                .select_nth_unstable_by(k, |a, b| {
-                    if (graph.connections[*a as usize] & 1 << *b) != 0 {
-                        Ordering::Greater
-                    } else {
-                        Ordering::Less
-                    }
-                })
-                .1 as u32
-                + 10;
-        }
+        i += 3;
     }
 
     sum
@@ -184,7 +190,8 @@ mod tests {
 75,29,13
 75,97,47,61,53
 61,13,29
-97,13,75,29,47";
+97,13,75,29,47
+";
 
     #[test]
     fn example_part1() {
