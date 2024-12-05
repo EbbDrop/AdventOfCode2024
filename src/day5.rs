@@ -1,6 +1,7 @@
 use std::cmp::Ordering;
 
 use aoc_runner_derive::aoc;
+use bitvec::{array::BitArray, vec::BitVec};
 
 fn to_index(a: u8, b: u8) -> u8 {
     a.wrapping_mul(10)
@@ -94,11 +95,31 @@ pub fn part1(s: &str) -> u32 {
     sum
 }
 
+#[derive(Clone, Debug)]
+struct Graph2 {
+    connections: BitArray<[u64; 130]>,
+}
+
+impl Graph2 {
+    fn new() -> Self {
+        Self {
+            connections: BitArray::default(),
+        }
+    }
+
+    fn add_relation(&mut self, r: &[u8]) {
+        let to = to_index(r[0], r[1]) as usize;
+        let from = to_index(r[3], r[4]) as usize;
+        self.connections.set(to * 91 + from, true);
+    }
+}
+
 #[aoc(day5, part2)]
 pub fn part2(s: &str) -> u32 {
     let s = s.as_bytes();
 
     let mut graph = Graph::new();
+    let mut graph2 = Graph2::new();
 
     let mut i = 0;
     loop {
@@ -106,6 +127,7 @@ pub fn part2(s: &str) -> u32 {
             break;
         }
         graph.add_relation(&s[i..i + 5]);
+        graph2.add_relation(&s[i..i + 5]);
         i += 6;
     }
     // Skip the newline
@@ -132,9 +154,7 @@ pub fn part2(s: &str) -> u32 {
             let k = v.len() / 2;
             sum += *v
                 .select_nth_unstable_by(k, |a, b| {
-                    if a == b {
-                        Ordering::Equal
-                    } else if graph.connections[*a as usize].contains(b) {
+                    if graph2.connections[(*a as usize * 91) + *b as usize] {
                         Ordering::Greater
                     } else {
                         Ordering::Less
