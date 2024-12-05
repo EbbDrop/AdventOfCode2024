@@ -1,7 +1,8 @@
 use std::cmp::Ordering;
 
 use aoc_runner_derive::aoc;
-use bitvec::{array::BitArray, vec::BitVec};
+use bitvec::array::BitArray;
+use tinyvec::ArrayVec;
 
 fn to_index(a: u8, b: u8) -> u8 {
     a.wrapping_mul(10)
@@ -12,13 +13,13 @@ fn to_index(a: u8, b: u8) -> u8 {
 
 #[derive(Clone, Debug)]
 struct Graph {
-    connections: [Vec<u8>; 91],
+    connections: [ArrayVec<[u8; 30]>; 91],
 }
 
 impl Graph {
     fn new() -> Self {
         Self {
-            connections: [const { Vec::new() }; 91],
+            connections: [const { ArrayVec::from_array_empty([0; 30]) }; 91],
         }
     }
 
@@ -44,13 +45,13 @@ impl Marks {
     }
 
     // Returns true if that index was already marked, marks all predecesors
-    fn mark(&mut self, graph: &Graph, id: u8) -> bool {
+    fn mark(&mut self, graph: &[ArrayVec<[u8; 30]>; 91], id: u8) -> bool {
         if self.marks[id as usize] {
             return true;
         }
 
         self.marks[id as usize] = true;
-        for con in &graph.connections[id as usize] {
+        for con in &graph[id as usize] {
             self.marks[*con as usize] = true;
         }
         return false;
@@ -79,12 +80,12 @@ pub fn part1(s: &str) -> u32 {
 
     'line: for line in s[i..].split_inclusive(|b| *b == b'\n') {
         marks.reset();
-        let mut v = Vec::with_capacity(23);
+        let mut v = ArrayVec::<[u8; 23]>::new();
         for num in line.chunks_exact(3) {
             let num = to_index(num[0], num[1]);
             v.push(num);
 
-            if marks.mark(&graph, num) {
+            if marks.mark(&graph.connections, num) {
                 continue 'line;
             }
         }
@@ -97,20 +98,24 @@ pub fn part1(s: &str) -> u32 {
 
 #[derive(Clone, Debug)]
 struct Graph2 {
-    connections: BitArray<[u64; 130]>,
+    connections: [ArrayVec<[u8; 30]>; 91],
+    connections2: BitArray<[u64; 130]>,
 }
 
 impl Graph2 {
     fn new() -> Self {
         Self {
-            connections: BitArray::default(),
+            connections: [const { ArrayVec::from_array_empty([0; 30]) }; 91],
+            connections2: BitArray::default(),
         }
     }
 
     fn add_relation(&mut self, r: &[u8]) {
         let to = to_index(r[0], r[1]) as usize;
         let from = to_index(r[3], r[4]) as usize;
-        self.connections.set(to * 91 + from, true);
+
+        self.connections[from as usize].push(to as u8);
+        self.connections2.set(to * 91 + from, true);
     }
 }
 
@@ -118,7 +123,6 @@ impl Graph2 {
 pub fn part2(s: &str) -> u32 {
     let s = s.as_bytes();
 
-    let mut graph = Graph::new();
     let mut graph2 = Graph2::new();
 
     let mut i = 0;
@@ -126,7 +130,6 @@ pub fn part2(s: &str) -> u32 {
         if s[i + 2] != b'|' {
             break;
         }
-        graph.add_relation(&s[i..i + 5]);
         graph2.add_relation(&s[i..i + 5]);
         i += 6;
     }
@@ -138,7 +141,7 @@ pub fn part2(s: &str) -> u32 {
 
     for line in s[i..].split_inclusive(|b| *b == b'\n') {
         marks.reset();
-        let mut v = Vec::with_capacity(23);
+        let mut v = ArrayVec::<[u8; 23]>::new();
 
         let mut good = true;
 
@@ -146,7 +149,7 @@ pub fn part2(s: &str) -> u32 {
             let num = to_index(num[0], num[1]);
             v.push(num);
 
-            if good && marks.mark(&graph, num) {
+            if good && marks.mark(&graph2.connections, num) {
                 good = false;
             }
         }
@@ -154,7 +157,7 @@ pub fn part2(s: &str) -> u32 {
             let k = v.len() / 2;
             sum += *v
                 .select_nth_unstable_by(k, |a, b| {
-                    if graph2.connections[(*a as usize * 91) + *b as usize] {
+                    if graph2.connections2[(*a as usize * 91) + *b as usize] {
                         Ordering::Greater
                     } else {
                         Ordering::Less
