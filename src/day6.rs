@@ -110,10 +110,12 @@ pub fn part2(s: &str) -> u32 {
 
     let mut hor_grid = [BitArray::<[u64; SIZE.div_ceil(64)]>::default(); SIZE];
     let mut vert_grid = [BitArray::<[u64; SIZE.div_ceil(64)]>::default(); SIZE];
+
     let mut hor_visit = [BitArray::<[u64; SIZE.div_ceil(64)]>::default(); SIZE];
     let mut vert_visit = [BitArray::<[u64; SIZE.div_ceil(64)]>::default(); SIZE];
-    let mut visited_vert = [false; SIZE * SIZE];
-    let mut visited_hor = [false; SIZE * SIZE];
+
+    let mut visited_vert = BitArray::<[u64; (SIZE * SIZE).div_ceil(64)]>::default();
+    let mut visited_hor = BitArray::<[u64; (SIZE * SIZE).div_ceil(64)]>::default();
 
     for i in memchr::memchr_iter(b'#', s) {
         let x = i % (SIZE + 1);
@@ -197,7 +199,7 @@ pub fn part2(s: &str) -> u32 {
                 if visited_vert[y * SIZE + x] {
                     break true;
                 }
-                visited_vert[y * SIZE + x] = true;
+                visited_vert.set(y * SIZE + x, true);
 
                 // Right
                 let x_move = hor_grid[y][x + 1..].leading_zeros();
@@ -208,7 +210,7 @@ pub fn part2(s: &str) -> u32 {
                 if visited_hor[y * SIZE + x] {
                     break true;
                 }
-                visited_hor[y * SIZE + x] = true;
+                visited_hor.set(y * SIZE + x, true);
 
                 // Down
                 let y_move = vert_grid[x][y + 1..].leading_zeros();
@@ -219,7 +221,7 @@ pub fn part2(s: &str) -> u32 {
                 if visited_vert[y * SIZE + x] {
                     break true;
                 }
-                visited_vert[y * SIZE + x] = true;
+                visited_vert.set(y * SIZE + x, true);
 
                 // Left
                 let x_move = hor_grid[y][..x].trailing_zeros();
@@ -230,7 +232,7 @@ pub fn part2(s: &str) -> u32 {
                 if visited_hor[y * SIZE + x] {
                     break true;
                 }
-                visited_hor[y * SIZE + x] = true;
+                visited_hor.set(y * SIZE + x, true);
             };
             if loops {
                 sum += 1;
