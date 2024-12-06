@@ -6,25 +6,6 @@ const SIZE: usize = 10;
 #[cfg(not(test))]
 const SIZE: usize = 130;
 
-// #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-// enum Dir {
-//     Up,
-//     Right,
-//     Down,
-//     Left,
-// }
-
-// impl Dir {
-//     fn next(&self) -> Self {
-//         match self {
-//             Dir::Up => Dir::Right,
-//             Dir::Right => Dir::Down,
-//             Dir::Down => Dir::Left,
-//             Dir::Left => Dir::Up,
-//         }
-//     }
-// }
-
 #[aoc(day6, part1)]
 pub fn part1(s: &str) -> usize {
     let s = s.as_bytes();
@@ -32,7 +13,7 @@ pub fn part1(s: &str) -> usize {
     let mut hor_grid = [BitArray::<[u64; SIZE.div_ceil(64)]>::default(); SIZE];
     let mut vert_grid = [BitArray::<[u64; SIZE.div_ceil(64)]>::default(); SIZE];
     let mut hor_visit = [BitArray::<[u64; SIZE.div_ceil(64)]>::default(); SIZE];
-    let mut vert_visit = [BitArray::<[u64; SIZE.div_ceil(64)]>::default(); SIZE];
+    // let mut vert_visit = [BitArray::<[u64; SIZE.div_ceil(64)]>::default(); SIZE];
 
     for i in memchr::memchr_iter(b'#', s) {
         let x = i % (SIZE + 1);
@@ -51,7 +32,10 @@ pub fn part1(s: &str) -> usize {
     loop {
         // Up
         let y_move = vert_grid[x][..y].trailing_zeros();
-        vert_visit[x][..y][y - y_move..].fill(true);
+        // vert_visit[x][..y][y - y_move..].fill(true);
+        for y in y - y_move..y {
+            hor_visit[y].set(x, true);
+        }
         if y_move >= y {
             break;
         }
@@ -69,10 +53,14 @@ pub fn part1(s: &str) -> usize {
         // Down
         let y_move = vert_grid[x][y + 1..].leading_zeros();
         if y + y_move > SIZE {
-            vert_visit[x][y..SIZE].fill(true);
+            for y in y..SIZE {
+                hor_visit[y].set(x, true);
+            }
             break;
         }
-        vert_visit[x][y..SIZE][..y_move + 1].fill(true);
+        for y in y..y + y_move + 1 {
+            hor_visit[y].set(x, true);
+        }
         y += y_move;
 
         // Left
@@ -85,11 +73,11 @@ pub fn part1(s: &str) -> usize {
     }
 
     // TODO: is there a smarter way to do this?
-    for x in 0..SIZE {
-        for y in vert_visit[x].iter_ones() {
-            hor_visit[y].set(x, true);
-        }
-    }
+    // for x in 0..SIZE {
+    //     for y in vert_visit[x].iter_ones() {
+    //         hor_visit[y].set(x, true);
+    //     }
+    // }
     // for y in 0..SIZE {
     //     for x in 0..SIZE {
     //         if hor_visit[y][x] {
