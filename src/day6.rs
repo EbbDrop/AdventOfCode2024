@@ -110,6 +110,8 @@ pub fn part2(s: &str) -> u32 {
 
     let mut hor_grid = [BitArray::<[u64; SIZE.div_ceil(64)]>::default(); SIZE];
     let mut vert_grid = [BitArray::<[u64; SIZE.div_ceil(64)]>::default(); SIZE];
+    let mut hor_visit = [BitArray::<[u64; SIZE.div_ceil(64)]>::default(); SIZE];
+    let mut vert_visit = [BitArray::<[u64; SIZE.div_ceil(64)]>::default(); SIZE];
     let mut visited_vert = [false; SIZE * SIZE];
     let mut visited_hor = [false; SIZE * SIZE];
 
@@ -126,77 +128,117 @@ pub fn part2(s: &str) -> u32 {
     let start_x = start % (SIZE + 1);
     let start_y = start / (SIZE + 1);
 
-    let mut sum = 0;
-    // TODO: Only test opst in original path
-    for i in 0..SIZE * SIZE {
-        let opst_x = i % SIZE;
-        let opst_y = i / SIZE;
-
-        if opst_x == start_x && opst_y == start_y {
-            continue;
-        }
-        if hor_grid[opst_y][opst_x] {
-            continue;
-        }
-        hor_grid[opst_y].set(opst_x, true);
-        vert_grid[opst_x].set(opst_y, true);
-
+    {
         let mut x = start_x;
         let mut y = start_y;
-
-        visited_hor.fill(false);
-        visited_vert.fill(false);
-        let loops = loop {
+        loop {
             // Up
             let y_move = vert_grid[x][..y].trailing_zeros();
+            vert_visit[x][..y][y - y_move..].fill(true);
             if y_move >= y {
-                break false;
+                break;
             }
             y -= y_move;
-            if visited_vert[y * SIZE + x] {
-                break true;
-            }
-            visited_vert[y * SIZE + x] = true;
 
             // Right
             let x_move = hor_grid[y][x + 1..].leading_zeros();
             if x + x_move > SIZE {
-                break false;
+                hor_visit[y][x..SIZE].fill(true);
+                break;
             }
+            hor_visit[y][x..SIZE][..x_move + 1].fill(true);
             x += x_move;
-            if visited_hor[y * SIZE + x] {
-                break true;
-            }
-            visited_hor[y * SIZE + x] = true;
 
             // Down
             let y_move = vert_grid[x][y + 1..].leading_zeros();
             if y + y_move > SIZE {
-                break false;
+                vert_visit[x][y..SIZE].fill(true);
+                break;
             }
+            vert_visit[x][y..SIZE][..y_move + 1].fill(true);
             y += y_move;
-            if visited_vert[y * SIZE + x] {
-                break true;
-            }
-            visited_vert[y * SIZE + x] = true;
 
             // Left
             let x_move = hor_grid[y][..x].trailing_zeros();
+            hor_visit[y][..x][x - x_move..].fill(true);
             if x_move >= x {
-                break false;
+                break;
             }
             x -= x_move;
-            if visited_hor[y * SIZE + x] {
-                break true;
-            }
-            visited_hor[y * SIZE + x] = true;
-        };
-        if loops {
-            sum += 1;
         }
+        for x in 0..SIZE {
+            for y in vert_visit[x].iter_ones() {
+                hor_visit[y].set(x, true);
+            }
+        }
+    }
 
-        hor_grid[opst_y].set(opst_x, false);
-        vert_grid[opst_x].set(opst_y, false);
+    let mut sum = 0;
+    for opst_y in 0..SIZE {
+        for opst_x in hor_visit[opst_y].iter_ones() {
+            if opst_x == start_x && opst_y == start_y {
+                continue;
+            }
+            hor_grid[opst_y].set(opst_x, true);
+            vert_grid[opst_x].set(opst_y, true);
+
+            let mut x = start_x;
+            let mut y = start_y;
+
+            visited_hor.fill(false);
+            visited_vert.fill(false);
+            let loops = loop {
+                // Up
+                let y_move = vert_grid[x][..y].trailing_zeros();
+                if y_move >= y {
+                    break false;
+                }
+                y -= y_move;
+                if visited_vert[y * SIZE + x] {
+                    break true;
+                }
+                visited_vert[y * SIZE + x] = true;
+
+                // Right
+                let x_move = hor_grid[y][x + 1..].leading_zeros();
+                if x + x_move > SIZE {
+                    break false;
+                }
+                x += x_move;
+                if visited_hor[y * SIZE + x] {
+                    break true;
+                }
+                visited_hor[y * SIZE + x] = true;
+
+                // Down
+                let y_move = vert_grid[x][y + 1..].leading_zeros();
+                if y + y_move > SIZE {
+                    break false;
+                }
+                y += y_move;
+                if visited_vert[y * SIZE + x] {
+                    break true;
+                }
+                visited_vert[y * SIZE + x] = true;
+
+                // Left
+                let x_move = hor_grid[y][..x].trailing_zeros();
+                if x_move >= x {
+                    break false;
+                }
+                x -= x_move;
+                if visited_hor[y * SIZE + x] {
+                    break true;
+                }
+                visited_hor[y * SIZE + x] = true;
+            };
+            if loops {
+                sum += 1;
+            }
+
+            hor_grid[opst_y].set(opst_x, false);
+            vert_grid[opst_x].set(opst_y, false);
+        }
     }
 
     sum
