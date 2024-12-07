@@ -1,25 +1,28 @@
-use std::num::NonZero;
+use std::{hint::unreachable_unchecked, num::NonZero};
 
 use aoc_runner_derive::aoc;
 
-pub fn search(target: u64, v: &[NonZero<u64>]) -> bool {
-    let (last, rest) = unsafe { v.split_last().unwrap_unchecked() };
+fn search(target: u64, v: &[NonZero<u64>]) -> bool {
+    match v {
+        [] => unsafe { unreachable_unchecked() },
+        [rest @ .., last] => {
+            let last = last.get();
+            if rest.is_empty() {
+                return target == last;
+            }
+            if last > target {
+                return false;
+            }
 
-    let last = last.get();
-    if rest.is_empty() {
-        return target == last;
-    }
-    if last > target {
-        return false;
-    }
+            if target % last == 0 {
+                if search(target / last, rest) {
+                    return true;
+                }
+            }
 
-    if target % last == 0 {
-        if search(target / last, rest) {
-            return true;
+            return search(target - last, rest);
         }
     }
-
-    return search(target - last, rest);
 }
 
 #[aoc(day7, part1)]
@@ -70,37 +73,40 @@ unsafe fn part1_inner(s: &str) -> u64 {
     sum
 }
 
-pub fn search_part2(target: u64, v: &[NonZero<u64>]) -> bool {
-    let (last, rest) = unsafe { v.split_last().unwrap_unchecked() };
+fn search_part2(target: u64, v: &[NonZero<u64>]) -> bool {
+    match v {
+        [] => unsafe { unreachable_unchecked() },
+        [rest @ .., last] => {
+            let last = last.get();
+            if rest.is_empty() {
+                return target == last;
+            }
+            if last > target {
+                return false;
+            }
 
-    let last = last.get();
-    if rest.is_empty() {
-        return target == last;
-    }
-    if last > target {
-        return false;
-    }
+            if target % last == 0 {
+                if search_part2(target / last, rest) {
+                    return true;
+                }
+            }
 
-    if target % last == 0 {
-        if search_part2(target / last, rest) {
-            return true;
+            let size = if last >= 100 {
+                1000
+            } else if last >= 10 {
+                100
+            } else {
+                10
+            };
+            if (target - last) % size == 0 {
+                if search_part2((target - last) / size, rest) {
+                    return true;
+                }
+            }
+
+            return search_part2(target - last, rest);
         }
     }
-
-    let size = if last >= 100 {
-        1000
-    } else if last >= 10 {
-        100
-    } else {
-        10
-    };
-    if (target - last) % size == 0 {
-        if search_part2((target - last) / size, rest) {
-            return true;
-        }
-    }
-
-    return search_part2(target - last, rest);
 }
 
 #[aoc(day7, part2)]
