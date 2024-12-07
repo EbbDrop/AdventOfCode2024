@@ -10,16 +10,17 @@ const SIZE: usize = 130;
 pub fn part1(s: &str) -> usize {
     let s = s.as_bytes();
 
-    let mut hor_grid = [[0u8; SIZE]; SIZE];
-    let mut vert_grid = [[0u8; SIZE]; SIZE];
+    let mut hor_grid = [BitArray::<[u64; SIZE.div_ceil(64)]>::default(); SIZE];
+    let mut vert_grid = [BitArray::<[u64; SIZE.div_ceil(64)]>::default(); SIZE];
     let mut hor_visit = [BitArray::<[u64; SIZE.div_ceil(64)]>::default(); SIZE];
+    // let mut vert_visit = [BitArray::<[u64; SIZE.div_ceil(64)]>::default(); SIZE];
 
     for i in memchr::memchr_iter(b'#', s) {
         let x = i % (SIZE + 1);
         let y = i / (SIZE + 1);
 
-        hor_grid[y][x] = b'#';
-        vert_grid[x][y] = b'#';
+        hor_grid[y].set(x, true);
+        vert_grid[x].set(y, true);
     }
 
     let start = memchr::memchr(b'^', s).unwrap();
@@ -30,44 +31,45 @@ pub fn part1(s: &str) -> usize {
 
     loop {
         // Up
-        let Some(y_move) = memchr::memrchr(b'#', &vert_grid[x][..y]) else {
-            for y in 0..y {
-                hor_visit[y].set(x, true);
-            }
-            break;
-        };
-        for y in y_move + 1..y {
+        let y_move = vert_grid[x][..y].trailing_zeros();
+        // vert_visit[x][..y][y - y_move..].fill(true);
+        for y in y - y_move..y {
             hor_visit[y].set(x, true);
         }
-        y = y_move + 1;
+        if y_move >= y {
+            break;
+        }
+        y -= y_move;
 
         // Right
-        let Some(x_move) = memchr::memchr(b'#', &hor_grid[y][x + 1..]) else {
+        let x_move = hor_grid[y][x + 1..].leading_zeros();
+        if x + x_move > SIZE {
             hor_visit[y][x..SIZE].fill(true);
             break;
-        };
-        hor_visit[y][x..x + x_move + 1].fill(true);
+        }
+        hor_visit[y][x..SIZE][..x_move + 1].fill(true);
         x += x_move;
 
         // Down
-        let Some(y_move) = memchr::memchr(b'#', &vert_grid[x][y + 1..]) else {
+        let y_move = vert_grid[x][y + 1..].leading_zeros();
+        if y + y_move > SIZE {
             for y in y..SIZE {
                 hor_visit[y].set(x, true);
             }
             break;
-        };
+        }
         for y in y..y + y_move + 1 {
             hor_visit[y].set(x, true);
         }
         y += y_move;
 
         // Left
-        let Some(x_move) = memchr::memrchr(b'#', &hor_grid[y][..x]) else {
-            hor_visit[y][..x].fill(true);
+        let x_move = hor_grid[y][..x].trailing_zeros();
+        hor_visit[y][..x][x - x_move..].fill(true);
+        if x_move >= x {
             break;
-        };
-        hor_visit[y][x_move + 1..x].fill(true);
-        x = x_move + 1;
+        }
+        x -= x_move;
     }
 
     // TODO: is there a smarter way to do this?
@@ -96,33 +98,35 @@ fn try_opst_up(
     start_x: usize,
     start_y: usize,
 
-    hor_grid: &mut [[u8; SIZE]; SIZE],
-    vert_grid: &mut [[u8; SIZE]; SIZE],
+    hor_grid: &mut [BitArray<[u64; SIZE.div_ceil(64)]>; SIZE],
+    vert_grid: &mut [BitArray<[u64; SIZE.div_ceil(64)]>; SIZE],
 
     mut visited_vert: BitArray<[u64; (SIZE * SIZE).div_ceil(64)]>,
     mut visited_hor: BitArray<[u64; (SIZE * SIZE).div_ceil(64)]>,
 ) -> bool {
-    hor_grid[opst_y][opst_x] = b'#';
-    vert_grid[opst_x][opst_y] = b'#';
+    hor_grid[opst_y].set(opst_x, true);
+    vert_grid[opst_x].set(opst_y, true);
 
     let mut x = start_x;
     let mut y = start_y;
 
     let loops = loop {
         // Up
-        let Some(y_move) = memchr::memrchr(b'#', &vert_grid[x][..y]) else {
+        let y_move = vert_grid[x][..y].trailing_zeros();
+        if y_move >= y {
             break false;
-        };
-        y = y_move + 1;
+        }
+        y -= y_move;
         if visited_vert[y * SIZE + x] {
             break true;
         }
         visited_vert.set(y * SIZE + x, true);
 
         // Right
-        let Some(x_move) = memchr::memchr(b'#', &hor_grid[y][x + 1..]) else {
+        let x_move = hor_grid[y][x + 1..].leading_zeros();
+        if x + x_move > SIZE {
             break false;
-        };
+        }
         x += x_move;
         if visited_hor[y * SIZE + x] {
             break true;
@@ -130,9 +134,10 @@ fn try_opst_up(
         visited_hor.set(y * SIZE + x, true);
 
         // Down
-        let Some(y_move) = memchr::memchr(b'#', &vert_grid[x][y + 1..]) else {
+        let y_move = vert_grid[x][y + 1..].leading_zeros();
+        if y + y_move > SIZE {
             break false;
-        };
+        }
         y += y_move;
         if visited_vert[y * SIZE + x] {
             break true;
@@ -140,18 +145,19 @@ fn try_opst_up(
         visited_vert.set(y * SIZE + x, true);
 
         // Left
-        let Some(x_move) = memchr::memrchr(b'#', &hor_grid[y][..x]) else {
+        let x_move = hor_grid[y][..x].trailing_zeros();
+        if x_move >= x {
             break false;
-        };
-        x = x_move + 1;
+        }
+        x -= x_move;
         if visited_hor[y * SIZE + x] {
             break true;
         }
         visited_hor.set(y * SIZE + x, true);
     };
 
-    hor_grid[opst_y][opst_x] = 0;
-    vert_grid[opst_x][opst_y] = 0;
+    hor_grid[opst_y].set(opst_x, false);
+    vert_grid[opst_x].set(opst_y, false);
 
     loops
 }
@@ -162,23 +168,24 @@ fn try_opst_right(
     start_x: usize,
     start_y: usize,
 
-    hor_grid: &mut [[u8; SIZE]; SIZE],
-    vert_grid: &mut [[u8; SIZE]; SIZE],
+    hor_grid: &mut [BitArray<[u64; SIZE.div_ceil(64)]>; SIZE],
+    vert_grid: &mut [BitArray<[u64; SIZE.div_ceil(64)]>; SIZE],
 
     mut visited_vert: BitArray<[u64; (SIZE * SIZE).div_ceil(64)]>,
     mut visited_hor: BitArray<[u64; (SIZE * SIZE).div_ceil(64)]>,
 ) -> bool {
-    hor_grid[opst_y][opst_x] = b'#';
-    vert_grid[opst_x][opst_y] = b'#';
+    hor_grid[opst_y].set(opst_x, true);
+    vert_grid[opst_x].set(opst_y, true);
 
     let mut x = start_x;
     let mut y = start_y;
 
     let loops = loop {
         // Right
-        let Some(x_move) = memchr::memchr(b'#', &hor_grid[y][x + 1..]) else {
+        let x_move = hor_grid[y][x + 1..].leading_zeros();
+        if x + x_move > SIZE {
             break false;
-        };
+        }
         x += x_move;
         if visited_hor[y * SIZE + x] {
             break true;
@@ -186,9 +193,10 @@ fn try_opst_right(
         visited_hor.set(y * SIZE + x, true);
 
         // Down
-        let Some(y_move) = memchr::memchr(b'#', &vert_grid[x][y + 1..]) else {
+        let y_move = vert_grid[x][y + 1..].leading_zeros();
+        if y + y_move > SIZE {
             break false;
-        };
+        }
         y += y_move;
         if visited_vert[y * SIZE + x] {
             break true;
@@ -196,28 +204,30 @@ fn try_opst_right(
         visited_vert.set(y * SIZE + x, true);
 
         // Left
-        let Some(x_move) = memchr::memrchr(b'#', &hor_grid[y][..x]) else {
+        let x_move = hor_grid[y][..x].trailing_zeros();
+        if x_move >= x {
             break false;
-        };
-        x = x_move + 1;
+        }
+        x -= x_move;
         if visited_hor[y * SIZE + x] {
             break true;
         }
         visited_hor.set(y * SIZE + x, true);
 
         // Up
-        let Some(y_move) = memchr::memrchr(b'#', &vert_grid[x][..y]) else {
+        let y_move = vert_grid[x][..y].trailing_zeros();
+        if y_move >= y {
             break false;
-        };
-        y = y_move + 1;
+        }
+        y -= y_move;
         if visited_vert[y * SIZE + x] {
             break true;
         }
         visited_vert.set(y * SIZE + x, true);
     };
 
-    hor_grid[opst_y][opst_x] = 0;
-    vert_grid[opst_x][opst_y] = 0;
+    hor_grid[opst_y].set(opst_x, false);
+    vert_grid[opst_x].set(opst_y, false);
 
     loops
 }
@@ -228,23 +238,24 @@ fn try_opst_down(
     start_x: usize,
     start_y: usize,
 
-    hor_grid: &mut [[u8; SIZE]; SIZE],
-    vert_grid: &mut [[u8; SIZE]; SIZE],
+    hor_grid: &mut [BitArray<[u64; SIZE.div_ceil(64)]>; SIZE],
+    vert_grid: &mut [BitArray<[u64; SIZE.div_ceil(64)]>; SIZE],
 
     mut visited_vert: BitArray<[u64; (SIZE * SIZE).div_ceil(64)]>,
     mut visited_hor: BitArray<[u64; (SIZE * SIZE).div_ceil(64)]>,
 ) -> bool {
-    hor_grid[opst_y][opst_x] = b'#';
-    vert_grid[opst_x][opst_y] = b'#';
+    hor_grid[opst_y].set(opst_x, true);
+    vert_grid[opst_x].set(opst_y, true);
 
     let mut x = start_x;
     let mut y = start_y;
 
     let loops = loop {
         // Down
-        let Some(y_move) = memchr::memchr(b'#', &vert_grid[x][y + 1..]) else {
+        let y_move = vert_grid[x][y + 1..].leading_zeros();
+        if y + y_move > SIZE {
             break false;
-        };
+        }
         y += y_move;
         if visited_vert[y * SIZE + x] {
             break true;
@@ -252,29 +263,32 @@ fn try_opst_down(
         visited_vert.set(y * SIZE + x, true);
 
         // Left
-        let Some(x_move) = memchr::memrchr(b'#', &hor_grid[y][..x]) else {
+        let x_move = hor_grid[y][..x].trailing_zeros();
+        if x_move >= x {
             break false;
-        };
-        x = x_move + 1;
+        }
+        x -= x_move;
         if visited_hor[y * SIZE + x] {
             break true;
         }
         visited_hor.set(y * SIZE + x, true);
 
         // Up
-        let Some(y_move) = memchr::memrchr(b'#', &vert_grid[x][..y]) else {
+        let y_move = vert_grid[x][..y].trailing_zeros();
+        if y_move >= y {
             break false;
-        };
-        y = y_move + 1;
+        }
+        y -= y_move;
         if visited_vert[y * SIZE + x] {
             break true;
         }
         visited_vert.set(y * SIZE + x, true);
 
         // Right
-        let Some(x_move) = memchr::memchr(b'#', &hor_grid[y][x + 1..]) else {
+        let x_move = hor_grid[y][x + 1..].leading_zeros();
+        if x + x_move > SIZE {
             break false;
-        };
+        }
         x += x_move;
         if visited_hor[y * SIZE + x] {
             break true;
@@ -282,8 +296,8 @@ fn try_opst_down(
         visited_hor.set(y * SIZE + x, true);
     };
 
-    hor_grid[opst_y][opst_x] = 0;
-    vert_grid[opst_x][opst_y] = 0;
+    hor_grid[opst_y].set(opst_x, false);
+    vert_grid[opst_x].set(opst_y, false);
 
     loops
 }
@@ -294,43 +308,46 @@ fn try_opst_left(
     start_x: usize,
     start_y: usize,
 
-    hor_grid: &mut [[u8; SIZE]; SIZE],
-    vert_grid: &mut [[u8; SIZE]; SIZE],
+    hor_grid: &mut [BitArray<[u64; SIZE.div_ceil(64)]>; SIZE],
+    vert_grid: &mut [BitArray<[u64; SIZE.div_ceil(64)]>; SIZE],
 
     mut visited_vert: BitArray<[u64; (SIZE * SIZE).div_ceil(64)]>,
     mut visited_hor: BitArray<[u64; (SIZE * SIZE).div_ceil(64)]>,
 ) -> bool {
-    hor_grid[opst_y][opst_x] = b'#';
-    vert_grid[opst_x][opst_y] = b'#';
+    hor_grid[opst_y].set(opst_x, true);
+    vert_grid[opst_x].set(opst_y, true);
 
     let mut x = start_x;
     let mut y = start_y;
 
     let loops = loop {
         // Left
-        let Some(x_move) = memchr::memrchr(b'#', &hor_grid[y][..x]) else {
+        let x_move = hor_grid[y][..x].trailing_zeros();
+        if x_move >= x {
             break false;
-        };
-        x = x_move + 1;
+        }
+        x -= x_move;
         if visited_hor[y * SIZE + x] {
             break true;
         }
         visited_hor.set(y * SIZE + x, true);
 
         // Up
-        let Some(y_move) = memchr::memrchr(b'#', &vert_grid[x][..y]) else {
+        let y_move = vert_grid[x][..y].trailing_zeros();
+        if y_move >= y {
             break false;
-        };
-        y = y_move + 1;
+        }
+        y -= y_move;
         if visited_vert[y * SIZE + x] {
             break true;
         }
         visited_vert.set(y * SIZE + x, true);
 
         // Right
-        let Some(x_move) = memchr::memchr(b'#', &hor_grid[y][x + 1..]) else {
+        let x_move = hor_grid[y][x + 1..].leading_zeros();
+        if x + x_move > SIZE {
             break false;
-        };
+        }
         x += x_move;
         if visited_hor[y * SIZE + x] {
             break true;
@@ -338,9 +355,10 @@ fn try_opst_left(
         visited_hor.set(y * SIZE + x, true);
 
         // Down
-        let Some(y_move) = memchr::memchr(b'#', &vert_grid[x][y + 1..]) else {
+        let y_move = vert_grid[x][y + 1..].leading_zeros();
+        if y + y_move > SIZE {
             break false;
-        };
+        }
         y += y_move;
         if visited_vert[y * SIZE + x] {
             break true;
@@ -348,8 +366,8 @@ fn try_opst_left(
         visited_vert.set(y * SIZE + x, true);
     };
 
-    hor_grid[opst_y][opst_x] = 0;
-    vert_grid[opst_x][opst_y] = 0;
+    hor_grid[opst_y].set(opst_x, false);
+    vert_grid[opst_x].set(opst_y, false);
 
     loops
 }
@@ -358,8 +376,8 @@ fn try_opst_left(
 pub fn part2(s: &str) -> u32 {
     let s = s.as_bytes();
 
-    let mut hor_grid = [[0u8; SIZE]; SIZE];
-    let mut vert_grid = [[0u8; SIZE]; SIZE];
+    let mut hor_grid = [BitArray::<[u64; SIZE.div_ceil(64)]>::default(); SIZE];
+    let mut vert_grid = [BitArray::<[u64; SIZE.div_ceil(64)]>::default(); SIZE];
 
     let mut visited_vert = BitArray::<[u64; (SIZE * SIZE).div_ceil(64)]>::default();
     let mut visited_hor = BitArray::<[u64; (SIZE * SIZE).div_ceil(64)]>::default();
@@ -369,8 +387,8 @@ pub fn part2(s: &str) -> u32 {
         let x = i % (SIZE + 1);
         let y = i / (SIZE + 1);
 
-        hor_grid[y][x] = b'#';
-        vert_grid[x][y] = b'#';
+        hor_grid[y].set(x, true);
+        vert_grid[x].set(y, true);
     }
 
     let start = memchr::memchr(b'^', s).unwrap();
@@ -388,7 +406,7 @@ pub fn part2(s: &str) -> u32 {
             if y == 0 {
                 break 'outer;
             }
-            if hor_grid[y - 1][x] != 0 {
+            if hor_grid[y - 1][x] {
                 visited_vert.set(y * SIZE + x, true);
                 break; // Turn
             } else {
@@ -416,7 +434,7 @@ pub fn part2(s: &str) -> u32 {
             if x == SIZE - 1 {
                 break 'outer;
             }
-            if hor_grid[y][x + 1] != 0 {
+            if hor_grid[y][x + 1] {
                 visited_hor.set(y * SIZE + x, true);
                 break; // Turn
             } else {
@@ -444,7 +462,7 @@ pub fn part2(s: &str) -> u32 {
             if y == SIZE - 1 {
                 break 'outer;
             }
-            if hor_grid[y + 1][x] != 0 {
+            if hor_grid[y + 1][x] {
                 visited_vert.set(y * SIZE + x, true);
                 break; // Turn
             } else {
@@ -472,7 +490,7 @@ pub fn part2(s: &str) -> u32 {
             if x == 0 {
                 break 'outer;
             }
-            if hor_grid[y][x - 1] != 0 {
+            if hor_grid[y][x - 1] {
                 visited_hor.set(y * SIZE + x, true);
                 break; // Turn
             } else {
