@@ -1,21 +1,19 @@
-use std::num::NonZero;
+use std::{hint::unreachable_unchecked, num::NonZero};
 
 use aoc_runner_derive::aoc;
 
 fn search(target: u64, v: &[NonZero<u64>]) -> bool {
     match v {
-        [] => {
-            return target == 0;
-        }
+        [] => unsafe { unreachable_unchecked() },
         [rest @ .., last] => {
             let last = last.get();
+            if last > target {
+                return rest.is_empty();
+            }
             if target % last == 0 {
                 if search(target / last, rest) {
                     return true;
                 }
-            }
-            if last > target {
-                return false;
             }
 
             return search(target - last, rest);
@@ -73,18 +71,16 @@ unsafe fn part1_inner(s: &str) -> u64 {
 
 fn search_part2(target: u64, v: &[NonZero<u64>]) -> bool {
     match v {
-        [] => {
-            return target == 0;
-        }
+        [] => unsafe { unreachable_unchecked() },
         [rest @ .., last] => {
             let last = last.get();
+            if last >= target {
+                return rest.is_empty();
+            }
             if target % last == 0 {
                 if search_part2(target / last, rest) {
                     return true;
                 }
-            }
-            if last > target {
-                return false;
             }
 
             let size = unsafe { NonZero::new_unchecked(10u64.pow(last.ilog10() + 1)) };
