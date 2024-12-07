@@ -85,15 +85,15 @@ fn search_part2(target: u64, v: &[NonZero<u64>]) -> bool {
                 return false;
             }
 
-            if target % last == 0 {
-                if search_part2(target / last, rest) {
+            let size = unsafe { NonZero::new_unchecked(10u64.pow(last.ilog10() + 1)) };
+            if (target - last) % size == 0 {
+                if search_part2((target - last) / size, rest) {
                     return true;
                 }
             }
 
-            let size = unsafe { NonZero::new_unchecked(10u64.pow(last.ilog10() + 1)) };
-            if (target - last) % size == 0 {
-                if search_part2((target - last) / size, rest) {
+            if target % last == 0 {
+                if search_part2(target / last, rest) {
                     return true;
                 }
             }
