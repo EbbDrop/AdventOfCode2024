@@ -91,7 +91,13 @@ fn search_part2(target: u64, v: &[NonZero<u64>]) -> bool {
                 }
             }
 
-            let size = unsafe { NonZero::new_unchecked(10u64.pow(last.ilog10() + 1)) };
+            let size = if last >= 100 {
+                1000
+            } else if last >= 10 {
+                100
+            } else {
+                10
+            };
             if (target - last) % size == 0 {
                 if search_part2((target - last) / size, rest) {
                     return true;
@@ -127,11 +133,11 @@ unsafe fn part2_inner(s: &str) -> u64 {
         i += 2;
 
         let mut num = 0;
-        while *s.get_unchecked(i) != b'\n' {
+        while i < s.len() && *s.get_unchecked(i) != b'\n' {
             num *= 10;
             num += (*s.get_unchecked(i) - b'0') as u64;
             i += 1;
-            if !s.get_unchecked(i).is_ascii_digit() {
+            if i >= s.len() || !s.get_unchecked(i).is_ascii_digit() {
                 *v.get_unchecked_mut(v_len) = NonZero::new_unchecked(num);
                 v_len += 1;
                 num = 0;
