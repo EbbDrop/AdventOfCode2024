@@ -2,26 +2,50 @@ use std::{hint::unreachable_unchecked, mem::MaybeUninit, num::NonZero};
 
 use aoc_runner_derive::aoc;
 
-fn search(target: u64, v: &[NonZero<u64>]) -> bool {
-    match v {
-        [] => unsafe { unreachable_unchecked() },
-        [rest @ .., last] => {
-            let last = last.get();
-            if rest.is_empty() {
-                return target == last;
-            }
-            if last > target {
-                return false;
-            }
+macro_rules! search_fn {
+    ($name:ident => $name_next:ident) => {
+        #[inline(always)]
+        unsafe fn $name(target: u64, v: &[NonZero<u64>]) -> bool {
+            match v {
+                [] => unsafe { unreachable_unchecked() },
+                [rest @ .., last] => {
+                    let last = last.get();
+                    if last > target {
+                        return false;
+                    }
 
-            if target % last == 0 {
-                if search(target / last, rest) {
-                    return true;
+                    if target % last == 0 {
+                        if $name_next(target / last, rest) {
+                            return true;
+                        }
+                    }
+
+                    return $name_next(target - last, rest);
                 }
             }
-
-            return search(target - last, rest);
         }
+    };
+}
+
+search_fn!(search_12 => search_11);
+search_fn!(search_11 => search_10);
+search_fn!(search_10 => search_9);
+search_fn!(search_9 => search_8);
+search_fn!(search_8 => search_7);
+search_fn!(search_7 => search_6);
+search_fn!(search_6 => search_5);
+search_fn!(search_5 => search_4);
+search_fn!(search_4 => search_3);
+search_fn!(search_3 => search_2);
+search_fn!(search_2 => search_1);
+
+#[inline(always)]
+unsafe fn search_1(target: u64, v: &[NonZero<u64>]) -> bool {
+    match v {
+        [last] => {
+            return target == last.get();
+        }
+        _ => unsafe { unreachable_unchecked() },
     }
 }
 
@@ -67,7 +91,21 @@ unsafe fn part1_inner(s: &str) -> u64 {
 
         let init = &*(v.get_unchecked(..v_len) as *const [MaybeUninit<NonZero<u64>>]
             as *const [NonZero<u64>]);
-        if search(target, init) {
+        if match init.len() {
+            1 => search_1(target, init),
+            2 => search_2(target, init),
+            3 => search_3(target, init),
+            4 => search_4(target, init),
+            5 => search_5(target, init),
+            6 => search_6(target, init),
+            7 => search_7(target, init),
+            8 => search_8(target, init),
+            9 => search_9(target, init),
+            10 => search_10(target, init),
+            11 => search_11(target, init),
+            12 => search_12(target, init),
+            _ => unreachable_unchecked(),
+        } {
             sum += target;
         }
         v_len = 0;
