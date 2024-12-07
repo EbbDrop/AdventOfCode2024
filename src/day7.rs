@@ -4,7 +4,6 @@ use aoc_runner_derive::aoc;
 
 macro_rules! search_fn {
     ($name:ident($a1:ident, $($a:ident),*) => $name_next:ident) => {
-        #[inline(always)]
         unsafe fn $name(target: u64, $($a: NonZero<u64>,)* $a1: NonZero<u64>) -> bool {
             let last = $a1.get();
             if last > target {
