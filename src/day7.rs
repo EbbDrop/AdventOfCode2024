@@ -1,20 +1,24 @@
+use std::num::NonZero;
+
 use aoc_runner_derive::aoc;
 
-fn search(target: u64, v: &[u64]) -> bool {
+fn search(target: u64, v: &[NonZero<u64>]) -> bool {
     match v {
         [] => {
             return target == 0;
         }
         [rest @ .., last] => {
-            if target % *last == 0 {
-                if search(target / *last, rest) {
+            let last = last.get();
+            if target % last == 0 {
+                if search(target / last, rest) {
                     return true;
                 }
             }
-            if *last > target {
+            if last > target {
                 return false;
             }
-            return search(target - *last, rest);
+
+            return search(target - last, rest);
         }
     }
 }
@@ -30,7 +34,7 @@ unsafe fn part1_inner(s: &str) -> u64 {
     let mut sum = 0;
 
     let mut i = 0;
-    let mut v = [0; 15];
+    let mut v = [NonZero::new(1).unwrap(); 15];
     let mut v_len = 0;
 
     while i < s.len() {
@@ -48,7 +52,7 @@ unsafe fn part1_inner(s: &str) -> u64 {
             num += (*s.get_unchecked(i) - b'0') as u64;
             i += 1;
             if !s.get_unchecked(i).is_ascii_digit() {
-                *v.get_unchecked_mut(v_len) = num;
+                *v.get_unchecked_mut(v_len) = NonZero::new_unchecked(num);
                 v_len += 1;
                 num = 0;
                 i += 1;
@@ -67,29 +71,30 @@ unsafe fn part1_inner(s: &str) -> u64 {
     sum
 }
 
-fn search_part2(target: u64, v: &[u64]) -> bool {
+fn search_part2(target: u64, v: &[NonZero<u64>]) -> bool {
     match v {
         [] => {
             return target == 0;
         }
         [rest @ .., last] => {
-            if target % *last == 0 {
-                if search_part2(target / *last, rest) {
+            let last = last.get();
+            if target % last == 0 {
+                if search_part2(target / last, rest) {
                     return true;
                 }
             }
-            if *last > target {
+            if last > target {
                 return false;
             }
 
-            let size = 10u64.pow(last.ilog10() + 1);
-            if (target - *last) % size == 0 {
-                if search_part2((target - *last) / size, rest) {
+            let size = unsafe { NonZero::new_unchecked(10u64.pow(last.ilog10() + 1)) };
+            if (target - last) % size == 0 {
+                if search_part2((target - last) / size, rest) {
                     return true;
                 }
             }
 
-            return search_part2(target - *last, rest);
+            return search_part2(target - last, rest);
         }
     }
 }
@@ -105,7 +110,7 @@ unsafe fn part2_inner(s: &str) -> u64 {
     let mut sum = 0;
 
     let mut i = 0;
-    let mut v = [0; 15];
+    let mut v = [NonZero::new(1).unwrap(); 15];
     let mut v_len = 0;
 
     while i < s.len() {
@@ -123,7 +128,7 @@ unsafe fn part2_inner(s: &str) -> u64 {
             num += (*s.get_unchecked(i) - b'0') as u64;
             i += 1;
             if !s.get_unchecked(i).is_ascii_digit() {
-                *v.get_unchecked_mut(v_len) = num;
+                *v.get_unchecked_mut(v_len) = NonZero::new_unchecked(num);
                 v_len += 1;
                 num = 0;
                 i += 1;
