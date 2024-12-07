@@ -3,48 +3,44 @@ use std::{hint::unreachable_unchecked, mem::MaybeUninit, num::NonZero};
 use aoc_runner_derive::aoc;
 
 macro_rules! search_fn {
-    ($name:ident => $name_next:ident) => {
-        unsafe fn $name(target: u64, v: &[NonZero<u64>]) -> bool {
-            match v {
-                [] => unsafe { unreachable_unchecked() },
-                [rest @ .., last] => {
-                    let last = last.get();
-                    if last > target {
-                        return false;
-                    }
+    ($name:ident; $n:expr => $name_next:ident) => {
+        unsafe fn $name(target: u64, v: &[NonZero<u64>; $n]) -> bool {
+            let [rest @ .., last] = v;
 
-                    if target % last == 0 {
-                        if $name_next(target / last, rest) {
-                            return true;
-                        }
-                    }
+            let last = last.get();
+            if last > target {
+                return false;
+            }
 
-                    return $name_next(target - last, rest);
+            if target % last == 0 {
+                if $name_next(target / last, rest) {
+                    return true;
                 }
             }
+
+            return $name_next(target - last, rest);
         }
     };
 }
 
-search_fn!(search_12 => search_11);
-search_fn!(search_11 => search_10);
-search_fn!(search_10 => search_9);
-search_fn!(search_9 => search_8);
-search_fn!(search_8 => search_7);
-search_fn!(search_7 => search_6);
-search_fn!(search_6 => search_5);
-search_fn!(search_5 => search_4);
-search_fn!(search_4 => search_3);
-search_fn!(search_3 => search_2);
-search_fn!(search_2 => search_1);
+search_fn!(search_12; 12 => search_11);
+search_fn!(search_11; 11 => search_10);
+search_fn!(search_10; 10 => search_9);
+search_fn!(search_9; 9 => search_8);
+search_fn!(search_8; 8 => search_7);
+search_fn!(search_7; 7 => search_6);
+search_fn!(search_6; 6 => search_5);
+search_fn!(search_5; 5 => search_4);
+search_fn!(search_4; 4 => search_3);
+search_fn!(search_3; 3 => search_2);
+search_fn!(search_2; 2 => search_1);
 
 #[inline(always)]
-unsafe fn search_1(target: u64, v: &[NonZero<u64>]) -> bool {
+unsafe fn search_1(target: u64, v: &[NonZero<u64>; 1]) -> bool {
     match v {
         [last] => {
             return target == last.get();
         }
-        _ => unsafe { unreachable_unchecked() },
     }
 }
 
@@ -91,18 +87,18 @@ unsafe fn part1_inner(s: &str) -> u64 {
         let init = &*(v.get_unchecked(..v_len) as *const [MaybeUninit<NonZero<u64>>]
             as *const [NonZero<u64>]);
         if match init.len() {
-            1 => search_1(target, init),
-            2 => search_2(target, init),
-            3 => search_3(target, init),
-            4 => search_4(target, init),
-            5 => search_5(target, init),
-            6 => search_6(target, init),
-            7 => search_7(target, init),
-            8 => search_8(target, init),
-            9 => search_9(target, init),
-            10 => search_10(target, init),
-            11 => search_11(target, init),
-            12 => search_12(target, init),
+            1 => search_1(target, init.try_into().unwrap_unchecked()),
+            2 => search_2(target, init.try_into().unwrap_unchecked()),
+            3 => search_3(target, init.try_into().unwrap_unchecked()),
+            4 => search_4(target, init.try_into().unwrap_unchecked()),
+            5 => search_5(target, init.try_into().unwrap_unchecked()),
+            6 => search_6(target, init.try_into().unwrap_unchecked()),
+            7 => search_7(target, init.try_into().unwrap_unchecked()),
+            8 => search_8(target, init.try_into().unwrap_unchecked()),
+            9 => search_9(target, init.try_into().unwrap_unchecked()),
+            10 => search_10(target, init.try_into().unwrap_unchecked()),
+            11 => search_11(target, init.try_into().unwrap_unchecked()),
+            12 => search_12(target, init.try_into().unwrap_unchecked()),
             _ => unreachable_unchecked(),
         } {
             sum += target;
