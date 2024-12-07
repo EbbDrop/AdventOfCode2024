@@ -133,11 +133,11 @@ unsafe fn part2_inner(s: &str) -> u64 {
         i += 2;
 
         let mut num = 0;
-        while i < s.len() && *s.get_unchecked(i) != b'\n' {
+        while *s.get_unchecked(i) != b'\n' {
             num *= 10;
             num += (*s.get_unchecked(i) - b'0') as u64;
             i += 1;
-            if i >= s.len() || !s.get_unchecked(i).is_ascii_digit() {
+            if !s.get_unchecked(i).is_ascii_digit() {
                 *v.get_unchecked_mut(v_len) = NonZero::new_unchecked(num);
                 v_len += 1;
                 num = 0;
