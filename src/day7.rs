@@ -7,8 +7,8 @@ fn search(target: u64, v: &[NonZero<u64>]) -> bool {
         [] => unsafe { unreachable_unchecked() },
         [rest @ .., last] => {
             let last = last.get();
-            if last > target {
-                return rest.is_empty();
+            if last >= target || rest.is_empty() {
+                return rest.is_empty() && last == target;
             }
             if target % last == 0 {
                 if search(target / last, rest) {
@@ -74,8 +74,8 @@ fn search_part2(target: u64, v: &[NonZero<u64>]) -> bool {
         [] => unsafe { unreachable_unchecked() },
         [rest @ .., last] => {
             let last = last.get();
-            if last >= target {
-                return rest.is_empty();
+            if last >= target || rest.is_empty() {
+                return rest.is_empty() && last == target;
             }
             if target % last == 0 {
                 if search_part2(target / last, rest) {
