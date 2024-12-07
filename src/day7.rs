@@ -18,7 +18,10 @@ macro_rules! search_fn {
                 }
             }
 
-            return $name_next(target - last, rest);
+            if target != last {
+                return $name_next(target - last, rest);
+            }
+            return false;
         }
     };
 }
@@ -138,7 +141,10 @@ macro_rules! search_fn {
                 }
             }
 
-            return $name_next(target - last, rest);
+            if target != last {
+                return $name_next(target - last, rest);
+            }
+            return false;
         }
     };
 }
