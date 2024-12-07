@@ -10,16 +10,17 @@ const SIZE: usize = 130;
 pub fn part1(s: &str) -> usize {
     let s = s.as_bytes();
 
-    let mut hor_grid = [[0u8; SIZE]; SIZE];
-    let mut vert_grid = [[0u8; SIZE]; SIZE];
+    let mut hor_grid = [BitArray::<[u64; SIZE.div_ceil(64)]>::default(); SIZE];
+    let mut vert_grid = [BitArray::<[u64; SIZE.div_ceil(64)]>::default(); SIZE];
     let mut hor_visit = [BitArray::<[u64; SIZE.div_ceil(64)]>::default(); SIZE];
+    // let mut vert_visit = [BitArray::<[u64; SIZE.div_ceil(64)]>::default(); SIZE];
 
     for i in memchr::memchr_iter(b'#', s) {
         let x = i % (SIZE + 1);
         let y = i / (SIZE + 1);
 
-        hor_grid[y][x] = b'#';
-        vert_grid[x][y] = b'#';
+        hor_grid[y].set(x, true);
+        vert_grid[x].set(y, true);
     }
 
     let start = memchr::memchr(b'^', s).unwrap();
@@ -30,44 +31,45 @@ pub fn part1(s: &str) -> usize {
 
     loop {
         // Up
-        let Some(y_move) = memchr::memrchr(b'#', &vert_grid[x][..y]) else {
-            for y in 0..y {
-                hor_visit[y].set(x, true);
-            }
-            break;
-        };
-        for y in y_move + 1..y {
+        let y_move = vert_grid[x][..y].trailing_zeros();
+        // vert_visit[x][..y][y - y_move..].fill(true);
+        for y in y - y_move..y {
             hor_visit[y].set(x, true);
         }
-        y = y_move + 1;
+        if y_move >= y {
+            break;
+        }
+        y -= y_move;
 
         // Right
-        let Some(x_move) = memchr::memchr(b'#', &hor_grid[y][x + 1..]) else {
+        let x_move = hor_grid[y][x + 1..].leading_zeros();
+        if x + x_move > SIZE {
             hor_visit[y][x..SIZE].fill(true);
             break;
-        };
-        hor_visit[y][x..x + x_move + 1].fill(true);
+        }
+        hor_visit[y][x..SIZE][..x_move + 1].fill(true);
         x += x_move;
 
         // Down
-        let Some(y_move) = memchr::memchr(b'#', &vert_grid[x][y + 1..]) else {
+        let y_move = vert_grid[x][y + 1..].leading_zeros();
+        if y + y_move > SIZE {
             for y in y..SIZE {
                 hor_visit[y].set(x, true);
             }
             break;
-        };
+        }
         for y in y..y + y_move + 1 {
             hor_visit[y].set(x, true);
         }
         y += y_move;
 
         // Left
-        let Some(x_move) = memchr::memrchr(b'#', &hor_grid[y][..x]) else {
-            hor_visit[y][..x].fill(true);
+        let x_move = hor_grid[y][..x].trailing_zeros();
+        hor_visit[y][..x][x - x_move..].fill(true);
+        if x_move >= x {
             break;
-        };
-        hor_visit[y][x_move + 1..x].fill(true);
-        x = x_move + 1;
+        }
+        x -= x_move;
     }
 
     // TODO: is there a smarter way to do this?
