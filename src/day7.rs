@@ -30,8 +30,7 @@ unsafe fn part1_inner(s: &str) -> u64 {
     let mut sum = 0;
 
     let mut i = 0;
-    let mut v = [0; 15];
-    let mut v_len = 0;
+    let mut v = Vec::with_capacity(15);
 
     while i < s.len() {
         let mut target: u64 = 0;
@@ -48,8 +47,7 @@ unsafe fn part1_inner(s: &str) -> u64 {
             num += (*s.get_unchecked(i) - b'0') as u64;
             i += 1;
             if !s.get_unchecked(i).is_ascii_digit() {
-                *v.get_unchecked_mut(v_len) = num;
-                v_len += 1;
+                v.push(num);
                 num = 0;
                 i += 1;
                 if *s.get_unchecked(i - 1) == b'\n' {
@@ -58,10 +56,10 @@ unsafe fn part1_inner(s: &str) -> u64 {
             }
         }
 
-        if search(target, &v[..v_len]) {
+        if search(target, &v) {
             sum += target;
         }
-        v_len = 0;
+        v.clear();
     }
 
     sum
@@ -105,8 +103,7 @@ unsafe fn part2_inner(s: &str) -> u64 {
     let mut sum = 0;
 
     let mut i = 0;
-    let mut v = [0; 15];
-    let mut v_len = 0;
+    let mut v = Vec::with_capacity(15);
 
     while i < s.len() {
         let mut target: u64 = 0;
@@ -123,8 +120,7 @@ unsafe fn part2_inner(s: &str) -> u64 {
             num += (*s.get_unchecked(i) - b'0') as u64;
             i += 1;
             if !s.get_unchecked(i).is_ascii_digit() {
-                *v.get_unchecked_mut(v_len) = num;
-                v_len += 1;
+                v.push(num);
                 num = 0;
                 i += 1;
                 if *s.get_unchecked(i - 1) == b'\n' {
@@ -133,10 +129,10 @@ unsafe fn part2_inner(s: &str) -> u64 {
             }
         }
 
-        if search_part2(target, &v[..v_len]) {
+        if search_part2(target, &v) {
             sum += target;
         }
-        v_len = 0;
+        v.clear();
     }
 
     sum
