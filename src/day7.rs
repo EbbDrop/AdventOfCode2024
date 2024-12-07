@@ -3,50 +3,40 @@ use std::{hint::unreachable_unchecked, mem::MaybeUninit, num::NonZero};
 use aoc_runner_derive::aoc;
 
 macro_rules! search_fn {
-    ($name:ident => $name_next:ident) => {
+    ($name:ident($a1:ident, $($a:ident),*) => $name_next:ident) => {
         #[inline(always)]
-        unsafe fn $name(target: u64, v: &[NonZero<u64>]) -> bool {
-            match v {
-                [] => unsafe { unreachable_unchecked() },
-                [rest @ .., last] => {
-                    let last = last.get();
-                    if last > target {
-                        return false;
-                    }
+        unsafe fn $name(target: u64, $($a: NonZero<u64>,)* $a1: NonZero<u64>) -> bool {
+            let last = $a1.get();
+            if last > target {
+                return false;
+            }
 
-                    if target % last == 0 {
-                        if $name_next(target / last, rest) {
-                            return true;
-                        }
-                    }
-
-                    return $name_next(target - last, rest);
+            if target % last == 0 {
+                if $name_next(target / last, $($a),*) {
+                    return true;
                 }
             }
+
+            return $name_next(target - last, $($a),*);
         }
     };
 }
 
-search_fn!(search_12 => search_11);
-search_fn!(search_11 => search_10);
-search_fn!(search_10 => search_9);
-search_fn!(search_9 => search_8);
-search_fn!(search_8 => search_7);
-search_fn!(search_7 => search_6);
-search_fn!(search_6 => search_5);
-search_fn!(search_5 => search_4);
-search_fn!(search_4 => search_3);
-search_fn!(search_3 => search_2);
-search_fn!(search_2 => search_1);
+search_fn!(search_12(a,b,c,d,e,f,g,h,i,j,k,l) => search_11);
+search_fn!(search_11(a,b,c,d,e,f,g,h,i,j,k) => search_10);
+search_fn!(search_10(a,b,c,d,e,f,g,h,i,j) => search_9);
+search_fn!(search_9(a,b,c,d,e,f,g,h,i) => search_8);
+search_fn!(search_8(a,b,c,d,e,f,g,h) => search_7);
+search_fn!(search_7(a,b,c,d,e,f,g) => search_6);
+search_fn!(search_6(a,b,c,d,e,f) => search_5);
+search_fn!(search_5(a,b,c,d,e) => search_4);
+search_fn!(search_4(a,b,c,d) => search_3);
+search_fn!(search_3(a,b,c) => search_2);
+search_fn!(search_2(a,b) => search_1);
 
 #[inline(always)]
-unsafe fn search_1(target: u64, v: &[NonZero<u64>]) -> bool {
-    match v {
-        [last] => {
-            return target == last.get();
-        }
-        _ => unsafe { unreachable_unchecked() },
-    }
+fn search_1(target: u64, last: NonZero<u64>) -> bool {
+    return target == last.get();
 }
 
 #[aoc(day7, part1)]
@@ -91,19 +81,25 @@ unsafe fn part1_inner(s: &str) -> u64 {
 
         let init = &*(v.get_unchecked(..v_len) as *const [MaybeUninit<NonZero<u64>>]
             as *const [NonZero<u64>]);
-        if match init.len() {
-            1 => search_1(target, init),
-            2 => search_2(target, init),
-            3 => search_3(target, init),
-            4 => search_4(target, init),
-            5 => search_5(target, init),
-            6 => search_6(target, init),
-            7 => search_7(target, init),
-            8 => search_8(target, init),
-            9 => search_9(target, init),
-            10 => search_10(target, init),
-            11 => search_11(target, init),
-            12 => search_12(target, init),
+        if match init {
+            [a, b, c, d, e, f, g, h, i, j, k, l] => {
+                search_12(target, *a, *b, *c, *d, *e, *f, *g, *h, *i, *j, *k, *l)
+            }
+            [a, b, c, d, e, f, g, h, i, j, k] => {
+                search_11(target, *a, *b, *c, *d, *e, *f, *g, *h, *i, *j, *k)
+            }
+            [a, b, c, d, e, f, g, h, i, j] => {
+                search_10(target, *a, *b, *c, *d, *e, *f, *g, *h, *i, *j)
+            }
+            [a, b, c, d, e, f, g, h, i] => search_9(target, *a, *b, *c, *d, *e, *f, *g, *h, *i),
+            [a, b, c, d, e, f, g, h] => search_8(target, *a, *b, *c, *d, *e, *f, *g, *h),
+            [a, b, c, d, e, f, g] => search_7(target, *a, *b, *c, *d, *e, *f, *g),
+            [a, b, c, d, e, f] => search_6(target, *a, *b, *c, *d, *e, *f),
+            [a, b, c, d, e] => search_5(target, *a, *b, *c, *d, *e),
+            [a, b, c, d] => search_4(target, *a, *b, *c, *d),
+            [a, b, c] => search_3(target, *a, *b, *c),
+            [a, b] => search_2(target, *a, *b),
+            [a] => search_1(target, *a),
             _ => unreachable_unchecked(),
         } {
             sum += target;
