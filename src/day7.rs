@@ -1,4 +1,4 @@
-use std::{hint::unreachable_unchecked, num::NonZero};
+use std::{hint::unreachable_unchecked, mem::MaybeUninit, num::NonZero};
 
 use aoc_runner_derive::aoc;
 
@@ -36,7 +36,7 @@ unsafe fn part1_inner(s: &str) -> u64 {
     let mut sum = 0;
 
     let mut i = 0;
-    let mut v = [NonZero::new(1).unwrap(); 15];
+    let mut v = [MaybeUninit::uninit(); 15];
     let mut v_len = 0;
 
     while i < s.len() {
@@ -54,7 +54,8 @@ unsafe fn part1_inner(s: &str) -> u64 {
             num += (*s.get_unchecked(i) - b'0') as u64;
             i += 1;
             if !s.get_unchecked(i).is_ascii_digit() {
-                *v.get_unchecked_mut(v_len) = NonZero::new_unchecked(num);
+                v.get_unchecked_mut(v_len)
+                    .write(NonZero::new_unchecked(num));
                 v_len += 1;
                 num = 0;
                 i += 1;
@@ -64,7 +65,9 @@ unsafe fn part1_inner(s: &str) -> u64 {
             }
         }
 
-        if search(target, &v.get_unchecked(..v_len)) {
+        let init = &*(v.get_unchecked(..v_len) as *const [MaybeUninit<NonZero<u64>>]
+            as *const [NonZero<u64>]);
+        if search(target, init) {
             sum += target;
         }
         v_len = 0;
@@ -120,7 +123,7 @@ unsafe fn part2_inner(s: &str) -> u64 {
     let mut sum = 0;
 
     let mut i = 0;
-    let mut v = [NonZero::new(1).unwrap(); 15];
+    let mut v = [MaybeUninit::uninit(); 15];
     let mut v_len = 0;
 
     while i < s.len() {
@@ -138,7 +141,8 @@ unsafe fn part2_inner(s: &str) -> u64 {
             num += (*s.get_unchecked(i) - b'0') as u64;
             i += 1;
             if !s.get_unchecked(i).is_ascii_digit() {
-                *v.get_unchecked_mut(v_len) = NonZero::new_unchecked(num);
+                v.get_unchecked_mut(v_len)
+                    .write(NonZero::new_unchecked(num));
                 v_len += 1;
                 num = 0;
                 i += 1;
@@ -148,7 +152,9 @@ unsafe fn part2_inner(s: &str) -> u64 {
             }
         }
 
-        if search_part2(target, &v.get_unchecked(..v_len)) {
+        let init = &*(v.get_unchecked(..v_len) as *const [MaybeUninit<NonZero<u64>>]
+            as *const [NonZero<u64>]);
+        if search_part2(target, init) {
             sum += target;
         }
         v_len = 0;
