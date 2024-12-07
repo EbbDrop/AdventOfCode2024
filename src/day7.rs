@@ -41,11 +41,11 @@ pub fn part1(s: &str) -> u64 {
             num *= 10;
             num += (s[i] - b'0') as u64;
             i += 1;
-            if i >= s.len() || !s[i].is_ascii_digit() {
+            if !s[i].is_ascii_digit() {
                 v.push(num);
                 num = 0;
                 i += 1;
-                if i >= s.len() || s[i - 1] == b'\n' {
+                if s[i - 1] == b'\n' {
                     break;
                 }
             }
@@ -109,11 +109,11 @@ pub fn part2(s: &str) -> u64 {
             num *= 10;
             num += (s[i] - b'0') as u64;
             i += 1;
-            if i >= s.len() || !s[i].is_ascii_digit() {
+            if !s[i].is_ascii_digit() {
                 v.push(num);
                 num = 0;
                 i += 1;
-                if i >= s.len() || s[i - 1] == b'\n' {
+                if s[i - 1] == b'\n' {
                     break;
                 }
             }
