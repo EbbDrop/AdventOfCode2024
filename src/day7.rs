@@ -49,10 +49,7 @@ unsafe fn part1_inner(s: &str) -> u64 {
         i += 2;
 
         let mut num = 0;
-        while *s.get_unchecked(i) != b'\n' {
-            num *= 10;
-            num += (*s.get_unchecked(i) - b'0') as u64;
-            i += 1;
+        loop {
             if !s.get_unchecked(i).is_ascii_digit() {
                 v.get_unchecked_mut(v_len)
                     .write(NonZero::new_unchecked(num));
@@ -63,6 +60,9 @@ unsafe fn part1_inner(s: &str) -> u64 {
                     break;
                 }
             }
+            num *= 10;
+            num += (*s.get_unchecked(i) - b'0') as u64;
+            i += 1;
         }
 
         let init = &*(v.get_unchecked(..v_len) as *const [MaybeUninit<NonZero<u64>>]
@@ -136,10 +136,7 @@ unsafe fn part2_inner(s: &str) -> u64 {
         i += 2;
 
         let mut num = 0;
-        while *s.get_unchecked(i) != b'\n' {
-            num *= 10;
-            num += (*s.get_unchecked(i) - b'0') as u64;
-            i += 1;
+        loop {
             if !s.get_unchecked(i).is_ascii_digit() {
                 v.get_unchecked_mut(v_len)
                     .write(NonZero::new_unchecked(num));
@@ -150,6 +147,9 @@ unsafe fn part2_inner(s: &str) -> u64 {
                     break;
                 }
             }
+            num *= 10;
+            num += (*s.get_unchecked(i) - b'0') as u64;
+            i += 1;
         }
 
         let init = &*(v.get_unchecked(..v_len) as *const [MaybeUninit<NonZero<u64>>]
