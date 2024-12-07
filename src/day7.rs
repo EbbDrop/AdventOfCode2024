@@ -96,40 +96,47 @@ fn search_part2(target: u64, v: &[u64]) -> bool {
 
 #[aoc(day7, part2)]
 pub fn part2(s: &str) -> u64 {
+    unsafe { part2_inner(s) }
+}
+
+unsafe fn part2_inner(s: &str) -> u64 {
     let s = s.as_bytes();
 
     let mut sum = 0;
 
     let mut i = 0;
-    let mut v = Vec::new();
+    let mut v = [0; 15];
+    let mut v_len = 0;
+
     while i < s.len() {
         let mut target: u64 = 0;
-        while s[i] != b':' {
+        while *s.get_unchecked(i) != b':' {
             target *= 10;
-            target += (s[i] - b'0') as u64;
+            target += (*s.get_unchecked(i) - b'0') as u64;
             i += 1;
         }
         i += 2;
 
         let mut num = 0;
-        while s[i] != b'\n' {
+        while *s.get_unchecked(i) != b'\n' {
             num *= 10;
-            num += (s[i] - b'0') as u64;
+            num += (*s.get_unchecked(i) - b'0') as u64;
             i += 1;
-            if !s[i].is_ascii_digit() {
-                v.push(num);
+            if !s.get_unchecked(i).is_ascii_digit() {
+                *v.get_unchecked_mut(v_len) = num;
+                v_len += 1;
                 num = 0;
                 i += 1;
-                if s[i - 1] == b'\n' {
+                if *s.get_unchecked(i - 1) == b'\n' {
                     break;
                 }
             }
         }
 
-        if search_part2(target, &v) {
+        if search_part2(target, &v[..v_len]) {
             sum += target;
         }
-        v.clear();
+        v_len = 0;
     }
 
     sum
