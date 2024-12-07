@@ -109,20 +109,18 @@ unsafe fn part1_inner(s: &str) -> u64 {
     sum
 }
 
-fn search_part2(target: u64, v: &[NonZero<u64>]) -> bool {
-    match v {
-        [] => unsafe { unreachable_unchecked() },
-        [rest @ .., last] => {
+macro_rules! search_fn {
+    ($name:ident; $n:expr => $name_next:ident) => {
+        unsafe fn $name(target: u64, v: &[NonZero<u64>; $n]) -> bool {
+            let [rest @ .., last] = v;
+
             let last = last.get();
-            if rest.is_empty() {
-                return target == last;
-            }
             if last > target {
                 return false;
             }
 
             if target % last == 0 {
-                if search_part2(target / last, rest) {
+                if $name_next(target / last, rest) {
                     return true;
                 }
             }
@@ -135,12 +133,33 @@ fn search_part2(target: u64, v: &[NonZero<u64>]) -> bool {
                 10
             };
             if (target - last) % size == 0 {
-                if search_part2((target - last) / size, rest) {
+                if $name_next((target - last) / size, rest) {
                     return true;
                 }
             }
 
-            return search_part2(target - last, rest);
+            return $name_next(target - last, rest);
+        }
+    };
+}
+
+search_fn!(search_p2_12; 12 => search_p2_11);
+search_fn!(search_p2_11; 11 => search_p2_10);
+search_fn!(search_p2_10; 10 => search_p2_9);
+search_fn!(search_p2_9; 9 => search_p2_8);
+search_fn!(search_p2_8; 8 => search_p2_7);
+search_fn!(search_p2_7; 7 => search_p2_6);
+search_fn!(search_p2_6; 6 => search_p2_5);
+search_fn!(search_p2_5; 5 => search_p2_4);
+search_fn!(search_p2_4; 4 => search_p2_3);
+search_fn!(search_p2_3; 3 => search_p2_2);
+search_fn!(search_p2_2; 2 => search_p2_1);
+
+#[inline(always)]
+unsafe fn search_p2_1(target: u64, v: &[NonZero<u64>; 1]) -> bool {
+    match v {
+        [last] => {
+            return target == last.get();
         }
     }
 }
@@ -187,7 +206,21 @@ unsafe fn part2_inner(s: &str) -> u64 {
 
         let init = &*(v.get_unchecked(..v_len) as *const [MaybeUninit<NonZero<u64>>]
             as *const [NonZero<u64>]);
-        if search_part2(target, init) {
+        if match init.len() {
+            1 => search_p2_1(target, init.try_into().unwrap_unchecked()),
+            2 => search_p2_2(target, init.try_into().unwrap_unchecked()),
+            3 => search_p2_3(target, init.try_into().unwrap_unchecked()),
+            4 => search_p2_4(target, init.try_into().unwrap_unchecked()),
+            5 => search_p2_5(target, init.try_into().unwrap_unchecked()),
+            6 => search_p2_6(target, init.try_into().unwrap_unchecked()),
+            7 => search_p2_7(target, init.try_into().unwrap_unchecked()),
+            8 => search_p2_8(target, init.try_into().unwrap_unchecked()),
+            9 => search_p2_9(target, init.try_into().unwrap_unchecked()),
+            10 => search_p2_10(target, init.try_into().unwrap_unchecked()),
+            11 => search_p2_11(target, init.try_into().unwrap_unchecked()),
+            12 => search_p2_12(target, init.try_into().unwrap_unchecked()),
+            _ => unreachable_unchecked(),
+        } {
             sum += target;
         }
         v_len = 0;
