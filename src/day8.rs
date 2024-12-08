@@ -1,4 +1,5 @@
 use aoc_runner_derive::aoc;
+use tinyvec::ArrayVec;
 
 use crate::memchr_inv::OneInv;
 
@@ -21,7 +22,9 @@ pub fn part1(s: &str) -> u64 {
 
 fn part1_inner(s: &str) -> u64 {
     let s = s.as_bytes();
-    let mut masts: [Vec<usize>; FREQ_RANGE] = [const { Vec::new() }; FREQ_RANGE];
+
+    let mut masts: [ArrayVec<[usize; 5]>; FREQ_RANGE] =
+        [ArrayVec::from_array_empty([0; 5]); FREQ_RANGE];
 
     let mut antinodes = [false; SIZE * SIZE];
     let mut total_antinotedes = 0;
@@ -101,7 +104,8 @@ pub fn part2(s: &str) -> u64 {
 fn part2_inner(s: &str) -> u64 {
     let s = s.as_bytes();
 
-    let mut masts: [Vec<usize>; FREQ_RANGE] = [const { Vec::new() }; FREQ_RANGE];
+    let mut masts: [ArrayVec<[usize; 5]>; FREQ_RANGE] =
+        [ArrayVec::from_array_empty([0; 5]); FREQ_RANGE];
 
     let mut antinodes = [false; SIZE * SIZE];
     let mut total_antinotedes = 0;
