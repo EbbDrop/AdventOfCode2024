@@ -98,8 +98,8 @@ pub fn part2(s: &str) -> u64 {
 fn part2_inner(s: &str) -> u64 {
     let s = s.as_bytes();
 
-    let mut masts: [ArrayVec<[i16; 3]>; FREQ_RANGE] =
-        [ArrayVec::from_array_empty([0; 3]); FREQ_RANGE];
+    let mut masts: [ArrayVec<[(i16, i16); 3]>; FREQ_RANGE] =
+        [ArrayVec::from_array_empty([(0, 0); 3]); FREQ_RANGE];
 
     let mut antinodes = [false; (SIZE * SIZE) as usize];
     let mut total_antinotedes = 0;
@@ -117,10 +117,7 @@ fn part2_inner(s: &str) -> u64 {
 
         let new_x = i % SIZE1;
         let new_y = i / SIZE1;
-        for mast_i in &masts[f as usize] {
-            let mast_x = mast_i % SIZE1;
-            let mast_y = mast_i / SIZE1;
-
+        for (mast_x, mast_y) in &masts[f as usize] {
             let o_diff_x = mast_x - new_x;
             let o_diff_y = new_y - mast_y;
 
@@ -129,7 +126,7 @@ fn part2_inner(s: &str) -> u64 {
                 let diff_y = o_diff_y * k;
 
                 let node_x = mast_x + diff_x;
-                if node_x >= 0 && node_x < SIZE && mast_y >= diff_y {
+                if node_x >= 0 && node_x < SIZE && *mast_y >= diff_y {
                     let node_y = mast_y - diff_y;
                     set_node(node_x, node_y);
                 } else {
@@ -151,7 +148,7 @@ fn part2_inner(s: &str) -> u64 {
             }
         }
 
-        masts[f as usize].try_push(i);
+        masts[f as usize].try_push((new_x, new_y));
     }
 
     total_antinotedes
