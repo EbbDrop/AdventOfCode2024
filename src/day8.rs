@@ -159,7 +159,7 @@ unsafe fn part2_inner(s: &str) -> u32 {
                 let diff_x = diff_x_o * k;
                 let diff_y = diff_y_o * k;
 
-                if *mast_y >= diff_y {
+                if *mast_y >= diff_y && diff_x.abs() < 50 {
                     let node_y = mast_y - diff_y;
 
                     *antinodes.get_unchecked_mut(node_y as usize) |= if diff_x.is_positive() {
@@ -176,7 +176,7 @@ unsafe fn part2_inner(s: &str) -> u32 {
                 let diff_x = diff_x_o * k;
                 let diff_y = diff_y_o * k;
 
-                if new_y + diff_y < SIZE {
+                if new_y + diff_y < SIZE && diff_x.abs() < 50 {
                     let node_y = new_y + diff_y;
 
                     *antinodes.get_unchecked_mut(node_y as usize) |= if diff_x.is_positive() {
