@@ -8,20 +8,17 @@ macro_rules! search_fn {
             let [rest @ .., last] = v;
 
             let last = last.get();
-            if last > target {
-                return false;
-            }
 
             if target % last == 0 {
                 if $name_next(target / last, rest) {
                     return true;
                 }
             }
-
-            if target != last {
-                return $name_next(target - last, rest);
+            if last >= target {
+                return false;
             }
-            return false;
+
+            return $name_next(target - last, rest);
         }
     };
 }
@@ -118,14 +115,15 @@ macro_rules! search_fn {
             let [rest @ .., last] = v;
 
             let last = last.get();
-            if last > target {
-                return false;
-            }
 
             if target % last == 0 {
                 if $name_next(target / last, rest) {
                     return true;
                 }
+            }
+
+            if last >= target {
+                return false;
             }
 
             let size = if last >= 100 {
@@ -141,10 +139,7 @@ macro_rules! search_fn {
                 }
             }
 
-            if target != last {
-                return $name_next(target - last, rest);
-            }
-            return false;
+            return $name_next(target - last, rest);
         }
     };
 }
