@@ -8,8 +8,6 @@ const SIZE: i32 = 50;
 #[cfg(test)]
 const SIZE: i32 = 12;
 
-const SIZE1: i32 = SIZE + 1;
-
 /// Has the `SIZE` lsb set
 const FIELD_SIZE: u64 = 2u64.pow(SIZE as u32) - 1;
 
@@ -155,11 +153,11 @@ unsafe fn part2_inner(s: &str) -> u32 {
             let diff_x_o = mast_x - new_x;
             let diff_y_o = new_y - mast_y;
 
-            for k in 0.. {
+            for k in 0..(SIZE / diff_x_o.abs()) {
                 let diff_x = diff_x_o * k;
                 let diff_y = diff_y_o * k;
 
-                if *mast_y >= diff_y && diff_x.abs() < 50 {
+                if *mast_y >= diff_y {
                     let node_y = mast_y - diff_y;
 
                     *antinodes.get_unchecked_mut(node_y as usize) |= if diff_x.is_positive() {
@@ -172,11 +170,11 @@ unsafe fn part2_inner(s: &str) -> u32 {
                 }
             }
 
-            for k in 0.. {
+            for k in 0..(SIZE / diff_x_o.abs()) {
                 let diff_x = diff_x_o * k;
                 let diff_y = diff_y_o * k;
 
-                if new_y + diff_y < SIZE && diff_x.abs() < 50 {
+                if new_y + diff_y < SIZE {
                     let node_y = new_y + diff_y;
 
                     *antinodes.get_unchecked_mut(node_y as usize) |= if diff_x.is_positive() {
