@@ -3,6 +3,8 @@ use tinyvec::ArrayVec;
 
 use crate::memchr_inv::OneInv;
 
+use std::simd::prelude::*;
+
 #[cfg(not(test))]
 const SIZE: i32 = 50;
 #[cfg(test)]
@@ -14,13 +16,11 @@ const FREQ_RANGE: usize = (b'z' - b'0' + 1) as usize;
 
 #[aoc(day8, part1)]
 pub fn part1(s: &str) -> u64 {
-    #[expect(unused_unsafe)]
-    unsafe {
-        part1_inner(s)
-    }
+    unsafe { part1_inner(s) }
 }
 
-fn part1_inner(s: &str) -> u64 {
+#[target_feature(enable = "avx2,bmi1,bmi2,cmpxchg16b,lzcnt,movbe,popcnt")]
+unsafe fn part1_inner(s: &str) -> u64 {
     let s = s.as_bytes();
 
     let mut masts: [ArrayVec<[i32; 4]>; FREQ_RANGE] =
@@ -51,15 +51,26 @@ fn part1_inner(s: &str) -> u64 {
             let new_x = masts[i] % SIZE1;
             let new_y = masts[i] / SIZE1;
 
+            let mast_is = i32x4::load_or_default(&masts);
+            let mast_xs = mast_is % i32x4::splat(SIZE1);
+            let mast_ys = mast_is / i32x4::splat(SIZE1);
+
+            let new_xs = i32x4::splat(new_x);
+            let new_ys = i32x4::splat(new_y);
+
+            let node_xs = mast_xs + mast_xs - new_xs;
+            let node_ys = mast_ys + mast_ys - new_ys;
+
+            let node_xs = node_xs.as_array();
+            let node_ys = node_ys.as_array();
+
             for other_i in 0..masts.len() {
                 if other_i == i {
                     continue;
                 }
-                let mast_x = masts[other_i] % SIZE1;
-                let mast_y = masts[other_i] / SIZE1;
 
-                let node_x = mast_x + mast_x - new_x;
-                let node_y = mast_y + mast_y - new_y;
+                let node_x = node_xs[other_i];
+                let node_y = node_ys[other_i];
 
                 if node_x >= 0 && node_x < SIZE && node_y >= 0 && node_y < SIZE {
                     set_node(node_x, node_y);

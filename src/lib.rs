@@ -1,3 +1,5 @@
+#![feature(portable_simd)]
+
 use aoc_runner_derive::aoc_lib;
 
 pub mod day1;
