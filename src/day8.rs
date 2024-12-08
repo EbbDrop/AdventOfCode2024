@@ -20,20 +20,30 @@ pub fn part1(s: &str) -> u32 {
     unsafe { part1_inner(s) }
 }
 
-const SHIFT_LUT: [u64; (SIZE * 3) as usize] = {
-    let mut lut = [0; (SIZE * 3) as usize];
+// const SHIFT_LUT: [u64; (SIZE * SIZE * 2) as usize] = {
+//     let mut lut = [0; (SIZE * SIZE * 2) as usize];
 
-    let mut i = 0;
-    while i < SIZE * 2 {
-        if i >= SIZE - 1 {
-            lut[i as usize] = 1 << i - SIZE + 1;
-        }
+//     let mut x = 0;
+//     while x < SIZE {
+//         let mut diff_x = -SIZE + 1;
 
-        i += 1;
-    }
+//         let field = 1 << x;
 
-    lut
-};
+//         while diff_x < SIZE {
+//             lut[(x * SIZE * 2 + diff_x + SIZE - 1) as usize] = if diff_x.is_positive() {
+//                 field << diff_x
+//             } else {
+//                 field >> -diff_x
+//             };
+
+//             diff_x += 1;
+//         }
+
+//         x += 1;
+//     }
+
+//     lut
+// };
 
 unsafe fn part1_inner(s: &str) -> u32 {
     #[cfg(not(test))]
@@ -69,15 +79,21 @@ unsafe fn part1_inner(s: &str) -> u32 {
             if *mast_y >= diff_y {
                 let node_y = mast_y - diff_y;
 
-                *antinodes.get_unchecked_mut(node_y as usize) |=
-                    SHIFT_LUT[(mast_x + diff_x + SIZE - 1) as usize];
+                *antinodes.get_unchecked_mut(node_y as usize) |= if diff_x.is_positive() {
+                    1 << mast_x << diff_x
+                } else {
+                    1 << mast_x >> -diff_x
+                };
             }
 
             if new_y + diff_y < SIZE {
                 let node_y = new_y + diff_y;
 
-                *antinodes.get_unchecked_mut(node_y as usize) |=
-                    SHIFT_LUT[(new_x - diff_x + SIZE - 1) as usize];
+                *antinodes.get_unchecked_mut(node_y as usize) |= if diff_x.is_positive() {
+                    1 << new_x << diff_x
+                } else {
+                    1 << new_x >> -diff_x
+                };
             }
         }
 
