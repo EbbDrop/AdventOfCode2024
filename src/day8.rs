@@ -4,11 +4,11 @@ use tinyvec::ArrayVec;
 use crate::memchr_inv::OneInv;
 
 #[cfg(not(test))]
-const SIZE: i32 = 50;
+const SIZE: i16 = 50;
 #[cfg(test)]
-const SIZE: i32 = 12;
+const SIZE: i16 = 12;
 
-const SIZE1: i32 = SIZE + 1;
+const SIZE1: i16 = SIZE + 1;
 
 /// Has the `SIZE` lsb set
 const FIELD_SIZE: u64 = 2u64.pow(SIZE as u32) - 1;
@@ -21,13 +21,6 @@ pub fn part1(s: &str) -> u32 {
 }
 
 unsafe fn part1_inner(s: &str) -> u32 {
-    #[cfg(not(test))]
-    const SIZE: i16 = 50;
-    #[cfg(test)]
-    const SIZE: i16 = 12;
-
-    const SIZE1: i16 = SIZE + 1;
-
     let s = s.as_bytes();
 
     let mut masts: [ArrayVec<[(i16, i16); 3]>; FREQ_RANGE] =
@@ -105,8 +98,8 @@ pub fn part2(s: &str) -> u64 {
 fn part2_inner(s: &str) -> u64 {
     let s = s.as_bytes();
 
-    let mut masts: [ArrayVec<[i32; 4]>; FREQ_RANGE] =
-        [ArrayVec::from_array_empty([0; 4]); FREQ_RANGE];
+    let mut masts: [ArrayVec<[i16; 3]>; FREQ_RANGE] =
+        [ArrayVec::from_array_empty([0; 3]); FREQ_RANGE];
 
     let mut antinodes = [false; (SIZE * SIZE) as usize];
     let mut total_antinotedes = 0;
@@ -120,7 +113,7 @@ fn part2_inner(s: &str) -> u64 {
             continue;
         }
         let f = s[i] - b'0';
-        let i = i as i32;
+        let i = i as i16;
 
         let new_x = i % SIZE1;
         let new_y = i / SIZE1;
@@ -129,7 +122,7 @@ fn part2_inner(s: &str) -> u64 {
             let mast_y = mast_i / SIZE1;
 
             let o_diff_x = mast_x - new_x;
-            let o_diff_y = (new_y - mast_y).abs() as i32;
+            let o_diff_y = new_y - mast_y;
 
             for k in 0.. {
                 let diff_x = o_diff_x * k;
@@ -158,7 +151,7 @@ fn part2_inner(s: &str) -> u64 {
             }
         }
 
-        masts[f as usize].push(i);
+        masts[f as usize].try_push(i);
     }
 
     total_antinotedes
