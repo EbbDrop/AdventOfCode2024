@@ -3,6 +3,8 @@ use tinyvec::ArrayVec;
 
 use crate::memchr_inv::OneInv;
 
+use std::simd::prelude::*;
+
 #[cfg(not(test))]
 const SIZE: i32 = 50;
 #[cfg(test)]
@@ -46,31 +48,57 @@ fn part1_inner(s: &str) -> u64 {
         let new_x = i % SIZE1;
         let new_y = i / SIZE1;
 
-        // numbers[masts[f as usize].len()] += 1;
+        let masts = &mut masts[f as usize];
 
-        for mast_i in &masts[f as usize] {
-            let mast_x = mast_i % SIZE1;
-            let mast_y = mast_i / SIZE1;
+        match masts.as_slice() {
+            [] => {}
+            [mast_i] => {
+                let mast_x = mast_i % SIZE1;
+                let mast_y = mast_i / SIZE1;
 
-            let diff_x = mast_x - new_x;
-            let diff_y = (new_y - mast_y).abs() as i32;
+                let node_x = mast_x + mast_x - new_x;
+                let node_y = mast_y - new_y + mast_y;
+                if node_x >= 0 && node_x < SIZE && node_y >= 0 && node_y < SIZE {
+                    set_node(node_x, node_y);
+                }
 
-            let node_x = mast_x + diff_x;
-            if node_x >= 0 && node_x < SIZE && mast_y >= diff_y {
-                let node_y = mast_y - diff_y;
-
-                set_node(node_x, node_y);
+                let node_x = new_x - mast_x + new_x;
+                let node_y = new_y + new_y - mast_y;
+                if node_x >= 0 && node_x < SIZE && node_y >= 0 && node_y < SIZE {
+                    set_node(node_x, node_y);
+                }
             }
+            masts => {
+                let mast_is = i32x4::load_or_default(masts);
+                let mast_xs = mast_is % i32x4::splat(SIZE1);
+                let mast_ys = mast_is / i32x4::splat(SIZE1);
 
-            let node_x = new_x - diff_x;
-            if node_x >= 0 && node_x < SIZE && new_y + diff_y < SIZE {
-                let node_y = new_y + diff_y;
+                let new_xs = i32x4::splat(new_x);
+                let new_ys = i32x4::splat(new_y);
 
-                set_node(node_x, node_y);
+                let node1_xs = mast_xs + mast_xs - new_xs;
+                let node1_ys = mast_ys + mast_ys - new_ys;
+
+                let node2_xs = new_xs + new_xs - mast_xs;
+                let node2_ys = new_ys + new_ys - mast_ys;
+
+                for i in 0..masts.len() {
+                    let node_x = node1_xs.as_array()[i];
+                    let node_y = node1_ys.as_array()[i];
+                    if node_x >= 0 && node_x < SIZE && node_y >= 0 && node_y < SIZE {
+                        set_node(node_x, node_y);
+                    }
+
+                    let node_x = node2_xs.as_array()[i];
+                    let node_y = node2_ys.as_array()[i];
+                    if node_x >= 0 && node_x < SIZE && node_y >= 0 && node_y < SIZE {
+                        set_node(node_x, node_y);
+                    }
+                }
             }
         }
 
-        masts[f as usize].push(i);
+        masts.push(i);
     }
 
     // for i in 0..5 {
