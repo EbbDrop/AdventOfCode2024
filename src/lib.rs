@@ -8,5 +8,6 @@ pub mod day5;
 pub mod day6;
 pub mod day7;
 pub mod day8;
+mod memchr_inv;
 
 aoc_lib! { year = 2024 }

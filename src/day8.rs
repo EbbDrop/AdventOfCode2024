@@ -1,5 +1,7 @@
 use aoc_runner_derive::aoc;
 
+use crate::memchr_inv::OneInv;
+
 #[cfg(not(test))]
 const SIZE: usize = 50;
 #[cfg(test)]
@@ -18,18 +20,17 @@ pub fn part1(s: &str) -> u64 {
 }
 
 fn part1_inner(s: &str) -> u64 {
+    let s = s.as_bytes();
     let mut masts: [Vec<usize>; FREQ_RANGE] = [const { Vec::new() }; FREQ_RANGE];
 
     let mut antinodes = [false; SIZE * SIZE];
     let mut total_antinotedes = 0;
 
-    for (i, f) in s
-        .as_bytes()
-        .iter()
-        .enumerate()
-        .filter(|(_, c)| **c != b'.' && **c != b'\n')
-    {
-        let f = f - b'0';
+    for i in unsafe { OneInv::new_unchecked(b'.').iter(s) } {
+        if s[i] == b'\n' {
+            continue;
+        }
+        let f = s[i] - b'0';
 
         let new_x = i % SIZE1;
         let new_y = i / SIZE1;
@@ -105,12 +106,11 @@ fn part2_inner(s: &str) -> u64 {
     let mut antinodes = [false; SIZE * SIZE];
     let mut total_antinotedes = 0;
 
-    for (i, f) in s
-        .iter()
-        .enumerate()
-        .filter(|(_, c)| **c != b'.' && **c != b'\n')
-    {
-        let f = f - b'0';
+    for i in unsafe { OneInv::new_unchecked(b'.').iter(s) } {
+        if s[i] == b'\n' {
+            continue;
+        }
+        let f = s[i] - b'0';
 
         let new_x = i % SIZE1;
         let new_y = i / SIZE1;
