@@ -23,8 +23,8 @@ pub fn part1(s: &str) -> u64 {
 fn part1_inner(s: &str) -> u64 {
     let s = s.as_bytes();
 
-    let mut masts: [ArrayVec<[i32; 5]>; FREQ_RANGE] =
-        [ArrayVec::from_array_empty([0; 5]); FREQ_RANGE];
+    let mut masts: [ArrayVec<[i32; 4]>; FREQ_RANGE] =
+        [ArrayVec::from_array_empty([0; 4]); FREQ_RANGE];
 
     let mut antinodes = [false; (SIZE * SIZE) as usize];
     let mut total_antinotedes = 0;
@@ -33,6 +33,8 @@ fn part1_inner(s: &str) -> u64 {
         total_antinotedes += !antinodes[(y * SIZE + x) as usize] as u64;
         antinodes[(y * SIZE + x) as usize] = true;
     };
+
+    // let mut numbers = [0; 5];
 
     for i in unsafe { OneInv::new_unchecked(b'.').iter(s) } {
         if s[i] == b'\n' {
@@ -43,6 +45,9 @@ fn part1_inner(s: &str) -> u64 {
 
         let new_x = i % SIZE1;
         let new_y = i / SIZE1;
+
+        // numbers[masts[f as usize].len()] += 1;
+
         for mast_i in &masts[f as usize] {
             let mast_x = mast_i % SIZE1;
             let mast_y = mast_i / SIZE1;
@@ -68,6 +73,10 @@ fn part1_inner(s: &str) -> u64 {
         masts[f as usize].push(i);
     }
 
+    // for i in 0..5 {
+    //     println!("{i}: {}", numbers[i]);
+    // }
+
     total_antinotedes
 }
 
@@ -82,8 +91,8 @@ pub fn part2(s: &str) -> u64 {
 fn part2_inner(s: &str) -> u64 {
     let s = s.as_bytes();
 
-    let mut masts: [ArrayVec<[i32; 5]>; FREQ_RANGE] =
-        [ArrayVec::from_array_empty([0; 5]); FREQ_RANGE];
+    let mut masts: [ArrayVec<[i32; 4]>; FREQ_RANGE] =
+        [ArrayVec::from_array_empty([0; 4]); FREQ_RANGE];
 
     let mut antinodes = [false; (SIZE * SIZE) as usize];
     let mut total_antinotedes = 0;
