@@ -47,9 +47,8 @@ fn part1_inner(s: &str) -> u64 {
             let mast_x = mast_i % SIZE1;
             let mast_y = mast_i / SIZE1;
 
-            let diff_x = (new_x - mast_x).abs() as i32;
+            let diff_x = mast_x - new_x;
             let diff_y = (new_y - mast_y).abs() as i32;
-            let diff_x = if new_x > mast_x { -diff_x } else { diff_x };
 
             let node_x = mast_x + diff_x;
             if node_x >= 0 && node_x < SIZE && mast_y >= diff_y {
@@ -106,9 +105,8 @@ fn part2_inner(s: &str) -> u64 {
             let mast_x = mast_i % SIZE1;
             let mast_y = mast_i / SIZE1;
 
-            let o_diff_x = (new_x - mast_x).abs() as i32;
+            let o_diff_x = mast_x - new_x;
             let o_diff_y = (new_y - mast_y).abs() as i32;
-            let o_diff_x = if new_x > mast_x { -o_diff_x } else { o_diff_x };
 
             for k in 0.. {
                 let diff_x = o_diff_x * k;
