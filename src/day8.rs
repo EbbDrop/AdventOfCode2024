@@ -10,74 +10,77 @@ const SIZE: i32 = 12;
 
 const SIZE1: i32 = SIZE + 1;
 
+/// Has the `SIZE` lsb set
+const FIELD_SIZE: u64 = 2u64.pow(SIZE as u32) - 1;
+
 const FREQ_RANGE: usize = (b'z' - b'0' + 1) as usize;
 
 #[aoc(day8, part1)]
-pub fn part1(s: &str) -> u64 {
-    #[expect(unused_unsafe)]
-    unsafe {
-        part1_inner(s)
-    }
+pub fn part1(s: &str) -> u32 {
+    unsafe { part1_inner(s) }
 }
 
-fn part1_inner(s: &str) -> u64 {
+unsafe fn part1_inner(s: &str) -> u32 {
+    #[cfg(not(test))]
+    const SIZE: i16 = 50;
+    #[cfg(test)]
+    const SIZE: i16 = 12;
+
+    const SIZE1: i16 = SIZE + 1;
+
     let s = s.as_bytes();
 
-    let mut masts: [ArrayVec<[i32; 4]>; FREQ_RANGE] =
-        [ArrayVec::from_array_empty([0; 4]); FREQ_RANGE];
+    let mut masts: [ArrayVec<[(i16, i16, u64); 3]>; FREQ_RANGE] =
+        [ArrayVec::from_array_empty([(0, 0, 0); 3]); FREQ_RANGE];
 
-    let mut antinodes = [false; (SIZE * SIZE) as usize];
-    let mut total_antinotedes = 0;
-
-    let mut set_node = |x, y| {
-        total_antinotedes += !antinodes[(y * SIZE + x) as usize] as u64;
-        antinodes[(y * SIZE + x) as usize] = true;
-    };
-
-    // let mut numbers = [0; 5];
+    let mut antinodes = [0u64; SIZE as usize];
 
     for i in unsafe { OneInv::new_unchecked(b'.').iter(s) } {
         if s[i] == b'\n' {
             continue;
         }
         let f = s[i] - b'0';
-        let i = i as i32;
+        let i = i as i16;
 
         let new_x = i % SIZE1;
         let new_y = i / SIZE1;
 
+        let new_field: u64 = 1 << new_x;
+
         // numbers[masts[f as usize].len()] += 1;
 
-        for mast_i in &masts[f as usize] {
-            let mast_x = mast_i % SIZE1;
-            let mast_y = mast_i / SIZE1;
-
+        for (mast_y, mast_x, mast_field) in masts.get_unchecked(f as usize) {
             let diff_x = mast_x - new_x;
-            let diff_y = (new_y - mast_y).abs() as i32;
+            let diff_y = new_y - mast_y;
 
-            let node_x = mast_x + diff_x;
-            if node_x >= 0 && node_x < SIZE && mast_y >= diff_y {
+            if *mast_y >= diff_y {
                 let node_y = mast_y - diff_y;
 
-                set_node(node_x, node_y);
+                *antinodes.get_unchecked_mut(node_y as usize) |= if diff_x.is_positive() {
+                    mast_field << diff_x
+                } else {
+                    mast_field >> -diff_x
+                };
             }
 
-            let node_x = new_x - diff_x;
-            if node_x >= 0 && node_x < SIZE && new_y + diff_y < SIZE {
+            if new_y + diff_y < SIZE {
                 let node_y = new_y + diff_y;
 
-                set_node(node_x, node_y);
+                *antinodes.get_unchecked_mut(node_y as usize) |= if diff_x.is_positive() {
+                    new_field >> diff_x
+                } else {
+                    new_field << -diff_x
+                };
             }
         }
 
-        masts[f as usize].push(i);
+        masts[f as usize].try_push((new_y, new_x, new_field));
     }
 
-    // for i in 0..5 {
-    //     println!("{i}: {}", numbers[i]);
-    // }
-
-    total_antinotedes
+    antinodes
+        .iter()
+        .map(|field| (field & FIELD_SIZE).count_ones())
+        .sum()
 }
 
 #[aoc(day8, part2)]
