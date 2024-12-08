@@ -162,16 +162,11 @@ unsafe fn part2_inner(s: &str) -> u32 {
                 if *mast_y >= diff_y {
                     let node_y = mast_y - diff_y;
 
-                    let field = if diff_x.is_positive() {
+                    *antinodes.get_unchecked_mut(node_y as usize) |= if diff_x.is_positive() {
                         1 << mast_x << diff_x
                     } else {
                         1 << mast_x >> -diff_x
                     };
-                    if field == 0 {
-                        break;
-                    } else {
-                        *antinodes.get_unchecked_mut(node_y as usize) |= field;
-                    }
                 } else {
                     break;
                 }
@@ -184,16 +179,11 @@ unsafe fn part2_inner(s: &str) -> u32 {
                 if new_y + diff_y < SIZE {
                     let node_y = new_y + diff_y;
 
-                    let field = if diff_x.is_positive() {
+                    *antinodes.get_unchecked_mut(node_y as usize) |= if diff_x.is_positive() {
                         1 << new_x >> diff_x
                     } else {
                         1 << new_x << -diff_x
                     };
-                    if field == 0 {
-                        break;
-                    } else {
-                        *antinodes.get_unchecked_mut(node_y as usize) |= field;
-                    }
                 } else {
                     break;
                 }
