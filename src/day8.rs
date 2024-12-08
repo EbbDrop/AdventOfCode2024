@@ -30,6 +30,9 @@ fn part1_inner(s: &str) -> u64 {
     let mut total_antinotedes = 0;
 
     let mut set_node = |x, y| {
+        if x < 0 || y < 0 || x >= SIZE || y >= SIZE {
+            return;
+        }
         total_antinotedes += !antinodes[(y * SIZE + x) as usize] as u64;
         antinodes[(y * SIZE + x) as usize] = true;
     };
@@ -51,38 +54,30 @@ fn part1_inner(s: &str) -> u64 {
             let diff_y = new_y.abs_diff(mast_y) as i32;
 
             if new_x > mast_x {
-                if mast_x >= diff_x && mast_y >= diff_y {
-                    let node_x = mast_x - diff_x;
-                    let node_y = mast_y - diff_y;
-
-                    set_node(node_x, node_y);
-                }
-
-                if new_x + diff_x < SIZE && new_y + diff_y < SIZE {
-                    let node_x = new_x + diff_x;
-                    let node_y = new_y + diff_y;
-
-                    set_node(node_x, node_y);
-                }
+                set_node(mast_x - diff_x, mast_y - diff_y);
+                set_node(new_x + diff_x, new_y + diff_y);
             } else {
-                if mast_x + diff_x < SIZE && mast_y >= diff_y {
-                    let node_x = mast_x + diff_x;
-                    let node_y = mast_y - diff_y;
-
-                    set_node(node_x, node_y);
-                }
-
-                if new_x >= diff_x && new_y + diff_y < SIZE {
-                    let node_x = new_x - diff_x;
-                    let node_y = new_y + diff_y;
-
-                    set_node(node_x, node_y);
-                }
+                set_node(mast_x + diff_x, mast_y - diff_y);
+                set_node(new_x - diff_x, new_y + diff_y);
             }
         }
 
         masts[f as usize].push(i);
     }
+
+    // for y in 0..SIZE {
+    //     for x in 0..SIZE {
+    //         print!(
+    //             "{}",
+    //             if antinodes[(y * SIZE + x) as usize] {
+    //                 '#'
+    //             } else {
+    //                 s[(y * SIZE1 + x) as usize] as char
+    //             }
+    //         )
+    //     }
+    //     println!("");
+    // }
 
     total_antinotedes
 }
@@ -104,8 +99,12 @@ fn part2_inner(s: &str) -> u64 {
     let mut antinodes = [false; (SIZE * SIZE) as usize];
     let mut total_antinotedes = 0;
     let mut set_node = |x, y| {
+        if x < 0 || y < 0 || x >= SIZE || y >= SIZE {
+            return false;
+        }
         total_antinotedes += !antinodes[(y * SIZE + x) as usize] as u64;
         antinodes[(y * SIZE + x) as usize] = true;
+        true
     };
 
     for i in unsafe { OneInv::new_unchecked(b'.').iter(s) } {
@@ -128,43 +127,17 @@ fn part2_inner(s: &str) -> u64 {
                 let diff_x = o_diff_x * k;
                 let diff_y = o_diff_y * k;
 
-                let mut new_mast = false;
+                let mut new_node = false;
 
                 if new_x > mast_x {
-                    if mast_x >= diff_x && mast_y >= diff_y {
-                        let node_x = mast_x - diff_x;
-                        let node_y = mast_y - diff_y;
-
-                        new_mast = true;
-                        set_node(node_x, node_y);
-                    }
-
-                    if new_x + diff_x < SIZE && new_y + diff_y < SIZE {
-                        let node_x = new_x + diff_x;
-                        let node_y = new_y + diff_y;
-
-                        new_mast = true;
-                        set_node(node_x, node_y);
-                    }
+                    new_node |= set_node(mast_x - diff_x, mast_y - diff_y);
+                    new_node |= set_node(new_x + diff_x, new_y + diff_y);
                 } else {
-                    if mast_x + diff_x < SIZE && mast_y >= diff_y {
-                        let node_x = mast_x + diff_x;
-                        let node_y = mast_y - diff_y;
-
-                        new_mast = true;
-                        set_node(node_x, node_y);
-                    }
-
-                    if new_x >= diff_x && new_y + diff_y < SIZE {
-                        let node_x = new_x - diff_x;
-                        let node_y = new_y + diff_y;
-
-                        new_mast = true;
-                        set_node(node_x, node_y);
-                    }
+                    new_node |= set_node(mast_x + diff_x, mast_y - diff_y);
+                    new_node |= set_node(new_x - diff_x, new_y + diff_y);
                 }
 
-                if !new_mast {
+                if !new_node {
                     break;
                 }
             }
