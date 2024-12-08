@@ -53,22 +53,22 @@ unsafe fn part1_inner(s: &str) -> u64 {
 
         match masts.as_slice() {
             [] => {}
-            // [mast_i] => {
-            //     let mast_x = mast_i % SIZE1;
-            //     let mast_y = mast_i / SIZE1;
+            [mast_i] => {
+                let mast_x = mast_i % SIZE1;
+                let mast_y = mast_i / SIZE1;
 
-            //     let node_x = mast_x + mast_x - new_x;
-            //     let node_y = mast_y - new_y + mast_y;
-            //     if node_x >= 0 && node_x < SIZE && node_y >= 0 && node_y < SIZE {
-            //         set_node(node_x, node_y);
-            //     }
+                let node_x = mast_x + mast_x - new_x;
+                let node_y = mast_y - new_y + mast_y;
+                if node_x >= 0 && node_x < SIZE && node_y >= 0 && node_y < SIZE {
+                    set_node(node_x, node_y);
+                }
 
-            //     let node_x = new_x - mast_x + new_x;
-            //     let node_y = new_y + new_y - mast_y;
-            //     if node_x >= 0 && node_x < SIZE && node_y >= 0 && node_y < SIZE {
-            //         set_node(node_x, node_y);
-            //     }
-            // }
+                let node_x = new_x - mast_x + new_x;
+                let node_y = new_y + new_y - mast_y;
+                if node_x >= 0 && node_x < SIZE && node_y >= 0 && node_y < SIZE {
+                    set_node(node_x, node_y);
+                }
+            }
             masts => {
                 let mast_is = i32x4::load_or_default(masts);
                 let mast_xs = mast_is % i32x4::splat(SIZE1);
