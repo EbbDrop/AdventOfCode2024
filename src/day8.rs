@@ -33,7 +33,7 @@ unsafe fn part1_inner(s: &str) -> u32 {
     let mut masts: [ArrayVec<[(i16, i16, u64); 3]>; FREQ_RANGE] =
         [ArrayVec::from_array_empty([(0, 0, 0); 3]); FREQ_RANGE];
 
-    let mut antinodes = [0u64; SIZE as usize * 3];
+    let mut antinodes = [0u64; SIZE as usize];
 
     for i in unsafe { OneInv::new_unchecked(b'.').iter(s) } {
         if s[i] == b'\n' {
@@ -53,25 +53,31 @@ unsafe fn part1_inner(s: &str) -> u32 {
             let diff_x = mast_x - new_x;
             let diff_y = new_y - mast_y;
 
-            let node_y = mast_y - diff_y;
-            *antinodes.get_unchecked_mut((node_y + SIZE) as usize) |= if diff_x.is_positive() {
-                mast_field << diff_x
-            } else {
-                mast_field >> -diff_x
-            };
+            if *mast_y >= diff_y {
+                let node_y = mast_y - diff_y;
 
-            let node_y = new_y + diff_y;
-            *antinodes.get_unchecked_mut((node_y + SIZE) as usize) |= if diff_x.is_positive() {
-                new_field >> diff_x
-            } else {
-                new_field << -diff_x
-            };
+                *antinodes.get_unchecked_mut(node_y as usize) |= if diff_x.is_positive() {
+                    mast_field << diff_x
+                } else {
+                    mast_field >> -diff_x
+                };
+            }
+
+            if new_y + diff_y < SIZE {
+                let node_y = new_y + diff_y;
+
+                *antinodes.get_unchecked_mut(node_y as usize) |= if diff_x.is_positive() {
+                    new_field >> diff_x
+                } else {
+                    new_field << -diff_x
+                };
+            }
         }
 
         masts[f as usize].try_push((new_y, new_x, new_field));
     }
 
-    antinodes[SIZE as usize..(SIZE * 2) as usize]
+    antinodes
         .iter()
         .map(|field| (field & FIELD_SIZE).count_ones())
         .sum()
