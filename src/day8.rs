@@ -29,14 +29,6 @@ unsafe fn part1_inner(s: &str) -> u64 {
     let mut masts: [ArrayVec<[i32; 4]>; FREQ_RANGE] =
         [ArrayVec::from_array_empty([0; 4]); FREQ_RANGE];
 
-    let mut antinodes = [false; (SIZE * SIZE) as usize];
-    let mut total_antinotedes = 0;
-
-    let mut set_node = |x, y| {
-        total_antinotedes += !antinodes[(y * SIZE + x) as usize] as u64;
-        antinodes[(y * SIZE + x) as usize] = true;
-    };
-
     // let mut numbers = [0; 5];
 
     for i in unsafe { OneInv::new_unchecked(b'.').iter(s) } {
@@ -46,16 +38,25 @@ unsafe fn part1_inner(s: &str) -> u64 {
         let f = s[i] - b'0';
         let i = i as i32;
 
-        let new_x = i % SIZE1;
-        let new_y = i / SIZE1;
+        masts[f as usize].push(i);
+    }
 
-        let masts = &mut masts[f as usize];
+    let mut antinodes = [false; (SIZE * SIZE) as usize];
+    let mut total_antinotedes = 0;
 
+    let mut set_node = |x, y| {
+        total_antinotedes += !antinodes[(y * SIZE + x) as usize] as u64;
+        antinodes[(y * SIZE + x) as usize] = true;
+    };
+
+    for mast in masts {
         match masts.as_slice() {
             [] => {}
-            [mast_i] => {
+            [mast_i, new_i] => {
                 let mast_x = mast_i % SIZE1;
                 let mast_y = mast_i / SIZE1;
+                let new_x = new_i % SIZE1;
+                let new_y = new_i / SIZE1;
 
                 let node_x = mast_x + mast_x - new_x;
                 let node_y = mast_y - new_y + mast_y;
@@ -98,8 +99,6 @@ unsafe fn part1_inner(s: &str) -> u64 {
                 }
             }
         }
-
-        masts.push(i);
     }
 
     // for i in 0..5 {
