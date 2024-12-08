@@ -26,15 +26,18 @@ fn part1_inner(s: &str) -> u64 {
     let mut masts: [ArrayVec<[i32; 5]>; FREQ_RANGE] =
         [ArrayVec::from_array_empty([0; 5]); FREQ_RANGE];
 
-    let mut antinodes = [false; (SIZE * SIZE) as usize];
+    let mut antinodes = [false; (SIZE * SIZE * 9) as usize];
+    for y in 0..SIZE {
+        antinodes[(y * SIZE * 3 + SIZE + SIZE * SIZE * 3) as usize
+            ..(y * SIZE * 3 + SIZE * 2 + SIZE * SIZE * 3) as usize]
+            .fill(true);
+    }
     let mut total_antinotedes = 0;
 
     let mut set_node = |x, y| {
-        if x < 0 || y < 0 || x >= SIZE || y >= SIZE {
-            return;
-        }
-        total_antinotedes += !antinodes[(y * SIZE + x) as usize] as u64;
-        antinodes[(y * SIZE + x) as usize] = true;
+        let i = (y * SIZE * 3 + x + SIZE + SIZE * SIZE * 3) as usize;
+        total_antinotedes += antinodes[i] as u64;
+        antinodes[i] = false;
     };
 
     for i in unsafe { OneInv::new_unchecked(b'.').iter(s) } {
