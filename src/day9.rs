@@ -68,11 +68,11 @@ pub fn part2(s: &str) -> u64 {
 unsafe fn part2_inner(s: &str) -> u64 {
     let s = s.as_bytes();
 
-    let mut jump_table: [u16; INPUT_SIZE / 2 + 1] = const {
+    let mut jump_table: [u32; INPUT_SIZE / 2 + 1] = const {
         let mut t = [0; INPUT_SIZE / 2 + 1];
         let mut i = 0;
         while i < INPUT_SIZE / 2 + 1 {
-            t[i] = (i + 1) as u16;
+            t[i] = (i + 1) as u32;
             i += 1;
         }
         t
