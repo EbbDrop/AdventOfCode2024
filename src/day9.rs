@@ -93,9 +93,9 @@ unsafe fn part2_inner(s: &str) -> u64 {
         position += (s.get_unchecked(i * 2 + 1) - b'0') as u32;
 
         if s.get_unchecked(i * 2 + 1) - b'0' == 0 {
-            jump_table[prev_pointer] += 1;
+            *jump_table.get_unchecked_mut(prev_pointer) += 1;
         } else {
-            prev_pointer = jump_table[prev_pointer] as usize;
+            prev_pointer = *jump_table.get_unchecked(prev_pointer) as usize;
         }
     }
 
@@ -120,7 +120,8 @@ unsafe fn part2_inner(s: &str) -> u64 {
 
                 *sizes.get_unchecked_mut(pointer) -= block_size;
                 if *sizes.get_unchecked(pointer) == 0 {
-                    jump_table[prev_pointer] = *jump_table.get_unchecked(pointer);
+                    *jump_table.get_unchecked_mut(prev_pointer) =
+                        *jump_table.get_unchecked(pointer);
                 }
                 *position_table.get_unchecked_mut(pointer) += block_size as u32;
 
