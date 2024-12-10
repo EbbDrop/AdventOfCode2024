@@ -7,19 +7,16 @@ const INPUT_SIZE: usize = 19;
 
 #[aoc(day9, part1)]
 pub fn part1(s: &str) -> u64 {
-    #[expect(unused_unsafe)]
-    unsafe {
-        part1_inner(s)
-    }
+    unsafe { part1_inner(s) }
 }
 
 #[inline(always)]
 fn get_checksum(block_id: usize, position: u32, size: u32) -> u64 {
-    // println!("at {:5}, got: {:5} x {}", position, block_id, size);
     size as u64 * block_id as u64 * (2 * position as u64 + size as u64 - 1)
 }
 
-fn part1_inner(s: &str) -> u64 {
+#[target_feature(enable = "avx2,bmi1,bmi2,cmpxchg16b,lzcnt,movbe,popcnt")]
+unsafe fn part1_inner(s: &str) -> u64 {
     let s = s.as_bytes();
 
     let mut front_pointer = 0;
@@ -64,13 +61,11 @@ fn part1_inner(s: &str) -> u64 {
 
 #[aoc(day9, part2)]
 pub fn part2(s: &str) -> u64 {
-    #[expect(unused_unsafe)]
-    unsafe {
-        part2_inner(s)
-    }
+    unsafe { part2_inner(s) }
 }
 
-fn part2_inner(s: &str) -> u64 {
+#[target_feature(enable = "avx2,bmi1,bmi2,cmpxchg16b,lzcnt,movbe,popcnt")]
+unsafe fn part2_inner(s: &str) -> u64 {
     let s = s.as_bytes();
 
     let mut jump_table: [usize; INPUT_SIZE / 2 + 1] = const {
@@ -104,13 +99,6 @@ fn part2_inner(s: &str) -> u64 {
     let mut sum = 0;
     loop {
         let block_size = s[i] - b'0';
-        // for i in 0..INPUT_SIZE / 2 + 1 {
-        //     println!(
-        //         "j: {}, p: {}, s: {}",
-        //         jump_table[i], position_table[i], sizes[i]
-        //     );
-        // }
-        // dbg!(block_size);
 
         let mut prev_pointer = 0;
         let mut pointer = jump_table[0];
@@ -133,7 +121,6 @@ fn part2_inner(s: &str) -> u64 {
             pointer = jump_table[pointer];
         }
         if pointer * 2 > i {
-            // println!("{:?}", or_position_table);
             sum += get_checksum(i / 2, or_position_table[i / 2] as u32, block_size as u32);
         }
         if i == 0 {
