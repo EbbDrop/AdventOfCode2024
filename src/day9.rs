@@ -78,7 +78,7 @@ unsafe fn part2_inner(s: &str) -> u64 {
         t
     };
 
-    let mut jump_table_size_gt_3: [u16; INPUT_SIZE / 2 + 1] = const {
+    let mut jump_table_size_eq_9: [u16; INPUT_SIZE / 2 + 1] = const {
         let mut t = [0; INPUT_SIZE / 2 + 1];
         let mut i = 0;
         while i < INPUT_SIZE / 2 + 1 {
@@ -93,7 +93,7 @@ unsafe fn part2_inner(s: &str) -> u64 {
     let mut position = 0u32;
 
     let mut prev_pointer = 0;
-    let mut prev_pointer_gt_3 = 0;
+    let mut prev_pointer_eq_9 = 0;
     for i in 0..INPUT_SIZE / 2 {
         *sizes_table.get_unchecked_mut(i + 1) = s.get_unchecked(i * 2 + 1) - b'0';
 
@@ -108,10 +108,10 @@ unsafe fn part2_inner(s: &str) -> u64 {
         } else {
             prev_pointer = jump_table[prev_pointer] as usize;
         }
-        if s.get_unchecked(i * 2 + 1) - b'0' < 3 {
-            jump_table_size_gt_3[prev_pointer_gt_3] += 1;
+        if s.get_unchecked(i * 2 + 1) - b'0' < 9 {
+            jump_table_size_eq_9[prev_pointer_eq_9] += 1;
         } else {
-            prev_pointer_gt_3 = jump_table_size_gt_3[prev_pointer_gt_3] as usize;
+            prev_pointer_eq_9 = jump_table_size_eq_9[prev_pointer_eq_9] as usize;
         }
     }
 
@@ -121,9 +121,9 @@ unsafe fn part2_inner(s: &str) -> u64 {
     loop {
         let block_size = s.get_unchecked(i) - b'0';
 
-        if block_size >= 3 {
+        if block_size == 9 {
             let mut prev_pointer = 0;
-            let mut pointer = *jump_table_size_gt_3.get_unchecked(0) as usize;
+            let mut pointer = *jump_table_size_eq_9.get_unchecked(0) as usize;
 
             while pointer * 2 <= i {
                 let empty_size = *sizes_table.get_unchecked(pointer);
@@ -136,9 +136,9 @@ unsafe fn part2_inner(s: &str) -> u64 {
                     );
 
                     *sizes_table.get_unchecked_mut(pointer) -= block_size;
-                    if *sizes_table.get_unchecked(pointer) < 3 {
-                        jump_table_size_gt_3[prev_pointer] =
-                            *jump_table_size_gt_3.get_unchecked(pointer);
+                    if *sizes_table.get_unchecked(pointer) < 9 {
+                        jump_table_size_eq_9[prev_pointer] =
+                            *jump_table_size_eq_9.get_unchecked(pointer);
                     }
                     if *sizes_table.get_unchecked(pointer) == 0 {
                         jump_table[pointer - 1] = *jump_table.get_unchecked(pointer);
@@ -148,7 +148,7 @@ unsafe fn part2_inner(s: &str) -> u64 {
                     break;
                 }
                 prev_pointer = pointer;
-                pointer = *jump_table_size_gt_3.get_unchecked(pointer) as usize;
+                pointer = *jump_table_size_eq_9.get_unchecked(pointer) as usize;
             }
             if pointer * 2 > i {
                 sum += get_checksum(
@@ -176,9 +176,9 @@ unsafe fn part2_inner(s: &str) -> u64 {
                     if *sizes_table.get_unchecked(pointer) == 0 {
                         jump_table[prev_pointer] = *jump_table.get_unchecked(pointer);
 
-                        // Aproximation, should be whatever points here in gt_3
-                        jump_table_size_gt_3[pointer - 1] =
-                            *jump_table_size_gt_3.get_unchecked(pointer);
+                        // Aproximation, should be whatever points here in eq_9
+                        jump_table_size_eq_9[pointer - 1] =
+                            *jump_table_size_eq_9.get_unchecked(pointer);
                     }
                     *position_table.get_unchecked_mut(pointer) += block_size as u32;
 
