@@ -140,6 +140,10 @@ unsafe fn part2_inner(s: &str) -> u64 {
                         *jump_table_size_gt_1.get_unchecked_mut(prev_pointer) =
                             *jump_table_size_gt_1.get_unchecked(pointer);
                     }
+                    if *sizes_table.get_unchecked(pointer) == 0 {
+                        *jump_table.get_unchecked_mut(pointer - 1) =
+                            *jump_table.get_unchecked(pointer);
+                    }
                     *position_table.get_unchecked_mut(pointer) += block_size as u32;
 
                     break;
@@ -173,6 +177,11 @@ unsafe fn part2_inner(s: &str) -> u64 {
                     if *sizes_table.get_unchecked(pointer) == 0 {
                         *jump_table.get_unchecked_mut(prev_pointer) =
                             *jump_table.get_unchecked(pointer);
+
+                        // Aproximation, should be whatever points here in gt_1
+
+                        *jump_table_size_gt_1.get_unchecked_mut(pointer - 1) =
+                            *jump_table_size_gt_1.get_unchecked(pointer);
                     }
                     *position_table.get_unchecked_mut(pointer) += block_size as u32;
 
