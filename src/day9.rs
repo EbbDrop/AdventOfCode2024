@@ -61,10 +61,6 @@ fn part1_inner(s: &str) -> u64 {
     }
     sum += get_checksum(to_move_id, position, to_move_size);
 
-    println!("");
-    dbg!(to_move_id, to_move_size);
-    dbg!(front_pointer, back_pointer);
-
     sum / 2
 }
 
