@@ -30,18 +30,18 @@ unsafe fn part1_inner(s: &str) -> u64 {
     let mut to_move_id = 0;
 
     while front_pointer <= back_pointer {
-        let block_size = (s[front_pointer] - b'0') as u32;
+        let block_size = (*s.get_unchecked(front_pointer) - b'0') as u32;
         front_pointer += 1;
 
         sum += get_checksum(front_pointer / 2, position, block_size);
         position += block_size;
 
-        let mut empty_size = (s[front_pointer] - b'0') as u32;
+        let mut empty_size = (*s.get_unchecked(front_pointer) - b'0') as u32;
         front_pointer += 1;
 
         while empty_size > 0 {
             if to_move_size == 0 {
-                to_move_size = (s[back_pointer] - b'0') as u32;
+                to_move_size = (*s.get_unchecked(back_pointer) - b'0') as u32;
                 to_move_id = back_pointer / 2;
                 back_pointer -= 2;
             }
@@ -82,45 +82,49 @@ unsafe fn part2_inner(s: &str) -> u64 {
     let mut position_table = [0; INPUT_SIZE / 2 + 1];
     let mut position = 0u32;
     for i in 0..INPUT_SIZE / 2 {
-        sizes[i + 1] = s[i * 2 + 1] - b'0';
+        *sizes.get_unchecked_mut(i + 1) = s.get_unchecked(i * 2 + 1) - b'0';
 
-        position += (s[i * 2] - b'0') as u32;
+        position += (s.get_unchecked(i * 2) - b'0') as u32;
 
-        position_table[i + 1] = position;
+        *position_table.get_unchecked_mut(i + 1) = position;
 
-        position += (s[i * 2 + 1] - b'0') as u32;
+        position += (s.get_unchecked(i * 2 + 1) - b'0') as u32;
     }
 
     let mut i = INPUT_SIZE - 1;
 
     let mut sum = 0;
     loop {
-        let block_size = s[i] - b'0';
+        let block_size = s.get_unchecked(i) - b'0';
 
         let mut prev_pointer = 0;
-        let mut pointer = jump_table[0];
+        let mut pointer = *jump_table.get_unchecked(0);
 
         while pointer * 2 <= i {
-            let empty_size = sizes[pointer];
+            let empty_size = *sizes.get_unchecked(pointer);
 
             if empty_size >= block_size {
-                sum += get_checksum(i / 2, position_table[pointer] as u32, block_size as u32);
+                sum += get_checksum(
+                    i / 2,
+                    *position_table.get_unchecked(pointer) as u32,
+                    block_size as u32,
+                );
 
-                sizes[pointer] -= block_size;
-                if sizes[pointer] == 0 {
-                    jump_table[prev_pointer] = jump_table[pointer];
+                *sizes.get_unchecked_mut(pointer) -= block_size;
+                if *sizes.get_unchecked(pointer) == 0 {
+                    jump_table[prev_pointer] = *jump_table.get_unchecked(pointer);
                 }
-                position_table[pointer] += block_size as u32;
+                *position_table.get_unchecked_mut(pointer) += block_size as u32;
 
                 break;
             }
             prev_pointer = pointer;
-            pointer = jump_table[pointer];
+            pointer = *jump_table.get_unchecked(pointer);
         }
         if pointer * 2 > i {
             sum += get_checksum(
                 i / 2,
-                position_table[i / 2] as u32 + sizes[i / 2] as u32,
+                *position_table.get_unchecked(i / 2) as u32 + *sizes.get_unchecked(i / 2) as u32,
                 block_size as u32,
             );
         }
