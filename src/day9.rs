@@ -104,14 +104,14 @@ unsafe fn part2_inner(s: &str) -> u64 {
         position += (s.get_unchecked(i * 2 + 1) - b'0') as u32;
 
         if s.get_unchecked(i * 2 + 1) - b'0' == 0 {
-            jump_table[prev_pointer] += 1;
+            *jump_table.get_unchecked_mut(prev_pointer) += 1;
         } else {
-            prev_pointer = jump_table[prev_pointer] as usize;
+            prev_pointer = *jump_table.get_unchecked(prev_pointer) as usize;
         }
         if s.get_unchecked(i * 2 + 1) - b'0' <= 1 {
-            jump_table_size_gt_1[prev_pointer_gt_1] += 1;
+            *jump_table_size_gt_1.get_unchecked_mut(prev_pointer_gt_1) += 1;
         } else {
-            prev_pointer_gt_1 = jump_table_size_gt_1[prev_pointer_gt_1] as usize;
+            prev_pointer_gt_1 = *jump_table_size_gt_1.get_unchecked(prev_pointer_gt_1) as usize;
         }
     }
 
@@ -137,11 +137,12 @@ unsafe fn part2_inner(s: &str) -> u64 {
 
                     *sizes_table.get_unchecked_mut(pointer) -= block_size;
                     if *sizes_table.get_unchecked(pointer) <= 1 {
-                        jump_table_size_gt_1[prev_pointer] =
+                        *jump_table_size_gt_1.get_unchecked_mut(prev_pointer) =
                             *jump_table_size_gt_1.get_unchecked(pointer);
                     }
                     if *sizes_table.get_unchecked(pointer) == 0 {
-                        jump_table[pointer - 1] = *jump_table.get_unchecked(pointer);
+                        *jump_table.get_unchecked_mut(pointer - 1) =
+                            *jump_table.get_unchecked(pointer);
                     }
                     *position_table.get_unchecked_mut(pointer) += block_size as u32;
 
@@ -174,11 +175,12 @@ unsafe fn part2_inner(s: &str) -> u64 {
 
                     *sizes_table.get_unchecked_mut(pointer) -= block_size;
                     if *sizes_table.get_unchecked(pointer) == 0 {
-                        jump_table[prev_pointer] = *jump_table.get_unchecked(pointer);
+                        *jump_table.get_unchecked_mut(prev_pointer) =
+                            *jump_table.get_unchecked(pointer);
 
                         // Aproximation, should be whatever points here in gt_1
 
-                        jump_table_size_gt_1[pointer - 1] =
+                        *jump_table_size_gt_1.get_unchecked_mut(pointer - 1) =
                             *jump_table_size_gt_1.get_unchecked(pointer);
                     }
                     *position_table.get_unchecked_mut(pointer) += block_size as u32;
