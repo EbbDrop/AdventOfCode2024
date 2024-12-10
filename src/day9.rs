@@ -1,3 +1,5 @@
+use std::usize;
+
 use aoc_runner_derive::aoc;
 
 #[cfg(not(test))]
@@ -77,12 +79,30 @@ unsafe fn part2_inner(s: &str) -> u64 {
         }
         t
     };
-
+    let mut rev_jump_table: [u16; INPUT_SIZE / 2 + 5] = const {
+        let mut t = [0; INPUT_SIZE / 2 + 5];
+        let mut i = 1;
+        while i < INPUT_SIZE / 2 + 1 {
+            t[i] = (i - 1) as u16;
+            i += 1;
+        }
+        t
+    };
     let mut jump_table_size_gt_1: [u16; INPUT_SIZE / 2 + 1] = const {
         let mut t = [0; INPUT_SIZE / 2 + 1];
         let mut i = 0;
         while i < INPUT_SIZE / 2 + 1 {
             t[i] = (i + 1) as u16;
+            i += 1;
+        }
+        t
+    };
+
+    let mut rev_jump_table_size_gt_1: [u16; INPUT_SIZE / 2 + 5] = const {
+        let mut t = [0; INPUT_SIZE / 2 + 5];
+        let mut i = 1;
+        while i < INPUT_SIZE / 2 + 1 {
+            t[i] = (i - 1) as u16;
             i += 1;
         }
         t
@@ -105,11 +125,18 @@ unsafe fn part2_inner(s: &str) -> u64 {
 
         if s.get_unchecked(i * 2 + 1) - b'0' == 0 {
             *jump_table.get_unchecked_mut(prev_pointer) += 1;
+
+            *rev_jump_table.get_unchecked_mut(*jump_table.get_unchecked(prev_pointer) as usize) =
+                prev_pointer as u16;
         } else {
             prev_pointer = *jump_table.get_unchecked(prev_pointer) as usize;
         }
         if s.get_unchecked(i * 2 + 1) - b'0' <= 1 {
             *jump_table_size_gt_1.get_unchecked_mut(prev_pointer_gt_1) += 1;
+
+            *rev_jump_table_size_gt_1.get_unchecked_mut(
+                *jump_table_size_gt_1.get_unchecked(prev_pointer_gt_1) as usize,
+            ) = prev_pointer_gt_1 as u16;
         } else {
             prev_pointer_gt_1 = *jump_table_size_gt_1.get_unchecked(prev_pointer_gt_1) as usize;
         }
@@ -137,12 +164,17 @@ unsafe fn part2_inner(s: &str) -> u64 {
 
                     *sizes_table.get_unchecked_mut(pointer) -= block_size;
                     if *sizes_table.get_unchecked(pointer) <= 1 {
-                        *jump_table_size_gt_1.get_unchecked_mut(prev_pointer) =
-                            *jump_table_size_gt_1.get_unchecked(pointer);
+                        let to = *jump_table_size_gt_1.get_unchecked(pointer);
+
+                        *jump_table_size_gt_1.get_unchecked_mut(prev_pointer) = to;
+                        *rev_jump_table_size_gt_1.get_unchecked_mut(to as usize) =
+                            prev_pointer as u16;
                     }
                     if *sizes_table.get_unchecked(pointer) == 0 {
-                        *jump_table.get_unchecked_mut(pointer - 1) =
-                            *jump_table.get_unchecked(pointer);
+                        let to = *jump_table.get_unchecked(pointer);
+                        let from = *rev_jump_table.get_unchecked(to as usize);
+
+                        *jump_table.get_unchecked_mut(from as usize) = to;
                     }
                     *position_table.get_unchecked_mut(pointer) += block_size as u32;
 
@@ -175,13 +207,14 @@ unsafe fn part2_inner(s: &str) -> u64 {
 
                     *sizes_table.get_unchecked_mut(pointer) -= block_size;
                     if *sizes_table.get_unchecked(pointer) == 0 {
-                        *jump_table.get_unchecked_mut(prev_pointer) =
-                            *jump_table.get_unchecked(pointer);
+                        let to = *jump_table.get_unchecked(pointer);
+                        *jump_table.get_unchecked_mut(prev_pointer) = to;
+                        *rev_jump_table.get_unchecked_mut(to as usize) = prev_pointer as u16;
 
-                        // Aproximation, should be whatever points here in gt_1
+                        let to = *jump_table_size_gt_1.get_unchecked(pointer);
+                        let from = *rev_jump_table_size_gt_1.get_unchecked(to as usize);
 
-                        *jump_table_size_gt_1.get_unchecked_mut(pointer - 1) =
-                            *jump_table_size_gt_1.get_unchecked(pointer);
+                        *jump_table_size_gt_1.get_unchecked_mut(from as usize) = to;
                     }
                     *position_table.get_unchecked_mut(pointer) += block_size as u32;
 
