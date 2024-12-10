@@ -103,7 +103,6 @@ fn part2_inner(s: &str) -> u64 {
 
     let mut sum = 0;
     loop {
-        let hu = i / 2 == 5303;
         let block_size = s[i] - b'0';
         // for i in 0..INPUT_SIZE / 2 + 1 {
         //     println!(
@@ -116,10 +115,7 @@ fn part2_inner(s: &str) -> u64 {
         let mut prev_pointer = 0;
         let mut pointer = jump_table[0];
 
-        while pointer * 2 + 1 < i {
-            if hu {
-                println!("{pointer}");
-            }
+        while pointer * 2 <= i {
             let empty_size = sizes[pointer];
 
             if empty_size >= block_size {
@@ -136,7 +132,7 @@ fn part2_inner(s: &str) -> u64 {
             prev_pointer = pointer;
             pointer = jump_table[pointer];
         }
-        if pointer * 2 + 1 >= i {
+        if pointer * 2 > i {
             // println!("{:?}", or_position_table);
             sum += get_checksum(i / 2, or_position_table[i / 2] as u32, block_size as u32);
         }
