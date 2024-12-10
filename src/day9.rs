@@ -68,11 +68,11 @@ pub fn part2(s: &str) -> u64 {
 unsafe fn part2_inner(s: &str) -> u64 {
     let s = s.as_bytes();
 
-    let mut jump_table: [usize; INPUT_SIZE / 2 + 1] = const {
+    let mut jump_table: [u16; INPUT_SIZE / 2 + 1] = const {
         let mut t = [0; INPUT_SIZE / 2 + 1];
         let mut i = 0;
         while i < INPUT_SIZE / 2 + 1 {
-            t[i] = i + 1;
+            t[i] = (i + 1) as u16;
             i += 1;
         }
         t
@@ -95,7 +95,7 @@ unsafe fn part2_inner(s: &str) -> u64 {
         if s.get_unchecked(i * 2 + 1) - b'0' == 0 {
             jump_table[prev_pointer] += 1;
         } else {
-            prev_pointer = jump_table[prev_pointer];
+            prev_pointer = jump_table[prev_pointer] as usize;
         }
     }
 
@@ -106,7 +106,7 @@ unsafe fn part2_inner(s: &str) -> u64 {
         let block_size = s.get_unchecked(i) - b'0';
 
         let mut prev_pointer = 0;
-        let mut pointer = *jump_table.get_unchecked(0);
+        let mut pointer = *jump_table.get_unchecked(0) as usize;
 
         while pointer * 2 <= i {
             let empty_size = *sizes.get_unchecked(pointer);
@@ -127,7 +127,7 @@ unsafe fn part2_inner(s: &str) -> u64 {
                 break;
             }
             prev_pointer = pointer;
-            pointer = *jump_table.get_unchecked(pointer);
+            pointer = *jump_table.get_unchecked(pointer) as usize;
         }
         if pointer * 2 > i {
             sum += get_checksum(
