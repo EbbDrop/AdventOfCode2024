@@ -15,14 +15,7 @@ pub fn part1(s: &str) -> u64 {
 
 #[inline(always)]
 fn get_checksum(block_id: usize, position: u32, size: u32) -> u64 {
-    // println!(
-    //     "at {}, got: \"{}\" ({})",
-    //     position,
-    //     std::iter::repeat((block_id as u8 + b'0') as char)
-    //         .take(size as usize)
-    //         .collect::<String>(),
-    //     size
-    // );
+    // println!("at {:5}, got: {:5} x {}", position, block_id, size);
     size as u64 * block_id as u64 * (2 * position as u64 + size as u64 - 1)
 }
 
@@ -80,36 +73,72 @@ pub fn part2(s: &str) -> u64 {
 fn part2_inner(s: &str) -> u64 {
     let s = s.as_bytes();
 
-    let mut sizes = [0; INPUT_SIZE];
+    let mut jump_table: [usize; INPUT_SIZE / 2 + 1] = const {
+        let mut t = [0; INPUT_SIZE / 2 + 1];
+        let mut i = 0;
+        while i < INPUT_SIZE / 2 + 1 {
+            t[i] = i + 1;
+            i += 1;
+        }
+        t
+    };
 
-    for i in 0..INPUT_SIZE {
-        sizes[i] = s[i] - b'0';
+    let mut sizes = [0; INPUT_SIZE / 2 + 1];
+    let mut position_table = [0; INPUT_SIZE / 2 + 1];
+    let mut or_position_table = [0; INPUT_SIZE / 2 + 1];
+    let mut position = 0u32;
+    for i in 0..INPUT_SIZE / 2 {
+        sizes[i + 1] = s[i * 2 + 1] - b'0';
+
+        position += (s[i * 2] - b'0') as u32;
+
+        position_table[i + 1] = position;
+
+        position += (s[i * 2 + 1] - b'0') as u32;
+
+        or_position_table[i + 1] = position;
     }
 
     let mut i = INPUT_SIZE - 1;
 
     let mut sum = 0;
     loop {
+        let hu = i / 2 == 5303;
         let block_size = s[i] - b'0';
+        // for i in 0..INPUT_SIZE / 2 + 1 {
+        //     println!(
+        //         "j: {}, p: {}, s: {}",
+        //         jump_table[i], position_table[i], sizes[i]
+        //     );
+        // }
+        // dbg!(block_size);
 
-        let mut empty_pointer = 1;
-        let mut position = 0;
-        while empty_pointer < i {
-            position += sizes[empty_pointer - 1] as u32;
+        let mut prev_pointer = 0;
+        let mut pointer = jump_table[0];
 
-            let empty_size = sizes[empty_pointer];
+        while pointer * 2 + 1 < i {
+            if hu {
+                println!("{pointer}");
+            }
+            let empty_size = sizes[pointer];
+
             if empty_size >= block_size {
-                sizes[empty_pointer as usize] -= block_size;
-                sizes[empty_pointer as usize - 1] += block_size;
+                sum += get_checksum(i / 2, position_table[pointer] as u32, block_size as u32);
 
-                sum += get_checksum(i / 2, position, block_size as u32);
+                sizes[pointer] -= block_size;
+                if sizes[pointer] == 0 {
+                    jump_table[prev_pointer] = jump_table[pointer];
+                }
+                position_table[pointer] += block_size as u32;
+
                 break;
             }
-            position += empty_size as u32;
-            empty_pointer += 2;
+            prev_pointer = pointer;
+            pointer = jump_table[pointer];
         }
-        if empty_pointer >= i {
-            sum += get_checksum(i / 2, position, block_size as u32);
+        if pointer * 2 + 1 >= i {
+            // println!("{:?}", or_position_table);
+            sum += get_checksum(i / 2, or_position_table[i / 2] as u32, block_size as u32);
         }
         if i == 0 {
             break;
