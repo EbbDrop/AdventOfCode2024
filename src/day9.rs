@@ -80,7 +80,6 @@ unsafe fn part2_inner(s: &str) -> u64 {
 
     let mut sizes = [0; INPUT_SIZE / 2 + 1];
     let mut position_table = [0; INPUT_SIZE / 2 + 1];
-    let mut or_position_table = [0; INPUT_SIZE / 2 + 1];
     let mut position = 0u32;
     for i in 0..INPUT_SIZE / 2 {
         sizes[i + 1] = s[i * 2 + 1] - b'0';
@@ -90,8 +89,6 @@ unsafe fn part2_inner(s: &str) -> u64 {
         position_table[i + 1] = position;
 
         position += (s[i * 2 + 1] - b'0') as u32;
-
-        or_position_table[i + 1] = position;
     }
 
     let mut i = INPUT_SIZE - 1;
@@ -121,7 +118,11 @@ unsafe fn part2_inner(s: &str) -> u64 {
             pointer = jump_table[pointer];
         }
         if pointer * 2 > i {
-            sum += get_checksum(i / 2, or_position_table[i / 2] as u32, block_size as u32);
+            sum += get_checksum(
+                i / 2,
+                position_table[i / 2] as u32 + sizes[i / 2] as u32,
+                block_size as u32,
+            );
         }
         if i == 0 {
             break;
