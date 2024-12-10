@@ -81,6 +81,8 @@ unsafe fn part2_inner(s: &str) -> u64 {
     let mut sizes = [0; INPUT_SIZE / 2 + 1];
     let mut position_table = [0; INPUT_SIZE / 2 + 1];
     let mut position = 0u32;
+
+    let mut prev_pointer = 0;
     for i in 0..INPUT_SIZE / 2 {
         *sizes.get_unchecked_mut(i + 1) = s.get_unchecked(i * 2 + 1) - b'0';
 
@@ -89,6 +91,12 @@ unsafe fn part2_inner(s: &str) -> u64 {
         *position_table.get_unchecked_mut(i + 1) = position;
 
         position += (s.get_unchecked(i * 2 + 1) - b'0') as u32;
+
+        if s.get_unchecked(i * 2 + 1) - b'0' == 0 {
+            jump_table[prev_pointer] += 1;
+        } else {
+            prev_pointer = jump_table[prev_pointer];
+        }
     }
 
     let mut i = INPUT_SIZE - 1;
@@ -154,14 +162,3 @@ mod tests {
         assert_eq!(part2(EXAMPLE), 2858);
     }
 }
-
-// at 00, got: "00" (2)
-// at 02, got: "99" (2)
-// at 04, got: "2" (1)
-// at 05, got: "111" (3)
-// at 08, got: "777" (3)
-// at 12, got: "44" (2)
-// at 15, got: "333" (3)
-// at 22, got: "5555" (4)
-// at 27, got: "6666" (4)
-// at 36, got: "8888" (4)
