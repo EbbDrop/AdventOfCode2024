@@ -1,6 +1,6 @@
 use aoc_runner_derive::aoc;
 
-const MAX_SIZE: usize = 64;
+const MAX_SIZE: usize = 50;
 const BIG_SIZE: usize = MAX_SIZE * (MAX_SIZE + 2);
 
 #[aoc(day10, part1)]
@@ -12,9 +12,9 @@ pub fn part1(s: &str) -> u32 {
 unsafe fn part1_inner(s: &str) -> u32 {
     let s = s.as_bytes();
 
-    let mut positions = [(0usize, [0usize; MAX_SIZE * MAX_SIZE / 9]); 9];
+    let mut positions = [(0u16, [0u16; MAX_SIZE * MAX_SIZE / 9]); 9];
 
-    let mut zeros = [0usize; MAX_SIZE * MAX_SIZE / 9];
+    let mut zeros = [0u16; MAX_SIZE * MAX_SIZE / 9];
     let mut zeros_i = 0;
 
     let mut y = 0;
@@ -29,11 +29,11 @@ unsafe fn part1_inner(s: &str) -> u32 {
 
         let layer = (c - b'0') as usize;
         if layer == 0 {
-            zeros[zeros_i] = y * MAX_SIZE + x + MAX_SIZE;
+            zeros[zeros_i as usize] = (y * MAX_SIZE + x + MAX_SIZE) as u16;
             zeros_i += 1;
         } else {
             let len = positions[layer - 1].0;
-            positions[layer - 1].1[len] = y * MAX_SIZE + x + MAX_SIZE;
+            positions[layer - 1].1[len as usize] = (y * MAX_SIZE + x + MAX_SIZE) as u16;
             positions[layer - 1].0 += 1;
         }
         x += 1;
@@ -44,13 +44,13 @@ unsafe fn part1_inner(s: &str) -> u32 {
 
     let mut sum = 0;
     for i in &zeros[..zeros_i] {
-        current[*i] = true;
+        current[*i as usize] = true;
 
         for layer in 0..8 {
             let (len, positions) = positions[layer];
 
-            for i in &positions[..len] {
-                let i = *i;
+            for i in &positions[..len as usize] {
+                let i = *i as usize;
                 next[i] = current[i - 1]
                     || current[i + 1]
                     || current[i + MAX_SIZE]
@@ -62,7 +62,8 @@ unsafe fn part1_inner(s: &str) -> u32 {
         }
 
         let (len9, positions9) = positions[8];
-        for i in &positions9[..len9] {
+        for i in &positions9[..len9 as usize] {
+            let i = *i as usize;
             if current[i - 1] || current[i + 1] || current[i + MAX_SIZE] || current[i - MAX_SIZE] {
                 sum += 1;
             }
@@ -82,7 +83,7 @@ pub fn part2(s: &str) -> u16 {
 unsafe fn part2_inner(s: &str) -> u16 {
     let s = s.as_bytes();
 
-    let mut positions = [(0usize, [0usize; MAX_SIZE * MAX_SIZE / 9]); 9];
+    let mut positions = [(0u16, [0u16; MAX_SIZE * MAX_SIZE / 9]); 9];
     let mut first_map = [0u16; BIG_SIZE];
 
     let mut y = 0;
@@ -99,8 +100,8 @@ unsafe fn part2_inner(s: &str) -> u16 {
         if layer == 0 {
             first_map[y * MAX_SIZE + x + MAX_SIZE] = 1;
         } else {
-            let len = positions[layer - 1].0;
-            positions[layer - 1].1[len] = y * MAX_SIZE + x + MAX_SIZE;
+            let len = positions[layer - 1].0 as usize;
+            positions[layer - 1].1[len] = (y * MAX_SIZE + x + MAX_SIZE) as u16;
             positions[layer - 1].0 += 1;
         }
         x += 1;
@@ -114,8 +115,8 @@ unsafe fn part2_inner(s: &str) -> u16 {
     for layer in 0..8 {
         let (len, positions) = positions[layer];
 
-        for i in &positions[..len] {
-            let i = *i;
+        for i in &positions[..len as usize] {
+            let i = *i as usize;
             next[i] =
                 current[i - 1] + current[i + 1] + current[i + MAX_SIZE] + current[i - MAX_SIZE];
         }
@@ -125,7 +126,8 @@ unsafe fn part2_inner(s: &str) -> u16 {
     }
 
     let (len9, positions9) = positions[8];
-    for i in &positions9[..len9] {
+    for i in &positions9[..len9 as usize] {
+        let i = *i as usize;
         sum += current[i - 1] + current[i + 1] + current[i + MAX_SIZE] + current[i - MAX_SIZE];
     }
 
