@@ -19,7 +19,7 @@ unsafe fn part1_inner(s: &str) -> u32 {
     let mut y = 0;
     let mut x = 0;
     for i in 0..s.len() {
-        let c = s[i];
+        let c = *s.get_unchecked(i);
         if c == b'\n' {
             y += 1;
             x = 0;
@@ -28,13 +28,16 @@ unsafe fn part1_inner(s: &str) -> u32 {
 
         let layer = (c - b'0') as usize;
         if layer == 0 {
-            first_map[y * MAX_SIZE + x + MAX_SIZE] = 1 << zero_pos;
+            *first_map.get_unchecked_mut(y * MAX_SIZE + x + MAX_SIZE) = 1 << zero_pos;
             zero_pos += 1;
             zero_pos %= 64;
         } else {
-            let len = positions[layer - 1].0 as usize;
-            positions[layer - 1].1[len] = (y * MAX_SIZE + x + MAX_SIZE) as u16;
-            positions[layer - 1].0 += 1;
+            let len = positions.get_unchecked(layer - 1).0 as usize;
+            *positions
+                .get_unchecked_mut(layer - 1)
+                .1
+                .get_unchecked_mut(len) = (y * MAX_SIZE + x + MAX_SIZE) as u16;
+            positions.get_unchecked_mut(layer - 1).0 += 1;
         }
         x += 1;
     }
@@ -45,23 +48,28 @@ unsafe fn part1_inner(s: &str) -> u32 {
     let mut current = &mut first_map;
 
     for layer in 0..8 {
-        let (len, positions) = positions[layer];
+        let (len, positions) = *positions.get_unchecked(layer);
 
-        for i in &positions[..len as usize] {
+        for i in &*positions.get_unchecked(..len as usize) {
             let i = *i as usize;
-            next[i] =
-                current[i - 1] | current[i + 1] | current[i + MAX_SIZE] | current[i - MAX_SIZE];
+            *next.get_unchecked_mut(i) = *current.get_unchecked(i - 1)
+                | *current.get_unchecked(i + 1)
+                | *current.get_unchecked(i + MAX_SIZE)
+                | *current.get_unchecked(i - MAX_SIZE);
         }
 
         std::mem::swap(&mut current, &mut next);
         next.fill(0);
     }
 
-    let (len9, positions9) = positions[8];
+    let (len9, positions9) = *positions.get_unchecked(8);
     for i in &positions9[..len9 as usize] {
         let i = *i as usize;
-        sum += (current[i - 1] | current[i + 1] | current[i + MAX_SIZE] | current[i - MAX_SIZE])
-            .count_ones();
+        sum += (*current.get_unchecked(i - 1)
+            | *current.get_unchecked(i + 1)
+            | *current.get_unchecked(i + MAX_SIZE)
+            | *current.get_unchecked(i - MAX_SIZE))
+        .count_ones();
     }
 
     sum
@@ -82,7 +90,7 @@ unsafe fn part2_inner(s: &str) -> u16 {
     let mut y = 0;
     let mut x = 0;
     for i in 0..s.len() {
-        let c = s[i];
+        let c = *s.get_unchecked(i);
         if c == b'\n' {
             y += 1;
             x = 0;
@@ -91,11 +99,14 @@ unsafe fn part2_inner(s: &str) -> u16 {
 
         let layer = (c - b'0') as usize;
         if layer == 0 {
-            first_map[y * MAX_SIZE + x + MAX_SIZE] = 1;
+            *first_map.get_unchecked_mut(y * MAX_SIZE + x + MAX_SIZE) = 1;
         } else {
-            let len = positions[layer - 1].0 as usize;
-            positions[layer - 1].1[len] = (y * MAX_SIZE + x + MAX_SIZE) as u16;
-            positions[layer - 1].0 += 1;
+            let len = positions.get_unchecked(layer - 1).0 as usize;
+            *positions
+                .get_unchecked_mut(layer - 1)
+                .1
+                .get_unchecked_mut(len) = (y * MAX_SIZE + x + MAX_SIZE) as u16;
+            positions.get_unchecked_mut(layer - 1).0 += 1;
         }
         x += 1;
     }
@@ -106,22 +117,27 @@ unsafe fn part2_inner(s: &str) -> u16 {
     let mut current = &mut first_map;
 
     for layer in 0..8 {
-        let (len, positions) = positions[layer];
+        let (len, positions) = *positions.get_unchecked(layer);
 
-        for i in &positions[..len as usize] {
+        for i in &*positions.get_unchecked(..len as usize) {
             let i = *i as usize;
-            next[i] =
-                current[i - 1] + current[i + 1] + current[i + MAX_SIZE] + current[i - MAX_SIZE];
+            *next.get_unchecked_mut(i) = *current.get_unchecked(i - 1)
+                + *current.get_unchecked(i + 1)
+                + *current.get_unchecked(i + MAX_SIZE)
+                + *current.get_unchecked(i - MAX_SIZE);
         }
 
         std::mem::swap(&mut current, &mut next);
         next.fill(0);
     }
 
-    let (len9, positions9) = positions[8];
+    let (len9, positions9) = *positions.get_unchecked(8);
     for i in &positions9[..len9 as usize] {
         let i = *i as usize;
-        sum += current[i - 1] + current[i + 1] + current[i + MAX_SIZE] + current[i - MAX_SIZE];
+        sum += *current.get_unchecked(i - 1)
+            + *current.get_unchecked(i + 1)
+            + *current.get_unchecked(i + MAX_SIZE)
+            + *current.get_unchecked(i - MAX_SIZE);
     }
 
     sum
