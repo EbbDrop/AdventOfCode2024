@@ -13,7 +13,7 @@ unsafe fn part1_inner(s: &str) -> u32 {
     let s = s.as_bytes();
 
     let mut positions = [(0u16, [0u16; MAX_SIZE * MAX_SIZE / 9]); 9];
-    let mut first_map = [0u64; BIG_SIZE];
+    let mut maps = [[0u64; BIG_SIZE]; 9];
     let mut zero_pos = 0;
 
     let mut y = 0;
@@ -28,7 +28,9 @@ unsafe fn part1_inner(s: &str) -> u32 {
 
         let layer = (c - b'0') as usize;
         if layer == 0 {
-            *first_map.get_unchecked_mut(y * MAX_SIZE + x + MAX_SIZE) = 1 << zero_pos;
+            *maps
+                .get_unchecked_mut(0)
+                .get_unchecked_mut(y * MAX_SIZE + x + MAX_SIZE) = 1 << zero_pos;
             zero_pos += 1;
             zero_pos %= 64;
         } else {
@@ -44,31 +46,26 @@ unsafe fn part1_inner(s: &str) -> u32 {
 
     let mut sum = 0;
 
-    let mut next = &mut [0u64; BIG_SIZE];
-    let mut current = &mut first_map;
-
     for layer in 0..8 {
         let (len, positions) = *positions.get_unchecked(layer);
 
         for i in &*positions.get_unchecked(..len as usize) {
             let i = *i as usize;
-            *next.get_unchecked_mut(i) = *current.get_unchecked(i - 1)
-                | *current.get_unchecked(i + 1)
-                | *current.get_unchecked(i + MAX_SIZE)
-                | *current.get_unchecked(i - MAX_SIZE);
+            *maps.get_unchecked_mut(layer + 1).get_unchecked_mut(i) =
+                *maps.get_unchecked_mut(layer).get_unchecked(i - 1)
+                    | *maps.get_unchecked_mut(layer).get_unchecked(i + 1)
+                    | *maps.get_unchecked_mut(layer).get_unchecked(i + MAX_SIZE)
+                    | *maps.get_unchecked_mut(layer).get_unchecked(i - MAX_SIZE);
         }
-
-        std::mem::swap(&mut current, &mut next);
-        next.fill(0);
     }
 
     let (len9, positions9) = *positions.get_unchecked(8);
     for i in &positions9[..len9 as usize] {
         let i = *i as usize;
-        sum += (*current.get_unchecked(i - 1)
-            | *current.get_unchecked(i + 1)
-            | *current.get_unchecked(i + MAX_SIZE)
-            | *current.get_unchecked(i - MAX_SIZE))
+        sum += (*maps.get_unchecked_mut(8).get_unchecked(i - 1)
+            | *maps.get_unchecked_mut(8).get_unchecked(i + 1)
+            | *maps.get_unchecked_mut(8).get_unchecked(i + MAX_SIZE)
+            | *maps.get_unchecked_mut(8).get_unchecked(i - MAX_SIZE))
         .count_ones();
     }
 
