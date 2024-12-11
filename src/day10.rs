@@ -12,73 +12,56 @@ pub fn part1(s: &str) -> u32 {
 unsafe fn part1_inner(s: &str) -> u32 {
     let s = s.as_bytes();
 
-    let mut maps = [[0u64; MAX_SIZE + 2]; 9];
-
-    let mut zeros = [(0, 0); MAX_SIZE * MAX_SIZE / 9];
-    let mut zeros_i = 0;
+    let mut positions = [(0u16, [0u16; MAX_SIZE * MAX_SIZE / 9]); 9];
+    let mut first_map = [0u128; BIG_SIZE];
+    let mut zero_pos = 0;
 
     let mut y = 0;
     let mut x = 0;
-    let mut size = 0;
     for i in 0..s.len() {
         let c = s[i];
         if c == b'\n' {
-            size = x;
             y += 1;
             x = 0;
             continue;
         }
 
-        let layer = c - b'0';
+        let layer = (c - b'0') as usize;
         if layer == 0 {
-            zeros[zeros_i] = (x, y);
-            zeros_i += 1;
+            first_map[y * MAX_SIZE + x + MAX_SIZE] = 1 << zero_pos;
+            zero_pos += 1;
+            zero_pos %= 128;
         } else {
-            maps[layer as usize - 1][y + 1] |= 1 << x;
+            let len = positions[layer - 1].0 as usize;
+            positions[layer - 1].1[len] = (y * MAX_SIZE + x + MAX_SIZE) as u16;
+            positions[layer - 1].0 += 1;
         }
         x += 1;
     }
 
-    let mut next = &mut [0u64; MAX_SIZE + 2];
-    let mut current = &mut [0u64; MAX_SIZE + 2];
-
     let mut sum = 0;
-    for (x, y) in &zeros[..zeros_i] {
-        current[*y + 1] |= 1 << *x;
-        for layer in 0..9 {
-            // for yp1 in 1..size + 1 {
-            //     for x in 0..size {
-            //         let c = if current[yp1] & (1 << x) != 0 {
-            //             '#'
-            //         } else {
-            //             s[(yp1 - 1) * (size + 1) + x] as char
-            //         };
-            //         print!("{c}");
-            //     }
-            //     println!("");
-            // }
-            // println!("");
 
-            for yp1 in 1..size + 1 {
-                let to_left = (current[yp1] << 1) & maps[layer][yp1];
-                let to_right = (current[yp1] >> 1) & maps[layer][yp1];
-                let to_down = current[yp1 - 1] & maps[layer][yp1];
-                let to_up = current[yp1 + 1] & maps[layer][yp1];
+    let mut next = &mut [0u128; BIG_SIZE];
+    let mut current = &mut first_map;
 
-                let to_left_and_right = to_left | to_right;
-                let to_left_down_and_right = to_left_and_right | to_down;
+    for layer in 0..8 {
+        let (len, positions) = positions[layer];
 
-                next[yp1] = to_left_down_and_right | to_up;
-            }
-
-            std::mem::swap(&mut current, &mut next);
-            next.fill(0);
+        for i in &positions[..len as usize] {
+            let i = *i as usize;
+            next[i] =
+                current[i - 1] | current[i + 1] | current[i + MAX_SIZE] | current[i - MAX_SIZE];
         }
 
-        for yp1 in 1..size + 1 {
-            sum += current[yp1].count_ones();
-        }
-        current.fill(0);
+        std::mem::swap(&mut current, &mut next);
+        next.fill(0);
+    }
+
+    let (len9, positions9) = positions[8];
+    for i in &positions9[..len9 as usize] {
+        let i = *i as usize;
+        sum += (current[i - 1] | current[i + 1] | current[i + MAX_SIZE] | current[i - MAX_SIZE])
+            .count_ones();
     }
 
     sum
