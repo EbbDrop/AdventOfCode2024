@@ -13,7 +13,7 @@ unsafe fn part1_inner(s: &str) -> u32 {
     let s = s.as_bytes();
 
     let mut positions = [(0u16, [0u16; MAX_SIZE * MAX_SIZE / 9]); 9];
-    let mut first_map = [0u128; BIG_SIZE];
+    let mut first_map = [0u64; BIG_SIZE];
     let mut zero_pos = 0;
 
     let mut y = 0;
@@ -30,7 +30,7 @@ unsafe fn part1_inner(s: &str) -> u32 {
         if layer == 0 {
             first_map[y * MAX_SIZE + x + MAX_SIZE] = 1 << zero_pos;
             zero_pos += 1;
-            zero_pos %= 128;
+            zero_pos %= 64;
         } else {
             let len = positions[layer - 1].0 as usize;
             positions[layer - 1].1[len] = (y * MAX_SIZE + x + MAX_SIZE) as u16;
@@ -41,7 +41,7 @@ unsafe fn part1_inner(s: &str) -> u32 {
 
     let mut sum = 0;
 
-    let mut next = &mut [0u128; BIG_SIZE];
+    let mut next = &mut [0u64; BIG_SIZE];
     let mut current = &mut first_map;
 
     for layer in 0..8 {
