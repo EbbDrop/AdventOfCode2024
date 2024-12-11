@@ -43,7 +43,7 @@ unsafe fn part1_inner(s: &str) -> u32 {
     let mut current = &mut [0u64; MAX_SIZE + 2];
 
     let mut sum = 0;
-    for (x, y) in &zeros[..zeros_i] {
+    'outer: for (x, y) in &zeros[..zeros_i] {
         current[*y + 1] |= 1 << *x;
         for layer in 0..9 {
             // for yp1 in 1..size + 1 {
@@ -59,16 +59,21 @@ unsafe fn part1_inner(s: &str) -> u32 {
             // }
             // println!("");
 
+            let mut any = 0;
             for yp1 in 1..size + 1 {
                 let to_left = (current[yp1] << 1) & maps[layer][yp1];
                 let to_right = (current[yp1] >> 1) & maps[layer][yp1];
                 let to_down = current[yp1 - 1] & maps[layer][yp1];
                 let to_up = current[yp1 + 1] & maps[layer][yp1];
 
-                let to_left_and_right = to_left | to_right;
-                let to_left_down_and_right = to_left_and_right | to_down;
-
-                next[yp1] = to_left_down_and_right | to_up;
+                let total = to_left | to_right | to_down | to_up;
+                any |= total;
+                next[yp1] = total;
+            }
+            if any == 0 {
+                next.fill(0);
+                current.fill(0);
+                continue 'outer;
             }
 
             std::mem::swap(&mut current, &mut next);
