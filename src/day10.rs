@@ -11,12 +11,17 @@ pub fn part1(s: &str) -> u32 {
 static mut MAPS_PART1: [[u64; BIG_SIZE]; 9] = [[0; BIG_SIZE]; 9];
 static mut MAPS_PART2: [[u16; BIG_SIZE]; 9] = [[0; BIG_SIZE]; 9];
 
+static mut POSITIONS_PART1: [(u16, [u16; MAX_SIZE * MAX_SIZE / 9]); 9] =
+    [(0u16, [0u16; MAX_SIZE * MAX_SIZE / 9]); 9];
+static mut POSITIONS_PART2: [(u16, [u16; MAX_SIZE * MAX_SIZE / 9]); 9] =
+    [(0u16, [0u16; MAX_SIZE * MAX_SIZE / 9]); 9];
+
 #[target_feature(enable = "avx2,bmi1,bmi2,cmpxchg16b,lzcnt,movbe,popcnt")]
 unsafe fn part1_inner(s: &str) -> u32 {
     let s = s.as_bytes();
 
-    let mut positions = [(0u16, [0u16; MAX_SIZE * MAX_SIZE / 9]); 9];
-    let maps = &mut MAPS_PART1;
+    let positions = &mut *(&raw mut POSITIONS_PART1);
+    let maps = &mut *(&raw mut MAPS_PART1);
     let mut zero_pos = 0;
 
     let mut y = 0;
@@ -84,8 +89,8 @@ pub fn part2(s: &str) -> u16 {
 unsafe fn part2_inner(s: &str) -> u16 {
     let s = s.as_bytes();
 
-    let mut positions = [(0u16, [0u16; MAX_SIZE * MAX_SIZE / 9]); 9];
-    let mut maps = &mut MAPS_PART2;
+    let positions = &mut *(&raw mut POSITIONS_PART2);
+    let maps = &mut *(&raw mut MAPS_PART2);
 
     let mut y = 0;
     let mut x = 0;
