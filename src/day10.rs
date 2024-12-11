@@ -9,14 +9,11 @@ const SIZE1: usize = SIZE + 1;
 
 #[aoc(day10, part1)]
 pub fn part1(s: &str) -> u32 {
-    #[expect(unused_unsafe)]
-    unsafe {
-        part1_inner(s)
-    }
+    unsafe { part1_inner(s) }
 }
 
-// #[target_feature(enable = "avx2,bmi1,bmi2,cmpxchg16b,lzcnt,movbe,popcnt")]
-fn part1_inner(s: &str) -> u32 {
+#[target_feature(enable = "avx2,bmi1,bmi2,cmpxchg16b,lzcnt,movbe,popcnt")]
+unsafe fn part1_inner(s: &str) -> u32 {
     let s = s.as_bytes();
 
     let mut maps = [[0u64; SIZE + 2]; 9];
@@ -83,14 +80,11 @@ fn part1_inner(s: &str) -> u32 {
 
 #[aoc(day10, part2)]
 pub fn part2(s: &str) -> u64 {
-    #[expect(unused_unsafe)]
-    unsafe {
-        part2_inner(s)
-    }
+    unsafe { part2_inner(s) }
 }
 
-// #[target_feature(enable = "avx2,bmi1,bmi2,cmpxchg16b,lzcnt,movbe,popcnt")]
-fn part2_inner(s: &str) -> u64 {
+#[target_feature(enable = "avx2,bmi1,bmi2,cmpxchg16b,lzcnt,movbe,popcnt")]
+unsafe fn part2_inner(s: &str) -> u64 {
     const BIG_SIZE: usize = SIZE1 * (SIZE + 2);
 
     let s = s.as_bytes();
@@ -120,14 +114,6 @@ fn part2_inner(s: &str) -> u64 {
     let current = &mut first_map;
 
     for layer in 0..8 {
-        // for y in 0..SIZE {
-        //     for x in 0..SIZE {
-        //         print!("{:3} ", current[y * SIZE1 + x + SIZE1]);
-        //     }
-        //     println!("");
-        // }
-        // println!("");
-
         let (len, positions) = positions[layer];
 
         for i in &positions[..len] {
@@ -138,13 +124,6 @@ fn part2_inner(s: &str) -> u64 {
         std::mem::swap(current, next);
         next.fill(0);
     }
-    // for y in 0..SIZE {
-    //     for x in 0..SIZE {
-    //         print!("{:3} ", current[y * SIZE1 + x + SIZE1]);
-    //     }
-    //     println!("");
-    // }
-    // println!("");
 
     let (len9, positions9) = positions[8];
     for i in &positions9[..len9] {
