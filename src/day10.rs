@@ -16,7 +16,7 @@ unsafe fn part1_inner(s: &str) -> u32 {
     let s = s.as_bytes();
 
     let mut positions = [(0u16, [0u16; MAX_SIZE * MAX_SIZE / 9]); 9];
-    let maps = &mut MAPS_PART1;
+    let maps = &mut *(&raw mut MAPS_PART1);
     let mut zero_pos = 0;
 
     let mut y = 0;
@@ -85,7 +85,7 @@ unsafe fn part2_inner(s: &str) -> u16 {
     let s = s.as_bytes();
 
     let mut positions = [(0u16, [0u16; MAX_SIZE * MAX_SIZE / 9]); 9];
-    let mut maps = &mut MAPS_PART2;
+    let maps = &mut *(&raw mut MAPS_PART2);
 
     let mut y = 0;
     let mut x = 0;
