@@ -79,24 +79,21 @@ unsafe fn part1_inner(s: &str) -> u32 {
 }
 
 #[aoc(day10, part2)]
-pub fn part2(s: &str) -> u64 {
+pub fn part2(s: &str) -> u16 {
     unsafe { part2_inner(s) }
 }
 
 #[target_feature(enable = "avx2,bmi1,bmi2,cmpxchg16b,lzcnt,movbe,popcnt")]
-unsafe fn part2_inner(s: &str) -> u64 {
+unsafe fn part2_inner(s: &str) -> u16 {
     const BIG_SIZE: usize = SIZE1 * (SIZE + 2);
 
     let s = s.as_bytes();
 
     let mut positions = [(0usize, [0usize; SIZE * SIZE]); 9];
-    let mut first_map = [0u64; BIG_SIZE];
+    let mut first_map = [0u16; BIG_SIZE];
 
     for (y, l) in s.split(|n| *n == b'\n').enumerate() {
         for (x, c) in l.iter().enumerate() {
-            if *c == b'.' {
-                continue;
-            }
             let layer = (*c - b'0') as usize;
             if layer == 0 {
                 first_map[y * SIZE1 + x + SIZE1] = 1;
@@ -110,7 +107,7 @@ unsafe fn part2_inner(s: &str) -> u64 {
 
     let mut sum = 0;
 
-    let next = &mut [0u64; BIG_SIZE];
+    let next = &mut [0u16; BIG_SIZE];
     let current = &mut first_map;
 
     for layer in 0..8 {
