@@ -12,63 +12,73 @@ pub fn part1(s: &str) -> u32 {
 unsafe fn part1_inner(s: &str) -> u32 {
     let s = s.as_bytes();
 
-    let mut positions = [(0u16, [0u16; MAX_SIZE * MAX_SIZE / 9]); 9];
+    let mut maps = [[0u64; MAX_SIZE + 2]; 9];
 
-    let mut zeros = [0u16; MAX_SIZE * MAX_SIZE / 9];
+    let mut zeros = [(0, 0); MAX_SIZE * MAX_SIZE / 9];
     let mut zeros_i = 0;
 
     let mut y = 0;
     let mut x = 0;
+    let mut size = 0;
     for i in 0..s.len() {
         let c = s[i];
         if c == b'\n' {
+            size = x;
             y += 1;
             x = 0;
             continue;
         }
 
-        let layer = (c - b'0') as usize;
+        let layer = c - b'0';
         if layer == 0 {
-            zeros[zeros_i as usize] = (y * MAX_SIZE + x + MAX_SIZE) as u16;
+            zeros[zeros_i] = (x, y);
             zeros_i += 1;
         } else {
-            let len = positions[layer - 1].0;
-            positions[layer - 1].1[len as usize] = (y * MAX_SIZE + x + MAX_SIZE) as u16;
-            positions[layer - 1].0 += 1;
+            maps[layer as usize - 1][y + 1] |= 1 << x;
         }
         x += 1;
     }
 
-    let mut next = &mut [false; BIG_SIZE];
-    let mut current = &mut [false; BIG_SIZE];
+    let mut next = &mut [0u64; MAX_SIZE + 2];
+    let mut current = &mut [0u64; MAX_SIZE + 2];
 
     let mut sum = 0;
-    for i in &zeros[..zeros_i] {
-        current[*i as usize] = true;
+    for (x, y) in &zeros[..zeros_i] {
+        current[*y + 1] |= 1 << *x;
+        for layer in 0..9 {
+            // for yp1 in 1..size + 1 {
+            //     for x in 0..size {
+            //         let c = if current[yp1] & (1 << x) != 0 {
+            //             '#'
+            //         } else {
+            //             s[(yp1 - 1) * (size + 1) + x] as char
+            //         };
+            //         print!("{c}");
+            //     }
+            //     println!("");
+            // }
+            // println!("");
 
-        for layer in 0..8 {
-            let (len, positions) = positions[layer];
+            for yp1 in 1..size + 1 {
+                let to_left = (current[yp1] << 1) & maps[layer][yp1];
+                let to_right = (current[yp1] >> 1) & maps[layer][yp1];
+                let to_down = current[yp1 - 1] & maps[layer][yp1];
+                let to_up = current[yp1 + 1] & maps[layer][yp1];
 
-            for i in &positions[..len as usize] {
-                let i = *i as usize;
-                next[i] = current[i - 1]
-                    || current[i + 1]
-                    || current[i + MAX_SIZE]
-                    || current[i - MAX_SIZE];
+                let to_left_and_right = to_left | to_right;
+                let to_left_down_and_right = to_left_and_right | to_down;
+
+                next[yp1] = to_left_down_and_right | to_up;
             }
 
             std::mem::swap(&mut current, &mut next);
-            next.fill(false);
+            next.fill(0);
         }
 
-        let (len9, positions9) = positions[8];
-        for i in &positions9[..len9 as usize] {
-            let i = *i as usize;
-            if current[i - 1] || current[i + 1] || current[i + MAX_SIZE] || current[i - MAX_SIZE] {
-                sum += 1;
-            }
+        for yp1 in 1..size + 1 {
+            sum += current[yp1].count_ones();
         }
-        current.fill(false);
+        current.fill(0);
     }
 
     sum
