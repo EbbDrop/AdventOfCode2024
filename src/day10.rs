@@ -33,8 +33,8 @@ unsafe fn part1_inner(s: &str) -> u32 {
         }
     }
 
-    let next = &mut [0u64; SIZE + 2];
-    let current = &mut [0u64; SIZE + 2];
+    let mut next = &mut [0u64; SIZE + 2];
+    let mut current = &mut [0u64; SIZE + 2];
 
     let mut sum = 0;
     for (x, y) in &zeros[..zeros_i] {
@@ -65,7 +65,7 @@ unsafe fn part1_inner(s: &str) -> u32 {
                 next[yp1] = to_left_down_and_right | to_up;
             }
 
-            std::mem::swap(current, next);
+            std::mem::swap(&mut current, &mut next);
             next.fill(0);
         }
 
@@ -107,8 +107,8 @@ unsafe fn part2_inner(s: &str) -> u16 {
 
     let mut sum = 0;
 
-    let next = &mut [0u16; BIG_SIZE];
-    let current = &mut first_map;
+    let mut next = &mut [0u16; BIG_SIZE];
+    let mut current = &mut first_map;
 
     for layer in 0..8 {
         let (len, positions) = positions[layer];
@@ -118,7 +118,7 @@ unsafe fn part2_inner(s: &str) -> u16 {
             next[i] = current[i - 1] + current[i + 1] + current[i + SIZE1] + current[i - SIZE1];
         }
 
-        std::mem::swap(current, next);
+        std::mem::swap(&mut current, &mut next);
         next.fill(0);
     }
 
