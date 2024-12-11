@@ -1,13 +1,6 @@
-use std::arch::x86_64::*;
-
 use aoc_runner_derive::aoc;
 
-#[cfg(not(test))]
-const SIZE: usize = 47;
-#[cfg(test)]
-const SIZE: usize = 8;
-
-const SIZE1: usize = SIZE + 1;
+const MAX_SIZE: usize = 64;
 
 #[aoc(day10, part1)]
 pub fn part1(s: &str) -> u32 {
@@ -18,16 +11,18 @@ pub fn part1(s: &str) -> u32 {
 unsafe fn part1_inner(s: &str) -> u32 {
     let s = s.as_bytes();
 
-    let mut maps = [[0u64; SIZE + 2]; 9];
+    let mut maps = [[0u64; MAX_SIZE + 2]; 9];
 
-    let mut zeros = [(0, 0); SIZE * SIZE];
+    let mut zeros = [(0, 0); MAX_SIZE * MAX_SIZE / 9];
     let mut zeros_i = 0;
 
     let mut y = 0;
     let mut x = 0;
+    let mut size = 0;
     for i in 0..s.len() {
         let c = s[i];
         if c == b'\n' {
+            size = x;
             y += 1;
             x = 0;
             continue;
@@ -43,19 +38,19 @@ unsafe fn part1_inner(s: &str) -> u32 {
         x += 1;
     }
 
-    let mut next = &mut [0u64; SIZE + 2];
-    let mut current = &mut [0u64; SIZE + 2];
+    let mut next = &mut [0u64; MAX_SIZE + 2];
+    let mut current = &mut [0u64; MAX_SIZE + 2];
 
     let mut sum = 0;
     for (x, y) in &zeros[..zeros_i] {
         current[*y + 1] |= 1 << *x;
         for layer in 0..9 {
-            // for yp1 in 1..SIZE + 1 {
-            //     for x in 0..SIZE {
+            // for yp1 in 1..size + 1 {
+            //     for x in 0..size {
             //         let c = if current[yp1] & (1 << x) != 0 {
             //             '#'
             //         } else {
-            //             s[(yp1 - 1) * SIZE1 + x] as char
+            //             s[(yp1 - 1) * (size + 1) + x] as char
             //         };
             //         print!("{c}");
             //     }
@@ -63,7 +58,7 @@ unsafe fn part1_inner(s: &str) -> u32 {
             // }
             // println!("");
 
-            for yp1 in 1..SIZE + 1 {
+            for yp1 in 1..size + 1 {
                 let to_left = (current[yp1] << 1) & maps[layer][yp1];
                 let to_right = (current[yp1] >> 1) & maps[layer][yp1];
                 let to_down = current[yp1 - 1] & maps[layer][yp1];
@@ -79,7 +74,7 @@ unsafe fn part1_inner(s: &str) -> u32 {
             next.fill(0);
         }
 
-        for yp1 in 1..SIZE + 1 {
+        for yp1 in 1..size + 1 {
             sum += current[yp1].count_ones();
         }
         current.fill(0);
@@ -95,11 +90,11 @@ pub fn part2(s: &str) -> u16 {
 
 #[target_feature(enable = "avx2,bmi1,bmi2,cmpxchg16b,lzcnt,movbe,popcnt")]
 unsafe fn part2_inner(s: &str) -> u16 {
-    const BIG_SIZE: usize = SIZE1 * (SIZE + 2);
+    const BIG_SIZE: usize = MAX_SIZE * (MAX_SIZE + 2);
 
     let s = s.as_bytes();
 
-    let mut positions = [(0usize, [0usize; SIZE * SIZE]); 9];
+    let mut positions = [(0usize, [0usize; MAX_SIZE * MAX_SIZE / 9]); 9];
     let mut first_map = [0u16; BIG_SIZE];
 
     let mut y = 0;
@@ -114,10 +109,10 @@ unsafe fn part2_inner(s: &str) -> u16 {
 
         let layer = (c - b'0') as usize;
         if layer == 0 {
-            first_map[y * SIZE1 + x + SIZE1] = 1;
+            first_map[y * MAX_SIZE + x + MAX_SIZE] = 1;
         } else {
             let len = positions[layer - 1].0;
-            positions[layer - 1].1[len] = y * SIZE1 + x + SIZE1;
+            positions[layer - 1].1[len] = y * MAX_SIZE + x + MAX_SIZE;
             positions[layer - 1].0 += 1;
         }
         x += 1;
@@ -133,7 +128,8 @@ unsafe fn part2_inner(s: &str) -> u16 {
 
         for i in &positions[..len] {
             let i = *i;
-            next[i] = current[i - 1] + current[i + 1] + current[i + SIZE1] + current[i - SIZE1];
+            next[i] =
+                current[i - 1] + current[i + 1] + current[i + MAX_SIZE] + current[i - MAX_SIZE];
         }
 
         std::mem::swap(&mut current, &mut next);
@@ -142,7 +138,7 @@ unsafe fn part2_inner(s: &str) -> u16 {
 
     let (len9, positions9) = positions[8];
     for i in &positions9[..len9] {
-        sum += current[i - 1] + current[i + 1] + current[i + SIZE1] + current[i - SIZE1];
+        sum += current[i - 1] + current[i + 1] + current[i + MAX_SIZE] + current[i - MAX_SIZE];
     }
 
     sum
