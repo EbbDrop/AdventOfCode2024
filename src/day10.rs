@@ -1,6 +1,7 @@
 use aoc_runner_derive::aoc;
 
 const MAX_SIZE: usize = 64;
+const BIG_SIZE: usize = MAX_SIZE * (MAX_SIZE + 2);
 
 #[aoc(day10, part1)]
 pub fn part1(s: &str) -> u32 {
@@ -11,73 +12,62 @@ pub fn part1(s: &str) -> u32 {
 unsafe fn part1_inner(s: &str) -> u32 {
     let s = s.as_bytes();
 
-    let mut maps = [[0u64; MAX_SIZE + 2]; 9];
+    let mut positions = [(0usize, [0usize; MAX_SIZE * MAX_SIZE / 9]); 9];
 
-    let mut zeros = [(0, 0); MAX_SIZE * MAX_SIZE / 9];
+    let mut zeros = [0usize; MAX_SIZE * MAX_SIZE / 9];
     let mut zeros_i = 0;
 
     let mut y = 0;
     let mut x = 0;
-    let mut size = 0;
     for i in 0..s.len() {
         let c = s[i];
         if c == b'\n' {
-            size = x;
             y += 1;
             x = 0;
             continue;
         }
 
-        let layer = c - b'0';
+        let layer = (c - b'0') as usize;
         if layer == 0 {
-            zeros[zeros_i] = (x, y);
+            zeros[zeros_i] = y * MAX_SIZE + x + MAX_SIZE;
             zeros_i += 1;
         } else {
-            maps[layer as usize - 1][y + 1] |= 1 << x;
+            let len = positions[layer - 1].0;
+            positions[layer - 1].1[len] = y * MAX_SIZE + x + MAX_SIZE;
+            positions[layer - 1].0 += 1;
         }
         x += 1;
     }
 
-    let mut next = &mut [0u64; MAX_SIZE + 2];
-    let mut current = &mut [0u64; MAX_SIZE + 2];
+    let mut next = &mut [false; BIG_SIZE];
+    let mut current = &mut [false; BIG_SIZE];
 
     let mut sum = 0;
-    for (x, y) in &zeros[..zeros_i] {
-        current[*y + 1] |= 1 << *x;
-        for layer in 0..9 {
-            // for yp1 in 1..size + 1 {
-            //     for x in 0..size {
-            //         let c = if current[yp1] & (1 << x) != 0 {
-            //             '#'
-            //         } else {
-            //             s[(yp1 - 1) * (size + 1) + x] as char
-            //         };
-            //         print!("{c}");
-            //     }
-            //     println!("");
-            // }
-            // println!("");
+    for i in &zeros[..zeros_i] {
+        current[*i] = true;
 
-            for yp1 in 1..size + 1 {
-                let to_left = (current[yp1] << 1) & maps[layer][yp1];
-                let to_right = (current[yp1] >> 1) & maps[layer][yp1];
-                let to_down = current[yp1 - 1] & maps[layer][yp1];
-                let to_up = current[yp1 + 1] & maps[layer][yp1];
+        for layer in 0..8 {
+            let (len, positions) = positions[layer];
 
-                let to_left_and_right = to_left | to_right;
-                let to_left_down_and_right = to_left_and_right | to_down;
-
-                next[yp1] = to_left_down_and_right | to_up;
+            for i in &positions[..len] {
+                let i = *i;
+                next[i] = current[i - 1]
+                    || current[i + 1]
+                    || current[i + MAX_SIZE]
+                    || current[i - MAX_SIZE];
             }
 
             std::mem::swap(&mut current, &mut next);
-            next.fill(0);
+            next.fill(false);
         }
 
-        for yp1 in 1..size + 1 {
-            sum += current[yp1].count_ones();
+        let (len9, positions9) = positions[8];
+        for i in &positions9[..len9] {
+            if current[i - 1] || current[i + 1] || current[i + MAX_SIZE] || current[i - MAX_SIZE] {
+                sum += 1;
+            }
         }
-        current.fill(0);
+        current.fill(false);
     }
 
     sum
@@ -90,8 +80,6 @@ pub fn part2(s: &str) -> u16 {
 
 #[target_feature(enable = "avx2,bmi1,bmi2,cmpxchg16b,lzcnt,movbe,popcnt")]
 unsafe fn part2_inner(s: &str) -> u16 {
-    const BIG_SIZE: usize = MAX_SIZE * (MAX_SIZE + 2);
-
     let s = s.as_bytes();
 
     let mut positions = [(0usize, [0usize; MAX_SIZE * MAX_SIZE / 9]); 9];
