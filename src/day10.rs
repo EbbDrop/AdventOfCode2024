@@ -1,3 +1,5 @@
+use std::arch::x86_64::*;
+
 use aoc_runner_derive::aoc;
 
 #[cfg(not(test))]
@@ -20,17 +22,25 @@ unsafe fn part1_inner(s: &str) -> u32 {
 
     let mut zeros = [(0, 0); SIZE * SIZE];
     let mut zeros_i = 0;
-    // TODO: simd
-    for (y, l) in s.split(|n| *n == b'\n').enumerate() {
-        for (x, c) in l.iter().enumerate() {
-            let layer = *c - b'0';
-            if layer == 0 {
-                zeros[zeros_i] = (x, y);
-                zeros_i += 1;
-            } else {
-                maps[layer as usize - 1][y + 1] |= 1 << x;
-            }
+
+    let mut y = 0;
+    let mut x = 0;
+    for i in 0..s.len() {
+        let c = s[i];
+        if c == b'\n' {
+            y += 1;
+            x = 0;
+            continue;
         }
+
+        let layer = c - b'0';
+        if layer == 0 {
+            zeros[zeros_i] = (x, y);
+            zeros_i += 1;
+        } else {
+            maps[layer as usize - 1][y + 1] |= 1 << x;
+        }
+        x += 1;
     }
 
     let mut next = &mut [0u64; SIZE + 2];
@@ -92,17 +102,25 @@ unsafe fn part2_inner(s: &str) -> u16 {
     let mut positions = [(0usize, [0usize; SIZE * SIZE]); 9];
     let mut first_map = [0u16; BIG_SIZE];
 
-    for (y, l) in s.split(|n| *n == b'\n').enumerate() {
-        for (x, c) in l.iter().enumerate() {
-            let layer = (*c - b'0') as usize;
-            if layer == 0 {
-                first_map[y * SIZE1 + x + SIZE1] = 1;
-            } else {
-                let len = positions[layer - 1].0;
-                positions[layer - 1].1[len] = y * SIZE1 + x + SIZE1;
-                positions[layer - 1].0 += 1;
-            }
+    let mut y = 0;
+    let mut x = 0;
+    for i in 0..s.len() {
+        let c = s[i];
+        if c == b'\n' {
+            y += 1;
+            x = 0;
+            continue;
         }
+
+        let layer = (c - b'0') as usize;
+        if layer == 0 {
+            first_map[y * SIZE1 + x + SIZE1] = 1;
+        } else {
+            let len = positions[layer - 1].0;
+            positions[layer - 1].1[len] = y * SIZE1 + x + SIZE1;
+            positions[layer - 1].0 += 1;
+        }
+        x += 1;
     }
 
     let mut sum = 0;
