@@ -2,7 +2,7 @@ use fxhash::FxHashMap as HashMap;
 
 use aoc_runner_derive::aoc;
 
-const LUT_SIZE: u64 = 2u64.pow(13);
+const LUT_SIZE: u64 = 2u64.pow(12);
 
 const LUT: [u64; LUT_SIZE as usize] = const {
     let mut lut = [0; LUT_SIZE as usize];
