@@ -156,7 +156,7 @@ fn aos(start_num: u64, num_blinks: u64, cach: &mut HashMap<(u64, u64), u64>) -> 
     let mut stack_i = 0;
 
     loop {
-        let mut top = unsafe { stack[stack_i].assume_init_read() };
+        let mut top = unsafe { stack.get_unchecked(stack_i).assume_init_read() };
         let top_i = stack_i;
 
         loop {
@@ -190,7 +190,8 @@ fn aos(start_num: u64, num_blinks: u64, cach: &mut HashMap<(u64, u64), u64>) -> 
                     if top.parrent_stone == usize::MAX {
                         return r;
                     }
-                    unsafe { stack[top.parrent_stone].assume_init_mut() }.stones += r;
+                    unsafe { stack.get_unchecked_mut(top.parrent_stone).assume_init_mut() }
+                        .stones += r;
                     stack_i -= 1;
                 } else {
                     stack[top_i].write(top);
@@ -204,7 +205,7 @@ fn aos(start_num: u64, num_blinks: u64, cach: &mut HashMap<(u64, u64), u64>) -> 
                 }
 
                 stack_i += 1;
-                stack[stack_i].write(Stack {
+                unsafe { stack.get_unchecked_mut(stack_i) }.write(Stack {
                     stones: 1,
                     num: new_num,
                     blinks_left: top.blinks_left - 1,
