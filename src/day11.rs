@@ -143,14 +143,16 @@ fn aos(start_num: u64, num_blinks: u64, cach: &mut HashMap<(u64, u64), u64>) -> 
         num: u64,
         blinks_left: u64,
         parrent_stone: usize,
+        done: bool,
         cach_entry: (u64, u64),
     }
     let mut stack = [const { MaybeUninit::uninit() }; 1024];
     stack[0].write(Stack {
-        stones: 1,
+        stones: 0,
         num: start_num,
         blinks_left: num_blinks,
         parrent_stone: usize::MAX,
+        done: false,
         cach_entry: (start_num, num_blinks),
     });
     let mut stack_i = 0;
@@ -159,118 +161,116 @@ fn aos(start_num: u64, num_blinks: u64, cach: &mut HashMap<(u64, u64), u64>) -> 
         let mut top = unsafe { stack.get_unchecked(stack_i).assume_init_read() };
         let top_i = stack_i;
 
-        loop {
-            if top.blinks_left == 1 {
-                if top_i == stack_i {
-                    let r = top.stones
-                        + match top.num {
-                            0..=9 => 0,
-                            10..=99 => 1,
-                            100..=999 => 0,
-                            1000..=9999 => 1,
-                            10000..=99999 => 0,
-                            100000..=999999 => 1,
-                            1000000..=9999999 => 0,
-                            10000000..=99999999 => 1,
-                            100000000..=999999999 => 0,
-                            1000000000..=9999999999 => 1,
-                            10000000000..=99999999999 => 0,
-                            100000000000..=999999999999 => 1,
-                            1000000000000..=9999999999999 => 0,
-                            10000000000000..=99999999999999 => 1,
-                            100000000000000..=999999999999999 => 0,
-                            1000000000000000..=9999999999999999 => 1,
-                            10000000000000000..=99999999999999999 => 0,
-                            100000000000000000..=999999999999999999 => 1,
-                            1000000000000000000..=9999999999999999999 => 0,
-                            10000000000000000000..=u64::MAX => 1,
-                        };
-                    cach.insert(top.cach_entry, r);
+        if top.done {
+            let r = top.stones;
+            cach.insert(top.cach_entry, r);
 
-                    if top.parrent_stone == usize::MAX {
-                        return r;
-                    }
-                    unsafe { stack.get_unchecked_mut(top.parrent_stone).assume_init_mut() }
-                        .stones += r;
-                    stack_i -= 1;
-                } else {
-                    stack[top_i].write(top);
-                }
-                break;
+            if top.parrent_stone == usize::MAX {
+                return r;
             }
-
-            let mut insert_stone = |new_num| {
-                if let Some(r) = cach.get(&(new_num, top.blinks_left - 1)) {
-                    return *r;
-                }
-
-                stack_i += 1;
-                unsafe { stack.get_unchecked_mut(stack_i) }.write(Stack {
-                    stones: 1,
-                    num: new_num,
-                    blinks_left: top.blinks_left - 1,
-                    parrent_stone: top_i,
-                    cach_entry: (new_num, top.blinks_left - 1),
-                });
-                return 0;
-            };
-
-            match top.num {
-                0 => top.num = 1,
-                1..=9 => top.num *= 2024,
-                10..=99 => {
-                    let r = LUT[top.num as usize];
-                    top.num = r & (2u64.pow(32) - 1);
-                    top.stones += insert_stone((r >> 32) & (2u64.pow(32) - 1));
-                }
-                100..=999 => top.num *= 2024,
-                1000..=9999 => {
-                    top.stones += insert_stone(top.num % 100);
-                    top.num = top.num / 100;
-                }
-                10000..=99999 => top.num *= 2024,
-                100000..=999999 => {
-                    top.stones += insert_stone(top.num % 1000);
-                    top.num = top.num / 1000;
-                }
-                1000000..=9999999 => top.num *= 2024,
-                10000000..=99999999 => {
-                    top.stones += insert_stone(top.num % 10000);
-                    top.num = top.num / 10000;
-                }
-                100000000..=999999999 => top.num *= 2024,
-                1000000000..=9999999999 => {
-                    top.stones += insert_stone(top.num % 100000);
-                    top.num = top.num / 100000;
-                }
-                10000000000..=99999999999 => top.num *= 2024,
-                100000000000..=999999999999 => {
-                    top.stones += insert_stone(top.num % 1000000);
-                    top.num = top.num / 1000000;
-                }
-                1000000000000..=9999999999999 => top.num *= 2024,
-                10000000000000..=99999999999999 => {
-                    top.stones += insert_stone(top.num % 10000000);
-                    top.num = top.num / 10000000;
-                }
-                100000000000000..=999999999999999 => top.num *= 2024,
-                1000000000000000..=9999999999999999 => {
-                    top.stones += insert_stone(top.num % 100000000);
-                    top.num = top.num / 100000000;
-                }
-                10000000000000000..=99999999999999999 => top.num *= 2024,
-                100000000000000000..=999999999999999999 => {
-                    top.stones += insert_stone(top.num % 1000000000);
-                    top.num = top.num / 1000000000;
-                }
-                1000000000000000000..=9999999999999999999 => top.num *= 2024,
-                10000000000000000000..=u64::MAX => {
-                    top.stones += insert_stone(top.num % 10000000000);
-                    top.num = top.num / 10000000000;
-                }
-            }
-            top.blinks_left -= 1;
+            unsafe { stack.get_unchecked_mut(top.parrent_stone).assume_init_mut() }.stones += r;
+            stack_i -= 1;
+            continue;
         }
+
+        let mut insert_stone = |new_num| {
+            if top.blinks_left - 1 == 1 {
+                return match new_num {
+                    0..=9 => 1,
+                    10..=99 => 2,
+                    100..=999 => 1,
+                    1000..=9999 => 2,
+                    10000..=99999 => 1,
+                    100000..=999999 => 2,
+                    1000000..=9999999 => 1,
+                    10000000..=99999999 => 2,
+                    100000000..=999999999 => 1,
+                    1000000000..=9999999999 => 2,
+                    10000000000..=99999999999 => 1,
+                    100000000000..=999999999999 => 2,
+                    1000000000000..=9999999999999 => 1,
+                    10000000000000..=99999999999999 => 2,
+                    100000000000000..=999999999999999 => 1,
+                    1000000000000000..=9999999999999999 => 2,
+                    10000000000000000..=99999999999999999 => 1,
+                    100000000000000000..=999999999999999999 => 2,
+                    1000000000000000000..=9999999999999999999 => 1,
+                    10000000000000000000..=u64::MAX => 2,
+                };
+            }
+            if let Some(r) = cach.get(&(new_num, top.blinks_left - 1)) {
+                return *r;
+            }
+
+            stack_i += 1;
+            unsafe { stack.get_unchecked_mut(stack_i) }.write(Stack {
+                stones: 0,
+                num: new_num,
+                blinks_left: top.blinks_left - 1,
+                parrent_stone: top_i,
+                done: false,
+                cach_entry: (new_num, top.blinks_left - 1),
+            });
+            return 0;
+        };
+
+        match top.num {
+            0 => top.stones += insert_stone(1),
+            1..=9 => top.stones += insert_stone(top.num * 2024),
+            10..=99 => {
+                let r = LUT[top.num as usize];
+                top.stones += insert_stone(r & (2u64.pow(32) - 1));
+                top.stones += insert_stone((r >> 32) & (2u64.pow(32) - 1));
+            }
+            100..=999 => top.stones += insert_stone(top.num * 2024),
+            1000..=9999 => {
+                top.stones += insert_stone(top.num % 100);
+                top.stones += insert_stone(top.num / 100);
+            }
+            10000..=99999 => top.stones += insert_stone(top.num * 2024),
+            100000..=999999 => {
+                top.stones += insert_stone(top.num % 1000);
+                top.stones += insert_stone(top.num / 1000);
+            }
+            1000000..=9999999 => top.stones += insert_stone(top.num * 2024),
+            10000000..=99999999 => {
+                top.stones += insert_stone(top.num % 10000);
+                top.stones += insert_stone(top.num / 10000);
+            }
+            100000000..=999999999 => top.stones += insert_stone(top.num * 2024),
+            1000000000..=9999999999 => {
+                top.stones += insert_stone(top.num % 100000);
+                top.stones += insert_stone(top.num / 100000);
+            }
+            10000000000..=99999999999 => top.stones += insert_stone(top.num * 2024),
+            100000000000..=999999999999 => {
+                top.stones += insert_stone(top.num % 1000000);
+                top.stones += insert_stone(top.num / 1000000);
+            }
+            1000000000000..=9999999999999 => top.stones += insert_stone(top.num * 2024),
+            10000000000000..=99999999999999 => {
+                top.stones += insert_stone(top.num % 10000000);
+                top.stones += insert_stone(top.num / 10000000);
+            }
+            100000000000000..=999999999999999 => top.stones += insert_stone(top.num * 2024),
+            1000000000000000..=9999999999999999 => {
+                top.stones += insert_stone(top.num % 100000000);
+                top.stones += insert_stone(top.num / 100000000);
+            }
+            10000000000000000..=99999999999999999 => top.stones += insert_stone(top.num * 2024),
+            100000000000000000..=999999999999999999 => {
+                top.stones += insert_stone(top.num % 1000000000);
+                top.stones += insert_stone(top.num / 1000000000);
+            }
+            1000000000000000000..=9999999999999999999 => top.stones += insert_stone(top.num * 2024),
+            10000000000000000000..=u64::MAX => {
+                top.stones += insert_stone(top.num % 10000000000);
+                top.stones += insert_stone(top.num / 10000000000);
+            }
+        }
+        top.blinks_left -= 1;
+        top.done = true;
+        stack[top_i].write(top);
     }
 }
 
