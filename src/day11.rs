@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use fxhash::FxHashMap as HashMap;
 
 use aoc_runner_derive::aoc;
 
@@ -49,7 +49,7 @@ fn inner(s: &str, num_blinks: u64) -> u64 {
 
     let mut num = 0;
 
-    let mut cach = HashMap::new();
+    let mut cach = HashMap::default();
 
     for c in s {
         if c.is_ascii_digit() {
