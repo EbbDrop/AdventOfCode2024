@@ -2,7 +2,7 @@ use fxhash::FxHashMap as HashMap;
 
 use aoc_runner_derive::aoc;
 
-const LUT_SIZE: u64 = 10000;
+const LUT_SIZE: u64 = 100;
 
 const LUT: [u64; LUT_SIZE as usize] = const {
     let mut lut = [0; LUT_SIZE as usize];
@@ -49,18 +49,18 @@ fn amount_of_stones(num: u64, blinks_left: u64, cach: &mut HashMap<(u64, u64), u
     if let Some(r) = cach.get(&(num, blinks_left)) {
         return *r;
     }
-    const { assert!(LUT_SIZE == 10000) };
+    const { assert!(LUT_SIZE == 100) };
     let r = match num {
         0 => amount_of_stones(1, blinks_left - 1, cach),
         1..=9 => amount_of_stones(num * 2024, blinks_left - 1, cach),
         10..=99 => {
-            // let r = LUT[num as usize];
-            // println!(
-            //     "{} -> {} and {}",
-            //     num,
-            //     r & (2u64.pow(32) - 1),
-            //     (r >> 32) & (2u64.pow(32) - 1)
-            // );
+            let r = LUT[num as usize];
+            println!(
+                "{} -> {} and {}",
+                num,
+                r & (2u64.pow(32) - 1),
+                (r >> 32) & (2u64.pow(32) - 1)
+            );
             // amount_of_stones(r & (2u64.pow(32) - 1), blinks_left - 1, cach)
             //     + amount_of_stones((r >> 32) & (2u64.pow(32) - 1), blinks_left - 1, cach)
             amount_of_stones(num / 10, blinks_left - 1, cach)
@@ -70,9 +70,6 @@ fn amount_of_stones(num: u64, blinks_left: u64, cach: &mut HashMap<(u64, u64), u
         1000..=9999 => {
             amount_of_stones(num / 100, blinks_left - 1, cach)
                 + amount_of_stones(num % 100, blinks_left - 1, cach)
-            // let r = LUT[num as usize];
-            // amount_of_stones(r & (2u64.pow(32) - 1), blinks_left - 1, cach)
-            //     + amount_of_stones((r >> 32) & (2u64.pow(32) - 1), blinks_left - 1, cach)
         }
         10000..=99999 => amount_of_stones(num * 2024, blinks_left - 1, cach),
         100000..=999999 => {
