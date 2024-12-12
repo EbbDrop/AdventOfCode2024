@@ -99,24 +99,35 @@ fn amount_of_stones(num: u64, blinks_left: u64, cach: &mut HashMap<(u64, u64), u
 
 #[repr(C, align(8))]
 #[derive(Clone, Copy)]
-struct AlignSlice([u8; 8_000_000]);
+struct AlignSlice([u8; 16_000_000]);
 
 unsafe impl Zeroable for AlignSlice {}
 unsafe impl Pod for AlignSlice {}
+
+fn array_of_default<T: Default, const N: usize>() -> Box<[T; N]> {
+    let mut vec = vec![];
+    vec.resize_with(N, T::default);
+    let boxed: Box<[T; N]> = match vec.into_boxed_slice().try_into() {
+        Ok(boxed) => boxed,
+        Err(_) => unreachable!(),
+    };
+
+    boxed
+}
 
 fn main() {
     // Never rerun
     println!("cargo::rerun-if-changed=build.rs");
 
-    let mut big_lut75 = Box::new([0u64; 1_000_000]);
-    let mut big_lut25 = Box::new([0u64; 1_000_000]);
+    let mut big_lut75: Box<[u64; 2_000_000]> = array_of_default();
+    let mut big_lut25: Box<[u64; 2_000_000]> = array_of_default();
 
     let mut cach = HashMap::default();
-    for i in 0..1_000_000u64 {
+    for i in 0..2_000_000u64 {
         big_lut25[i as usize] = amount_of_stones(i, 25, &mut cach);
     }
     let mut cach = HashMap::default();
-    for i in 0..1_000_000u64 {
+    for i in 0..2_000_000u64 {
         big_lut75[i as usize] = amount_of_stones(i, 75, &mut cach);
     }
 
