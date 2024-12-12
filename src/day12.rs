@@ -96,16 +96,6 @@ fn part1_inner(s: &str) -> u32 {
     //     println!("");
     // }
 
-    fun_name(next_id, merges, area, perimiter)
-}
-
-#[inline(never)]
-fn fun_name(
-    next_id: u16,
-    merges: [u16; 2048],
-    mut area: [u16; 2048],
-    mut perimiter: [u16; 2048],
-) -> u32 {
     let mut sum = 0;
 
     for id in 1..next_id {
