@@ -55,16 +55,8 @@ fn amount_of_stones(num: u64, blinks_left: u64, cach: &mut HashMap<(u64, u64), u
         1..=9 => amount_of_stones(num * 2024, blinks_left - 1, cach),
         10..=99 => {
             let r = LUT[num as usize];
-            println!(
-                "{} -> {} and {}",
-                num,
-                r & (2u64.pow(32) - 1),
-                (r >> 32) & (2u64.pow(32) - 1)
-            );
-            // amount_of_stones(r & (2u64.pow(32) - 1), blinks_left - 1, cach)
-            //     + amount_of_stones((r >> 32) & (2u64.pow(32) - 1), blinks_left - 1, cach)
-            amount_of_stones(num / 10, blinks_left - 1, cach)
-                + amount_of_stones(num % 10, blinks_left - 1, cach)
+            amount_of_stones(r & (2u64.pow(32) - 1), blinks_left - 1, cach)
+                + amount_of_stones((r >> 32) & (2u64.pow(32) - 1), blinks_left - 1, cach)
         }
         100..=999 => amount_of_stones(num * 2024, blinks_left - 1, cach),
         1000..=9999 => {
@@ -114,41 +106,8 @@ fn amount_of_stones(num: u64, blinks_left: u64, cach: &mut HashMap<(u64, u64), u
         10000000000000000000..=u64::MAX => {
             amount_of_stones(num / 10000000000, blinks_left - 1, cach)
                 + amount_of_stones(num % 10000000000, blinks_left - 1, cach)
-        } // _ => {
-          //     if num.ilog10() % 2 == 1 {
-          //         let num_digits = num.ilog10() + 1;
-          //         let tens = 10u64.pow(num_digits / 2);
-
-          //         amount_of_stones(num / tens, blinks_left - 1, cach)
-          //             + amount_of_stones(num % tens, blinks_left - 1, cach)
-          //     } else {
-          //         amount_of_stones(num * 2024, blinks_left - 1, cach)
-          //     }
-          // }
+        }
     };
-    // let r = if num < LUT_SIZE {
-    //     let r = LUT[num as usize];
-    //     if r & 1 << 63 != 0 {
-    //         // println!(
-    //         //     "{num} -> {} and {}",
-    //         //     r & (2u64.pow(32) - 1),
-    //         //     (r >> 32) & (2u64.pow(31) - 1)
-    //         // );
-    //         amount_of_stones(r & (2u64.pow(32) - 1), blinks_left - 1, cach)
-    //             + amount_of_stones((r >> 32) & (2u64.pow(31) - 1), blinks_left - 1, cach)
-    //     } else {
-    //         amount_of_stones(r, blinks_left - 1, cach)
-    //     }
-    // } else if num <= 99999 {
-    //     amount_of_stones(num * 2024, blinks_left - 1, cach)
-    //     } else if
-    //     let num_digits = num.ilog10() + 1;
-    //     let tens = 10u64.pow(num_digits / 2);
-
-    //     amount_of_stones(num / tens, blinks_left - 1, cach)
-    //         + amount_of_stones(num % tens, blinks_left - 1, cach)
-    // } else {
-    // };
     cach.insert((num, blinks_left), r);
     r
 }
