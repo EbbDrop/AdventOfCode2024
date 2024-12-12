@@ -4,15 +4,15 @@ use fxhash::FxHashMap as HashMap;
 
 #[repr(C, align(8))]
 #[derive(Clone, Copy)]
-struct AlignSlice([u8; 16_000_000]);
+struct AlignSlice([u8; 80_000_000]);
 
 unsafe impl Zeroable for AlignSlice {}
 unsafe impl Pod for AlignSlice {}
 
 static BIG_LUT25: &AlignSlice =
-    &AlignSlice(*include_bytes!(concat!(env!("OUT_DIR"), "/big_lut25.bin")));
+    &AlignSlice(*include_bytes!(concat!("../big_lut25.bin")));
 static BIG_LUT75: &AlignSlice =
-    &AlignSlice(*include_bytes!(concat!(env!("OUT_DIR"), "/big_lut75.bin")));
+    &AlignSlice(*include_bytes!(concat!("../big_lut75.bin")));
 
 const LUT_SIZE: u64 = 100;
 
@@ -110,7 +110,7 @@ fn amount_of_stones(num: u64, blinks_left: u64, cach: &mut HashMap<(u64, u64), u
 
 #[aoc(day11, part1)]
 pub fn part1(s: &str) -> u64 {
-    let big_lut: &[u64; 2_000_000] = cast_ref(BIG_LUT25);
+    let big_lut: &[u64; 10_000_000] = cast_ref(BIG_LUT25);
 
     let s = s.as_bytes();
 
@@ -138,7 +138,7 @@ pub fn part1(s: &str) -> u64 {
 
 #[aoc(day11, part2)]
 pub fn part2(s: &str) -> u64 {
-    let big_lut: &[u64; 2_000_000] = cast_ref(BIG_LUT75);
+    let big_lut: &[u64; 10_000_000] = cast_ref(BIG_LUT75);
 
     let s = s.as_bytes();
 
