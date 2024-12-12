@@ -1,4 +1,4 @@
-use fxhash::FxHashMap as HashMap;
+use fxhash::{FxBuildHasher, FxHashMap as HashMap};
 
 use aoc_runner_derive::aoc;
 
@@ -30,7 +30,7 @@ const LUT: [u64; LUT_SIZE as usize] = const {
 pub fn part1(s: &str) -> u64 {
     #[expect(unused_unsafe)]
     unsafe {
-        inner(s, 25)
+        inner(s, 25, 4000)
     }
 }
 
@@ -38,7 +38,7 @@ pub fn part1(s: &str) -> u64 {
 pub fn part2(s: &str) -> u64 {
     #[expect(unused_unsafe)]
     unsafe {
-        inner(s, 75)
+        inner(s, 75, 230000)
     }
 }
 
@@ -114,14 +114,14 @@ fn amount_of_stones(num: u64, blinks_left: u64, cach: &mut HashMap<(u64, u64), u
 
 // #[target_feature(enable = "avx2,bmi1,bmi2,cmpxchg16b,lzcnt,movbe,popcnt")]
 #[inline(always)]
-fn inner(s: &str, num_blinks: u64) -> u64 {
+fn inner(s: &str, num_blinks: u64, cach_cap: usize) -> u64 {
     let s = s.as_bytes();
 
     let mut sum = 0;
 
     let mut num = 0;
 
-    let mut cach = HashMap::default();
+    let mut cach = HashMap::with_capacity_and_hasher(cach_cap, FxBuildHasher::default());
 
     for c in s {
         if c.is_ascii_digit() {
@@ -132,6 +132,8 @@ fn inner(s: &str, num_blinks: u64) -> u64 {
             num = 0;
         }
     }
+
+    println!("{}", cach.capacity());
 
     // let mut sums = [0; 1000];
     // for (num, _) in cach.keys() {
