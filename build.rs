@@ -1,18 +1,7 @@
-use aoc_runner_derive::aoc;
-use bytemuck::{cast_ref, Pod, Zeroable};
+use std::{env, fs::File, io::Write, path::PathBuf};
+
+use bytemuck::{cast_box, Pod, Zeroable};
 use fxhash::FxHashMap as HashMap;
-
-#[repr(C, align(8))]
-#[derive(Clone, Copy)]
-struct AlignSlice([u8; 8_000_000]);
-
-unsafe impl Zeroable for AlignSlice {}
-unsafe impl Pod for AlignSlice {}
-
-const BIG_LUT25: &AlignSlice =
-    &AlignSlice(*include_bytes!(concat!(env!("OUT_DIR"), "/big_lut25.bin")));
-const BIG_LUT75: &AlignSlice =
-    &AlignSlice(*include_bytes!(concat!(env!("OUT_DIR"), "/big_lut75.bin")));
 
 const LUT_SIZE: u64 = 100;
 
@@ -108,70 +97,40 @@ fn amount_of_stones(num: u64, blinks_left: u64, cach: &mut HashMap<(u64, u64), u
     r
 }
 
-#[aoc(day11, part1)]
-pub fn part1(s: &str) -> u64 {
-    let big_lut: &[u64; 1_000_000] = cast_ref(BIG_LUT25);
+#[repr(C, align(8))]
+#[derive(Clone, Copy)]
+struct AlignSlice([u8; 8_000_000]);
 
-    let s = s.as_bytes();
+unsafe impl Zeroable for AlignSlice {}
+unsafe impl Pod for AlignSlice {}
 
-    let mut sum = 0;
+fn main() {
+    // Never rerun
+    println!("cargo::rerun-if-changed=build.rs");
 
-    let mut num = 0;
-
-    let mut cach = HashMap::default();
-    for c in s {
-        if c.is_ascii_digit() {
-            num *= 10;
-            num += (c - b'0') as u64;
-        } else {
-            if (num as usize) < big_lut.len() {
-                sum += big_lut[num as usize];
-            } else {
-                sum += amount_of_stones(num, 25, &mut cach);
-            }
-            num = 0;
-        }
-    }
-
-    sum
-}
-
-#[aoc(day11, part2)]
-pub fn part2(s: &str) -> u64 {
-    let big_lut: &[u64; 1_000_000] = cast_ref(BIG_LUT75);
-
-    let s = s.as_bytes();
-
-    let mut sum = 0;
-
-    let mut num = 0;
+    let mut big_lut75 = Box::new([0u64; 1_000_000]);
+    let mut big_lut25 = Box::new([0u64; 1_000_000]);
 
     let mut cach = HashMap::default();
-    for c in s {
-        if c.is_ascii_digit() {
-            num *= 10;
-            num += (c - b'0') as u64;
-        } else {
-            if (num as usize) < big_lut.len() {
-                sum += big_lut[num as usize];
-            } else {
-                sum += amount_of_stones(num, 75, &mut cach);
-            }
-            num = 0;
-        }
+    for i in 0..1_000_000u64 {
+        big_lut25[i as usize] = amount_of_stones(i, 25, &mut cach);
+    }
+    let mut cach = HashMap::default();
+    for i in 0..1_000_000u64 {
+        big_lut75[i as usize] = amount_of_stones(i, 75, &mut cach);
     }
 
-    sum
-}
+    let out_dir = PathBuf::from(env::var("OUT_DIR").unwrap());
 
-#[cfg(test)]
-mod tests {
-    use super::*;
+    let out_file75 = out_dir.join("big_lut75.bin");
+    let out_file25 = out_dir.join("big_lut25.bin");
 
-    const EXAMPLE: &str = "125 17\n";
+    let mut file75 = File::create(out_file75).unwrap();
+    let mut file25 = File::create(out_file25).unwrap();
 
-    #[test]
-    fn example_part1() {
-        assert_eq!(part1(EXAMPLE), 55312);
-    }
+    let big_lut75: Box<AlignSlice> = cast_box(big_lut75);
+    let big_lut25: Box<AlignSlice> = cast_box(big_lut25);
+
+    file75.write_all(big_lut75.0.as_slice()).unwrap();
+    file25.write_all(big_lut25.0.as_slice()).unwrap();
 }
