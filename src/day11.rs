@@ -2,6 +2,30 @@ use fxhash::FxHashMap as HashMap;
 
 use aoc_runner_derive::aoc;
 
+const LUT_SIZE: u64 = 2u64.pow(13);
+
+const LUT: [u64; LUT_SIZE as usize] = const {
+    let mut lut = [0; LUT_SIZE as usize];
+
+    let mut i = 0u64;
+    while i < LUT_SIZE {
+        let r = if i == 0 {
+            1
+        } else if i.ilog10() % 2 == 1 {
+            let i_digits = i.ilog10() + 1;
+            let tens = 10u64.pow(i_digits / 2);
+
+            (i / tens) << 32 | (i % tens) | 1 << 63
+        } else {
+            i * 2024
+        };
+        lut[i as usize] = r;
+        i += 1;
+    }
+
+    lut
+};
+
 #[aoc(day11, part1)]
 pub fn part1(s: &str) -> u64 {
     #[expect(unused_unsafe)]
@@ -25,8 +49,19 @@ fn amount_of_stones(num: u64, blinks_left: u64, cach: &mut HashMap<(u64, u64), u
     if let Some(r) = cach.get(&(num, blinks_left)) {
         return *r;
     }
-    let r = if num == 0 {
-        amount_of_stones(1, blinks_left - 1, cach)
+    let r = if num < LUT_SIZE {
+        let r = LUT[num as usize];
+        if r & 1 << 63 != 0 {
+            // println!(
+            //     "{num} -> {} and {}",
+            //     r & (2u64.pow(32) - 1),
+            //     (r >> 32) & (2u64.pow(31) - 1)
+            // );
+            amount_of_stones(r & (2u64.pow(32) - 1), blinks_left - 1, cach)
+                + amount_of_stones((r >> 32) & (2u64.pow(31) - 1), blinks_left - 1, cach)
+        } else {
+            amount_of_stones(r, blinks_left - 1, cach)
+        }
     } else if num.ilog10() % 2 == 1 {
         let num_digits = num.ilog10() + 1;
         let tens = 10u64.pow(num_digits / 2);
@@ -60,6 +95,14 @@ fn inner(s: &str, num_blinks: u64) -> u64 {
             num = 0;
         }
     }
+
+    // let mut sums = [0; 1000];
+    // for (num, _) in cach.keys() {
+    //     sums.get_mut(*num as usize).map(|v| *v += 1);
+    // }
+    // for (i, s) in sums.iter().enumerate() {
+    //     println!("{i} -> {s}");
+    // }
 
     sum
 }
