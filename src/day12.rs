@@ -19,7 +19,7 @@ pub fn part1(s: &str) -> u32 {
 fn part1_inner(s: &str) -> u32 {
     let s = s.as_bytes();
 
-    let mut id_map = [0u16; SIZE1 * SIZE1];
+    let mut id_map = [0u16; SIZE * SIZE1];
     let mut next_id = 1;
 
     let mut merges = const {
@@ -35,36 +35,40 @@ fn part1_inner(s: &str) -> u32 {
     let mut perimiter = [0u16; 2048];
 
     for i in 0..SIZE * SIZE1 {
-        let c = s.get(i).cloned().unwrap_or(b'\n');
-        let prev = s.get(i.wrapping_sub(1)).cloned().unwrap_or(b'\n');
-        let up = s.get(i.wrapping_sub(SIZE1)).cloned().unwrap_or(b'\n');
-        let prev_id = unsafe { merges[*id_map.get_unchecked(i + SIZE1 - 1) as usize] };
-        let up_id = unsafe { merges[*id_map.get_unchecked(i) as usize] };
+        let c = unsafe { *s.get_unchecked(i) };
+        let prev = unsafe { *s.get_unchecked(i.wrapping_sub(1).min(SIZE * SIZE1 - 1)) };
+        let up = unsafe { *s.get_unchecked(i.wrapping_sub(SIZE1).min(SIZE * SIZE1 - 1)) };
+        let prev_id = unsafe {
+            merges[*id_map.get_unchecked(i.wrapping_sub(1).min(SIZE * SIZE1 - 1)) as usize]
+        };
+        let up_id = unsafe {
+            merges[*id_map.get_unchecked(i.wrapping_sub(SIZE1).min(SIZE * SIZE1 - 1)) as usize]
+        };
 
         if prev == c && c == up && prev_id == up_id {
-            id_map[i + SIZE1] = prev_id;
+            id_map[i] = prev_id;
 
             area[prev_id as usize] += 1;
         } else if prev == c && c == up {
-            id_map[i + SIZE1] = prev_id;
+            id_map[i] = prev_id;
 
             merges[up_id as usize] = prev_id;
 
             area[prev_id as usize] += 1;
         } else if prev == c {
-            id_map[i + SIZE1] = prev_id;
+            id_map[i] = prev_id;
 
             area[prev_id as usize] += 1;
             perimiter[prev_id as usize] += 1;
             perimiter[up_id as usize] += 1;
         } else if up == c {
-            id_map[i + SIZE1] = up_id;
+            id_map[i] = up_id;
 
             area[up_id as usize] += 1;
             perimiter[prev_id as usize] += 1;
             perimiter[up_id as usize] += 1;
         } else {
-            id_map[i + SIZE1] = next_id;
+            id_map[i] = next_id;
 
             area[next_id as usize] += 1;
             perimiter[next_id as usize] += 2;
@@ -75,7 +79,7 @@ fn part1_inner(s: &str) -> u32 {
         }
     }
     for x in 0..SIZE {
-        perimiter[id_map[SIZE * SIZE1 + x] as usize] += 1;
+        perimiter[id_map[(SIZE - 1) * SIZE1 + x] as usize] += 1;
     }
 
     // for id in 0..next_id {
