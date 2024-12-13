@@ -60,6 +60,9 @@ unsafe fn inner_part1(s: &str) -> u64 {
         let numerator = x * by - y * bx;
         let denominator = ax * by - ay * bx;
         std::hint::assert_unchecked(denominator != 0);
+        std::hint::assert_unchecked(numerator != i32::MIN);
+        std::hint::assert_unchecked(by != 0);
+        std::hint::assert_unchecked(by != -1);
 
         if numerator % denominator != 0 {
             continue;
@@ -128,6 +131,9 @@ unsafe fn inner_part2(s: &str) -> u64 {
         let numerator = x * by - y * bx;
         let denominator = ax * by - ay * bx;
         std::hint::assert_unchecked(denominator != 0);
+        std::hint::assert_unchecked(numerator != i64::MIN);
+        std::hint::assert_unchecked(by != 0);
+        std::hint::assert_unchecked(by != -1);
 
         if numerator % denominator != 0 {
             continue;
