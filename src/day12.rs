@@ -347,10 +347,10 @@ MMMISSJEEE
     // ABBAAA
     // AAAAAA";
 
-    // #[test]
-    // fn example_part1() {
-    //     assert_eq!(part1(EXAMPLE), 1930);
-    // }
+    #[test]
+    fn example_part1() {
+        assert_eq!(part1(EXAMPLE), 1930);
+    }
 
     #[test]
     fn example_part2() {
