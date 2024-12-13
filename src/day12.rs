@@ -35,30 +35,21 @@ fn part1_inner(s: &str) -> u32 {
     let mut perimiter = [0u16; 2048];
 
     for i in 0..SIZE * SIZE1 {
-        let c = s.get(i).cloned().unwrap_or(b'\n');
-        let prev = s.get(i.wrapping_sub(1)).cloned().unwrap_or(b'\n');
-        let up = s.get(i.wrapping_sub(SIZE1)).cloned().unwrap_or(b'\n');
-        let prev_id = merges[id_map.get(i.wrapping_sub(1)).cloned().unwrap_or(0) as usize];
-        let up_id = merges[id_map.get(i.wrapping_sub(SIZE1)).cloned().unwrap_or(0) as usize];
+        let (c, prev, up, prev_id, up_id) = read_values(s, i, &merges, &id_map);
 
-        let prev_eq_c = prev == c;
-        let up_eq_c = up == c;
-        let all_eq = prev_eq_c && up_eq_c;
-
-        let new_id = prev_id * prev_eq_c as u16 + up_id * up_eq_c as u16 - up_id * all_eq as u16
-            + next_id * (!prev_eq_c && !up_eq_c) as u16;
-        id_map[i] = new_id;
-        area[new_id as usize] += 1;
-
-        next_id += (!prev_eq_c && !up_eq_c) as u16;
-
-        perimiter[new_id as usize] += 2 * (!prev_eq_c && !up_eq_c) as u16;
-        perimiter[prev_id as usize] += !all_eq as u16;
-        perimiter[up_id as usize] += !all_eq as u16;
-
-        if all_eq {
-            merges[up_id as usize] = prev_id;
-        }
+        update_values(
+            prev,
+            c,
+            up,
+            prev_id,
+            up_id,
+            &mut next_id,
+            &mut id_map,
+            i,
+            &mut area,
+            &mut perimiter,
+            &mut merges,
+        );
     }
     for x in 0..SIZE {
         perimiter[id_map[(SIZE - 1) * SIZE1 + x] as usize] += 1;
@@ -109,6 +100,55 @@ fn part1_inner(s: &str) -> u32 {
     }
 
     sum
+}
+
+#[inline(never)]
+fn update_values(
+    prev: u8,
+    c: u8,
+    up: u8,
+    prev_id: u16,
+    up_id: u16,
+    next_id: &mut u16,
+    id_map: &mut [u16; SIZE * SIZE1],
+    i: usize,
+    area: &mut [u16; 2048],
+    perimiter: &mut [u16; 2048],
+    merges: &mut [u16; 2048],
+) {
+    let prev_eq_c = prev == c;
+    let up_eq_c = up == c;
+    let all_eq = prev_eq_c && up_eq_c;
+
+    let new_id = prev_id * prev_eq_c as u16 + up_id * up_eq_c as u16 - up_id * all_eq as u16
+        + *next_id * (!prev_eq_c && !up_eq_c) as u16;
+    id_map[i] = new_id;
+    area[new_id as usize] += 1;
+
+    *next_id += (!prev_eq_c && !up_eq_c) as u16;
+
+    perimiter[new_id as usize] += 2 * (!prev_eq_c && !up_eq_c) as u16;
+    perimiter[prev_id as usize] += !all_eq as u16;
+    perimiter[up_id as usize] += !all_eq as u16;
+
+    if all_eq {
+        merges[up_id as usize] = prev_id;
+    }
+}
+
+#[inline(never)]
+fn read_values(
+    s: &[u8],
+    i: usize,
+    merges: &[u16; 2048],
+    id_map: &[u16; SIZE * SIZE1],
+) -> (u8, u8, u8, u16, u16) {
+    let c = s.get(i).cloned().unwrap_or(b'\n');
+    let prev = s.get(i.wrapping_sub(1)).cloned().unwrap_or(b'\n');
+    let up = s.get(i.wrapping_sub(SIZE1)).cloned().unwrap_or(b'\n');
+    let prev_id = merges[id_map.get(i.wrapping_sub(1)).cloned().unwrap_or(0) as usize];
+    let up_id = merges[id_map.get(i.wrapping_sub(SIZE1)).cloned().unwrap_or(0) as usize];
+    (c, prev, up, prev_id, up_id)
 }
 
 #[aoc(day12, part2)]
