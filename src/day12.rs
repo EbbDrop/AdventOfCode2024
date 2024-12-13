@@ -112,7 +112,6 @@ unsafe fn part1_inner(s: &str) -> u32 {
             }
             *area.get_unchecked_mut(real_id) += *area.get_unchecked(id);
             *perimiter.get_unchecked_mut(real_id) += *perimiter.get_unchecked(id);
-            *area.get_unchecked_mut(id) = 0;
             *perimiter.get_unchecked_mut(id) = 0
         }
     }
@@ -289,7 +288,6 @@ unsafe fn part2_inner(s: &str) -> u32 {
             }
             *area.get_unchecked_mut(real_id) += *area.get_unchecked(id);
             *perimiter.get_unchecked_mut(real_id) += *perimiter.get_unchecked(id);
-            *area.get_unchecked_mut(id) = 0;
             *perimiter.get_unchecked_mut(id) = 0
         }
     }
