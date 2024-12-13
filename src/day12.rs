@@ -35,10 +35,11 @@ unsafe fn part1_inner(s: &str) -> u32 {
         let c = *s.get_unchecked(i);
         let prev = *s.get_unchecked(i.wrapping_sub(1).min(SIZE * SIZE1 - 1));
         let up = *s.get_unchecked(i.wrapping_sub(SIZE1).min(SIZE * SIZE1 - 1));
-        let prev_id =
-            merges[*id_map.get_unchecked(i.wrapping_sub(1).min(SIZE * SIZE1 - 1)) as usize];
-        let up_id =
-            merges[*id_map.get_unchecked(i.wrapping_sub(SIZE1).min(SIZE * SIZE1 - 1)) as usize];
+        let prev_id = *merges
+            .get_unchecked(*id_map.get_unchecked(i.wrapping_sub(1).min(SIZE * SIZE1 - 1)) as usize);
+        let up_id = *merges.get_unchecked(
+            *id_map.get_unchecked(i.wrapping_sub(SIZE1).min(SIZE * SIZE1 - 1)) as usize,
+        );
 
         if prev == c && c == up && prev_id == up_id {
             *id_map.get_unchecked_mut(i) = prev_id;
@@ -153,10 +154,11 @@ unsafe fn part2_inner(s: &str) -> u32 {
         let prev = *s.get_unchecked(i.wrapping_sub(1).min(SIZE * SIZE1 - 1));
         let up = *s.get_unchecked(i.wrapping_sub(SIZE1).min(SIZE * SIZE1 - 1));
         let prevup = *s.get_unchecked(i.wrapping_sub(SIZE1 + 1).min(SIZE * SIZE1 - 1));
-        let prev_id =
-            merges[*id_map.get_unchecked(i.wrapping_sub(1).min(SIZE * SIZE1 - 1)) as usize];
-        let up_id =
-            merges[*id_map.get_unchecked(i.wrapping_sub(SIZE1).min(SIZE * SIZE1 - 1)) as usize];
+        let prev_id = *merges
+            .get_unchecked(*id_map.get_unchecked(i.wrapping_sub(1).min(SIZE * SIZE1 - 1)) as usize);
+        let up_id = *merges.get_unchecked(
+            *id_map.get_unchecked(i.wrapping_sub(SIZE1).min(SIZE * SIZE1 - 1)) as usize,
+        );
 
         if prev == c && c == up && prev_id == up_id {
             // ? A
