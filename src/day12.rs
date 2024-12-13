@@ -41,11 +41,7 @@ fn part1_inner(s: &str) -> u32 {
         let prev_id = merges[id_map.get(i.wrapping_sub(1)).cloned().unwrap_or(0) as usize];
         let up_id = merges[id_map.get(i.wrapping_sub(SIZE1)).cloned().unwrap_or(0) as usize];
 
-        if prev == c && c == up && prev_id == up_id {
-            id_map[i] = prev_id;
-
-            area[prev_id as usize] += 1;
-        } else if prev == c && c == up {
+        if prev == c && c == up {
             id_map[i] = prev_id;
 
             merges[up_id as usize] = prev_id;
@@ -160,13 +156,7 @@ fn part2_inner(s: &str) -> u32 {
         let prev_id = merges[id_map.get(i.wrapping_sub(1)).cloned().unwrap_or(0) as usize];
         let up_id = merges[id_map.get(i.wrapping_sub(SIZE1)).cloned().unwrap_or(0) as usize];
 
-        if prev == c && c == up && prev_id == up_id {
-            // ? A
-            // A A
-            id_map[i] = prev_id;
-
-            area[prev_id as usize] += 1;
-        } else if prev == c && c == up {
+        if prev == c && c == up {
             // ? A
             // A A
             id_map[i] = prev_id;
