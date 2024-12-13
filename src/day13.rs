@@ -1,5 +1,4 @@
 use aoc_runner_derive::aoc;
-use std::arch::x86_64::*;
 
 #[aoc(day13, part1)]
 pub fn part1(s: &str) -> u64 {
@@ -17,63 +16,38 @@ pub fn part2(s: &str) -> u64 {
     }
 }
 
-#[target_feature(enable = "avx2,bmi1,bmi2,cmpxchg16b,lzcnt,movbe,popcnt")]
-unsafe fn inner<const OFFSET: i64>(s: &str) -> u64 {
+// #[target_feature(enable = "avx2,bmi1,bmi2,cmpxchg16b,lzcnt,movbe,popcnt")]
+fn inner<const OFFSET: i64>(s: &str) -> u64 {
     let s = s.as_bytes();
 
     let mut sum = 0;
 
-    let mut axs = [0i64; 320];
-    let mut ays = [0i64; 320];
-    let mut bxs = [0i64; 320];
-    let mut bys = [0i64; 320];
-    let mut xs = [0i64; 320];
-    let mut ys = [0i64; 320];
-
-    let mut p = 0;
     let mut i = 0;
-    while p < s.len() {
-        let ax = ((s[p + 12] - b'0') * 10 + s[p + 13] - b'0') as i64;
-        let ay = ((s[p + 18] - b'0') * 10 + s[p + 19] - b'0') as i64;
+    while i < s.len() {
+        let ax = ((s[i + 12] - b'0') * 10 + s[i + 13] - b'0') as i64;
+        let ay = ((s[i + 18] - b'0') * 10 + s[i + 19] - b'0') as i64;
 
-        let bx = ((s[p + 33] - b'0') * 10 + s[p + 34] - b'0') as i64;
-        let by = ((s[p + 39] - b'0') * 10 + s[p + 40] - b'0') as i64;
-        p += 51;
+        let bx = ((s[i + 33] - b'0') * 10 + s[i + 34] - b'0') as i64;
+        let by = ((s[i + 39] - b'0') * 10 + s[i + 40] - b'0') as i64;
+        i += 51;
 
         let mut x = 0;
-        while s[p] != b',' {
+        while s[i] != b',' {
             x *= 10;
-            x += (s[p] - b'0') as i64;
-            p += 1;
+            x += (s[i] - b'0') as i64;
+            i += 1;
         }
         x += OFFSET;
-        p += 4;
+        i += 4;
 
         let mut y = 0;
-        while s[p] != b'\n' {
+        while i < s.len() && s[i] != b'\n' {
             y *= 10;
-            y += (s[p] - b'0') as i64;
-            p += 1;
+            y += (s[i] - b'0') as i64;
+            i += 1;
         }
         y += OFFSET;
-        p += 2;
-
-        *axs.get_unchecked_mut(i) = ax;
-        *ays.get_unchecked_mut(i) = ay;
-        *bxs.get_unchecked_mut(i) = bx;
-        *bys.get_unchecked_mut(i) = by;
-        *xs.get_unchecked_mut(i) = x;
-        *ys.get_unchecked_mut(i) = y;
-        i += 1;
-    }
-
-    for i in 0..i {
-        let ax = *axs.get_unchecked(i);
-        let ay = *ays.get_unchecked(i);
-        let bx = *bxs.get_unchecked(i);
-        let by = *bys.get_unchecked(i);
-        let x = *xs.get_unchecked(i);
-        let y = *ys.get_unchecked(i);
+        i += 2;
 
         let numerator = x * by - y * bx;
         let denominator = ax * by - ay * bx;
