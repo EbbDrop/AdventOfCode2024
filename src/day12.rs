@@ -45,37 +45,39 @@ fn part1_inner(s: &str) -> u32 {
             merges[*id_map.get_unchecked(i.wrapping_sub(SIZE1).min(SIZE * SIZE1 - 1)) as usize]
         };
 
-        if prev == c && c == up && prev_id == up_id {
-            id_map[i] = prev_id;
+        unsafe {
+            if prev == c && c == up && prev_id == up_id {
+                *id_map.get_unchecked_mut(i) = prev_id;
 
-            area[prev_id as usize] += 1;
-        } else if prev == c && c == up {
-            id_map[i] = prev_id;
+                *area.get_unchecked_mut(prev_id as usize) += 1;
+            } else if prev == c && c == up {
+                *id_map.get_unchecked_mut(i) = prev_id;
 
-            merges[up_id as usize] = prev_id;
+                *merges.get_unchecked_mut(up_id as usize) = prev_id;
 
-            area[prev_id as usize] += 1;
-        } else if prev == c {
-            id_map[i] = prev_id;
+                *area.get_unchecked_mut(prev_id as usize) += 1;
+            } else if prev == c {
+                *id_map.get_unchecked_mut(i) = prev_id;
 
-            area[prev_id as usize] += 1;
-            perimiter[prev_id as usize] += 1;
-            perimiter[up_id as usize] += 1;
-        } else if up == c {
-            id_map[i] = up_id;
+                *area.get_unchecked_mut(prev_id as usize) += 1;
+                *perimiter.get_unchecked_mut(prev_id as usize) += 1;
+                *perimiter.get_unchecked_mut(up_id as usize) += 1;
+            } else if up == c {
+                *id_map.get_unchecked_mut(i) = up_id;
 
-            area[up_id as usize] += 1;
-            perimiter[prev_id as usize] += 1;
-            perimiter[up_id as usize] += 1;
-        } else {
-            id_map[i] = next_id;
+                *area.get_unchecked_mut(up_id as usize) += 1;
+                *perimiter.get_unchecked_mut(prev_id as usize) += 1;
+                *perimiter.get_unchecked_mut(up_id as usize) += 1;
+            } else {
+                *id_map.get_unchecked_mut(i) = next_id;
 
-            area[next_id as usize] += 1;
-            perimiter[next_id as usize] += 2;
-            perimiter[prev_id as usize] += 1;
-            perimiter[up_id as usize] += 1;
+                *area.get_unchecked_mut(next_id as usize) += 1;
+                *perimiter.get_unchecked_mut(next_id as usize) += 2;
+                *perimiter.get_unchecked_mut(prev_id as usize) += 1;
+                *perimiter.get_unchecked_mut(up_id as usize) += 1;
 
-            next_id += 1
+                next_id += 1
+            }
         }
     }
     for x in 0..SIZE {
