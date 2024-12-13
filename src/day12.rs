@@ -116,23 +116,37 @@ fn update_values(
     perimiter: &mut [u16; 2048],
     merges: &mut [u16; 2048],
 ) {
-    let prev_eq_c = prev == c;
-    let up_eq_c = up == c;
-    let all_eq = prev_eq_c && up_eq_c;
+    if prev == c && c == up && prev_id == up_id {
+        id_map[i] = prev_id;
 
-    let new_id = prev_id * prev_eq_c as u16 + up_id * up_eq_c as u16 - up_id * all_eq as u16
-        + *next_id * (!prev_eq_c && !up_eq_c) as u16;
-    id_map[i] = new_id;
-    area[new_id as usize] += 1;
+        area[prev_id as usize] += 1;
+    } else if prev == c && c == up {
+        id_map[i] = prev_id;
 
-    *next_id += (!prev_eq_c && !up_eq_c) as u16;
-
-    perimiter[new_id as usize] += 2 * (!prev_eq_c && !up_eq_c) as u16;
-    perimiter[prev_id as usize] += !all_eq as u16;
-    perimiter[up_id as usize] += !all_eq as u16;
-
-    if all_eq {
         merges[up_id as usize] = prev_id;
+
+        area[prev_id as usize] += 1;
+    } else if prev == c {
+        id_map[i] = prev_id;
+
+        area[prev_id as usize] += 1;
+        perimiter[prev_id as usize] += 1;
+        perimiter[up_id as usize] += 1;
+    } else if up == c {
+        id_map[i] = up_id;
+
+        area[up_id as usize] += 1;
+        perimiter[prev_id as usize] += 1;
+        perimiter[up_id as usize] += 1;
+    } else {
+        id_map[i] = *next_id;
+
+        area[*next_id as usize] += 1;
+        perimiter[*next_id as usize] += 2;
+        perimiter[prev_id as usize] += 1;
+        perimiter[up_id as usize] += 1;
+
+        *next_id += 1
     }
 }
 
