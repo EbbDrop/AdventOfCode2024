@@ -64,16 +64,12 @@ unsafe fn inner_part1(s: &str) -> u64 {
         std::hint::assert_unchecked(by != 0);
         std::hint::assert_unchecked(by != -1);
 
-        if numerator % denominator != 0 {
-            continue;
-        }
         let a = numerator / denominator;
-        if (y - a * ay) % by != 0 {
-            continue;
-        }
-        let b = (y - a * ay) / by;
+        if numerator % denominator == 0 && (y - a * ay) % by == 0 {
+            let b = (y - a * ay) / by;
 
-        sum += (a * 3 + b) as u64;
+            sum += (a * 3 + b) as u64;
+        }
     }
 
     sum
@@ -135,16 +131,12 @@ unsafe fn inner_part2(s: &str) -> u64 {
         std::hint::assert_unchecked(by != 0);
         std::hint::assert_unchecked(by != -1);
 
-        if numerator % denominator != 0 {
-            continue;
-        }
         let a = numerator / denominator;
-        if (y - a * ay) % by != 0 {
-            continue;
-        }
-        let b = (y - a * ay) / by;
+        if numerator % denominator == 0 && (y - a * ay) % by == 0 {
+            let b = (y - a * ay) / by;
 
-        sum += (a * 3 + b) as u64;
+            sum += (a * 3 + b) as u64;
+        }
     }
 
     sum
