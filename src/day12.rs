@@ -35,21 +35,44 @@ fn part1_inner(s: &str) -> u32 {
     let mut perimiter = [0u16; 2048];
 
     for i in 0..SIZE * SIZE1 {
-        let (c, prev, up, prev_id, up_id) = read_values(s, i, &merges, &id_map);
+        let c = s.get(i).cloned().unwrap_or(b'\n');
+        let prev = s.get(i.wrapping_sub(1)).cloned().unwrap_or(b'\n');
+        let up = s.get(i.wrapping_sub(SIZE1)).cloned().unwrap_or(b'\n');
+        let prev_id = merges[id_map.get(i.wrapping_sub(1)).cloned().unwrap_or(0) as usize];
+        let up_id = merges[id_map.get(i.wrapping_sub(SIZE1)).cloned().unwrap_or(0) as usize];
 
-        update_values(
-            prev,
-            c,
-            up,
-            prev_id,
-            up_id,
-            &mut next_id,
-            &mut id_map,
-            i,
-            &mut area,
-            &mut perimiter,
-            &mut merges,
-        );
+        if prev == c && c == up && prev_id == up_id {
+            id_map[i] = prev_id;
+
+            area[prev_id as usize] += 1;
+        } else if prev == c && c == up {
+            id_map[i] = prev_id;
+
+            merges[up_id as usize] = prev_id;
+
+            area[prev_id as usize] += 1;
+        } else if prev == c {
+            id_map[i] = prev_id;
+
+            area[prev_id as usize] += 1;
+            perimiter[prev_id as usize] += 1;
+            perimiter[up_id as usize] += 1;
+        } else if up == c {
+            id_map[i] = up_id;
+
+            area[up_id as usize] += 1;
+            perimiter[prev_id as usize] += 1;
+            perimiter[up_id as usize] += 1;
+        } else {
+            id_map[i] = next_id;
+
+            area[next_id as usize] += 1;
+            perimiter[next_id as usize] += 2;
+            perimiter[prev_id as usize] += 1;
+            perimiter[up_id as usize] += 1;
+
+            next_id += 1
+        }
     }
     for x in 0..SIZE {
         perimiter[id_map[(SIZE - 1) * SIZE1 + x] as usize] += 1;
@@ -102,69 +125,6 @@ fn part1_inner(s: &str) -> u32 {
     sum
 }
 
-#[inline(never)]
-fn update_values(
-    prev: u8,
-    c: u8,
-    up: u8,
-    prev_id: u16,
-    up_id: u16,
-    next_id: &mut u16,
-    id_map: &mut [u16; SIZE * SIZE1],
-    i: usize,
-    area: &mut [u16; 2048],
-    perimiter: &mut [u16; 2048],
-    merges: &mut [u16; 2048],
-) {
-    if prev == c && c == up && prev_id == up_id {
-        id_map[i] = prev_id;
-
-        area[prev_id as usize] += 1;
-    } else if prev == c && c == up {
-        id_map[i] = prev_id;
-
-        merges[up_id as usize] = prev_id;
-
-        area[prev_id as usize] += 1;
-    } else if prev == c {
-        id_map[i] = prev_id;
-
-        area[prev_id as usize] += 1;
-        perimiter[prev_id as usize] += 1;
-        perimiter[up_id as usize] += 1;
-    } else if up == c {
-        id_map[i] = up_id;
-
-        area[up_id as usize] += 1;
-        perimiter[prev_id as usize] += 1;
-        perimiter[up_id as usize] += 1;
-    } else {
-        id_map[i] = *next_id;
-
-        area[*next_id as usize] += 1;
-        perimiter[*next_id as usize] += 2;
-        perimiter[prev_id as usize] += 1;
-        perimiter[up_id as usize] += 1;
-
-        *next_id += 1
-    }
-}
-
-#[inline(never)]
-fn read_values(
-    s: &[u8],
-    i: usize,
-    merges: &[u16; 2048],
-    id_map: &[u16; SIZE * SIZE1],
-) -> (u8, u8, u8, u16, u16) {
-    let c = s.get(i).cloned().unwrap_or(b'\n');
-    let prev = s.get(i.wrapping_sub(1)).cloned().unwrap_or(b'\n');
-    let up = s.get(i.wrapping_sub(SIZE1)).cloned().unwrap_or(b'\n');
-    let prev_id = merges[id_map.get(i.wrapping_sub(1)).cloned().unwrap_or(0) as usize];
-    let up_id = merges[id_map.get(i.wrapping_sub(SIZE1)).cloned().unwrap_or(0) as usize];
-    (c, prev, up, prev_id, up_id)
-}
-
 #[aoc(day12, part2)]
 pub fn part2(s: &str) -> u32 {
     #[expect(unused_unsafe)]
@@ -200,7 +160,13 @@ fn part2_inner(s: &str) -> u32 {
         let prev_id = merges[id_map.get(i.wrapping_sub(1)).cloned().unwrap_or(0) as usize];
         let up_id = merges[id_map.get(i.wrapping_sub(SIZE1)).cloned().unwrap_or(0) as usize];
 
-        if prev == c && c == up {
+        if prev == c && c == up && prev_id == up_id {
+            // ? A
+            // A A
+            id_map[i] = prev_id;
+
+            area[prev_id as usize] += 1;
+        } else if prev == c && c == up {
             // ? A
             // A A
             id_map[i] = prev_id;
