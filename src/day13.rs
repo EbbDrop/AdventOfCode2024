@@ -2,48 +2,58 @@ use aoc_runner_derive::aoc;
 
 #[aoc(day13, part1)]
 pub fn part1(s: &str) -> u64 {
-    #[expect(unused_unsafe)]
-    unsafe {
-        inner::<0>(s)
-    }
+    unsafe { inner::<0>(s) }
 }
 
 #[aoc(day13, part2)]
 pub fn part2(s: &str) -> u64 {
-    #[expect(unused_unsafe)]
-    unsafe {
-        inner::<10000000000000>(s)
-    }
+    unsafe { inner::<10000000000000>(s) }
 }
 
-// #[target_feature(enable = "avx2,bmi1,bmi2,cmpxchg16b,lzcnt,movbe,popcnt")]
-fn inner<const OFFSET: i64>(s: &str) -> u64 {
+#[target_feature(enable = "avx2,bmi1,bmi2,cmpxchg16b,lzcnt,movbe,popcnt")]
+unsafe fn inner<const OFFSET: i64>(s: &str) -> u64 {
     let s = s.as_bytes();
 
     let mut sum = 0;
 
     let mut i = 0;
     while i < s.len() {
-        let ax = ((s[i + 12] - b'0') * 10 + s[i + 13] - b'0') as i64;
-        let ay = ((s[i + 18] - b'0') * 10 + s[i + 19] - b'0') as i64;
+        let ax = (s
+            .get_unchecked(i + 12)
+            .wrapping_mul(10)
+            .wrapping_add(*s.get_unchecked(i + 13))
+            .wrapping_sub(const { b'0'.wrapping_mul(11) })) as i64;
+        let ay = (s
+            .get_unchecked(i + 18)
+            .wrapping_mul(10)
+            .wrapping_add(*s.get_unchecked(i + 19))
+            .wrapping_sub(const { b'0'.wrapping_mul(11) })) as i64;
 
-        let bx = ((s[i + 33] - b'0') * 10 + s[i + 34] - b'0') as i64;
-        let by = ((s[i + 39] - b'0') * 10 + s[i + 40] - b'0') as i64;
+        let bx = (s
+            .get_unchecked(i + 33)
+            .wrapping_mul(10)
+            .wrapping_add(*s.get_unchecked(i + 34))
+            .wrapping_sub(const { b'0'.wrapping_mul(11) })) as i64;
+        let by = (s
+            .get_unchecked(i + 39)
+            .wrapping_mul(10)
+            .wrapping_add(*s.get_unchecked(i + 40))
+            .wrapping_sub(const { b'0'.wrapping_mul(11) })) as i64;
         i += 51;
 
         let mut x = 0;
-        while s[i] != b',' {
+        while *s.get_unchecked(i) != b',' {
             x *= 10;
-            x += (s[i] - b'0') as i64;
+            x += (*s.get_unchecked(i) - b'0') as i64;
             i += 1;
         }
         x += OFFSET;
         i += 4;
 
         let mut y = 0;
-        while i < s.len() && s[i] != b'\n' {
+        while *s.get_unchecked(i) != b'\n' {
             y *= 10;
-            y += (s[i] - b'0') as i64;
+            y += (*s.get_unchecked(i) - b'0') as i64;
             i += 1;
         }
         y += OFFSET;
@@ -51,6 +61,7 @@ fn inner<const OFFSET: i64>(s: &str) -> u64 {
 
         let numerator = x * by - y * bx;
         let denominator = ax * by - ay * bx;
+        std::hint::assert_unchecked(denominator != 0);
 
         if numerator % denominator != 0 {
             continue;
