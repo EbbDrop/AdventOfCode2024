@@ -126,14 +126,11 @@ unsafe fn part1_inner(s: &str) -> u32 {
 
 #[aoc(day12, part2)]
 pub fn part2(s: &str) -> u32 {
-    #[expect(unused_unsafe)]
-    unsafe {
-        part2_inner(s)
-    }
+    unsafe { part2_inner(s) }
 }
 
-// #[target_feature(enable = "avx2,bmi1,bmi2,cmpxchg16b,lzcnt,movbe,popcnt")]
-fn part2_inner(s: &str) -> u32 {
+#[target_feature(enable = "avx2,bmi1,bmi2,cmpxchg16b,lzcnt,movbe,popcnt")]
+unsafe fn part2_inner(s: &str) -> u32 {
     let s = s.as_bytes();
 
     let mut id_map = [0u16; SIZE * SIZE1];
@@ -152,86 +149,88 @@ fn part2_inner(s: &str) -> u32 {
     let mut perimiter = [0u16; 2048];
 
     for i in 0..SIZE * SIZE1 {
-        let c = s.get(i).cloned().unwrap_or(b'\n');
-        let prev = s.get(i.wrapping_sub(1)).cloned().unwrap_or(b'\n');
-        let up = s.get(i.wrapping_sub(SIZE1)).cloned().unwrap_or(b'\n');
-        let prevup = s.get(i.wrapping_sub(SIZE1 + 1)).cloned().unwrap_or(b'\n');
-        let prev_id = merges[id_map.get(i.wrapping_sub(1)).cloned().unwrap_or(0) as usize];
-        let up_id = merges[id_map.get(i.wrapping_sub(SIZE1)).cloned().unwrap_or(0) as usize];
+        let c = *s.get_unchecked(i);
+        let prev = *s.get_unchecked(i.wrapping_sub(1).min(SIZE * SIZE1 - 1));
+        let up = *s.get_unchecked(i.wrapping_sub(SIZE1).min(SIZE * SIZE1 - 1));
+        let prevup = *s.get_unchecked(i.wrapping_sub(SIZE1 + 1).min(SIZE * SIZE1 - 1));
+        let prev_id =
+            merges[*id_map.get_unchecked(i.wrapping_sub(1).min(SIZE * SIZE1 - 1)) as usize];
+        let up_id =
+            merges[*id_map.get_unchecked(i.wrapping_sub(SIZE1).min(SIZE * SIZE1 - 1)) as usize];
 
         if prev == c && c == up && prev_id == up_id {
             // ? A
             // A A
-            id_map[i] = prev_id;
+            *id_map.get_unchecked_mut(i) = prev_id;
 
-            area[prev_id as usize] += 1;
+            *area.get_unchecked_mut(prev_id as usize) += 1;
         } else if prev == c && c == up {
             // ? A
             // A A
-            id_map[i] = prev_id;
+            *id_map.get_unchecked_mut(i) = prev_id;
 
-            merges[up_id as usize] = prev_id;
+            *merges.get_unchecked_mut(up_id as usize) = prev_id;
 
-            area[prev_id as usize] += 1;
+            *area.get_unchecked_mut(prev_id as usize) += 1;
         } else if prev == c {
             // ? B
             // A A
-            id_map[i] = prev_id;
+            *id_map.get_unchecked_mut(i) = prev_id;
 
-            area[prev_id as usize] += 1;
+            *area.get_unchecked_mut(prev_id as usize) += 1;
 
             if prevup == prev {
                 // A B
                 // A A
-                perimiter[prev_id as usize] += 1;
-                perimiter[up_id as usize] += 1;
+                *perimiter.get_unchecked_mut(prev_id as usize) += 1;
+                *perimiter.get_unchecked_mut(up_id as usize) += 1;
             } else if prevup == up {
                 // B B
                 // A A
             } else {
                 // C B
                 // A A
-                perimiter[up_id as usize] += 1;
+                *perimiter.get_unchecked_mut(up_id as usize) += 1;
             }
         } else if up == c {
             // ? A
             // B A
-            id_map[i] = up_id;
+            *id_map.get_unchecked_mut(i) = up_id;
 
-            area[up_id as usize] += 1;
+            *area.get_unchecked_mut(up_id as usize) += 1;
 
             if prevup == up {
                 // A A
                 // B A
 
-                perimiter[prev_id as usize] += 1;
-                perimiter[up_id as usize] += 1;
+                *perimiter.get_unchecked_mut(prev_id as usize) += 1;
+                *perimiter.get_unchecked_mut(up_id as usize) += 1;
             } else if prevup == prev {
                 // B A
                 // B A
             } else {
                 // C A
                 // B A
-                perimiter[prev_id as usize] += 1;
+                *perimiter.get_unchecked_mut(prev_id as usize) += 1;
             }
         } else {
             // ? C
             // B A
-            id_map[i] = next_id;
+            *id_map.get_unchecked_mut(i) = next_id;
 
-            area[next_id as usize] += 1;
-            perimiter[next_id as usize] += 2;
+            *area.get_unchecked_mut(next_id as usize) += 1;
+            *perimiter.get_unchecked_mut(next_id as usize) += 2;
 
             if up == prevup && prevup == prev {
                 // B B
                 // B A
-                perimiter[up_id as usize] += 1;
-                perimiter[prev_id as usize] += 1;
+                *perimiter.get_unchecked_mut(up_id as usize) += 1;
+                *perimiter.get_unchecked_mut(prev_id as usize) += 1;
             }
             if prevup != up {
                 // D C
                 // B A
-                perimiter[up_id as usize] += 1;
+                *perimiter.get_unchecked_mut(up_id as usize) += 1;
             } else {
                 // C C
                 // B A
@@ -239,7 +238,7 @@ fn part2_inner(s: &str) -> u32 {
             if prevup != prev {
                 // D C
                 // B A
-                perimiter[prev_id as usize] += 1;
+                *perimiter.get_unchecked_mut(prev_id as usize) += 1;
             } else {
                 // B C
                 // B A
@@ -250,9 +249,10 @@ fn part2_inner(s: &str) -> u32 {
     }
     let mut prevup = b'\n';
     for x in 0..SIZE {
-        let up = s[(SIZE - 1) * SIZE1 + x];
+        let up = *s.get_unchecked((SIZE - 1) * SIZE1 + x);
         if prevup != up {
-            perimiter[id_map[(SIZE - 1) * SIZE1 + x] as usize] += 1;
+            *perimiter.get_unchecked_mut(*id_map.get_unchecked((SIZE - 1) * SIZE1 + x) as usize) +=
+                1;
             prevup = up;
         }
     }
@@ -276,25 +276,25 @@ fn part2_inner(s: &str) -> u32 {
     for id in 1..next_id {
         let id = id as usize;
 
-        if merges[id] as usize != id {
-            let mut real_id = merges[id] as usize;
+        if *merges.get_unchecked(id) as usize != id {
+            let mut real_id = *merges.get_unchecked(id) as usize;
             while real_id < id {
-                let new_real_id = merges[real_id as usize] as usize;
+                let new_real_id = *merges.get_unchecked(real_id as usize) as usize;
                 if new_real_id == real_id {
                     break;
                 }
                 real_id = new_real_id;
             }
-            area[real_id] += area[id];
-            perimiter[real_id] += perimiter[id];
-            area[id] = 0;
-            perimiter[id] = 0
+            *area.get_unchecked_mut(real_id) += *area.get_unchecked(id);
+            *perimiter.get_unchecked_mut(real_id) += *perimiter.get_unchecked(id);
+            *area.get_unchecked_mut(id) = 0;
+            *perimiter.get_unchecked_mut(id) = 0
         }
     }
 
     for id in 1..next_id {
         let id = id as usize;
-        sum += area[id] as u32 * perimiter[id] as u32;
+        sum += *area.get_unchecked(id) as u32 * *perimiter.get_unchecked(id) as u32;
     }
 
     sum
