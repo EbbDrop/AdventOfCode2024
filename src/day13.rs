@@ -2,16 +2,82 @@ use aoc_runner_derive::aoc;
 
 #[aoc(day13, part1)]
 pub fn part1(s: &str) -> u64 {
-    unsafe { inner::<0>(s) }
+    unsafe { inner_part1(s) }
 }
 
 #[aoc(day13, part2)]
 pub fn part2(s: &str) -> u64 {
-    unsafe { inner::<10000000000000>(s) }
+    unsafe { inner_part2(s) }
 }
 
 #[target_feature(enable = "avx2,bmi1,bmi2,cmpxchg16b,lzcnt,movbe,popcnt")]
-unsafe fn inner<const OFFSET: i64>(s: &str) -> u64 {
+unsafe fn inner_part1(s: &str) -> u64 {
+    let s = s.as_bytes();
+
+    let mut sum = 0;
+
+    let mut i = 0;
+    while i < s.len() {
+        let ax = (s
+            .get_unchecked(i + 12)
+            .wrapping_mul(10)
+            .wrapping_add(*s.get_unchecked(i + 13))
+            .wrapping_sub(const { b'0'.wrapping_mul(11) })) as i32;
+        let ay = (s
+            .get_unchecked(i + 18)
+            .wrapping_mul(10)
+            .wrapping_add(*s.get_unchecked(i + 19))
+            .wrapping_sub(const { b'0'.wrapping_mul(11) })) as i32;
+
+        let bx = (s
+            .get_unchecked(i + 33)
+            .wrapping_mul(10)
+            .wrapping_add(*s.get_unchecked(i + 34))
+            .wrapping_sub(const { b'0'.wrapping_mul(11) })) as i32;
+        let by = (s
+            .get_unchecked(i + 39)
+            .wrapping_mul(10)
+            .wrapping_add(*s.get_unchecked(i + 40))
+            .wrapping_sub(const { b'0'.wrapping_mul(11) })) as i32;
+        i += 51;
+
+        let mut x = 0;
+        while *s.get_unchecked(i) != b',' {
+            x *= 10;
+            x += (*s.get_unchecked(i) - b'0') as i32;
+            i += 1;
+        }
+        i += 4;
+
+        let mut y = 0;
+        while *s.get_unchecked(i) != b'\n' {
+            y *= 10;
+            y += (*s.get_unchecked(i) - b'0') as i32;
+            i += 1;
+        }
+        i += 2;
+
+        let numerator = x * by - y * bx;
+        let denominator = ax * by - ay * bx;
+        std::hint::assert_unchecked(denominator != 0);
+
+        if numerator % denominator != 0 {
+            continue;
+        }
+        let a = numerator / denominator;
+        if (y - a * ay) % by != 0 {
+            continue;
+        }
+        let b = (y - a * ay) / by;
+
+        sum += (a * 3 + b) as u64;
+    }
+
+    sum
+}
+
+#[target_feature(enable = "avx2,bmi1,bmi2,cmpxchg16b,lzcnt,movbe,popcnt")]
+unsafe fn inner_part2(s: &str) -> u64 {
     let s = s.as_bytes();
 
     let mut sum = 0;
@@ -47,7 +113,7 @@ unsafe fn inner<const OFFSET: i64>(s: &str) -> u64 {
             x += (*s.get_unchecked(i) - b'0') as i64;
             i += 1;
         }
-        x += OFFSET;
+        x += 10000000000000;
         i += 4;
 
         let mut y = 0;
@@ -56,7 +122,7 @@ unsafe fn inner<const OFFSET: i64>(s: &str) -> u64 {
             y += (*s.get_unchecked(i) - b'0') as i64;
             i += 1;
         }
-        y += OFFSET;
+        y += 10000000000000;
         i += 2;
 
         let numerator = x * by - y * bx;
