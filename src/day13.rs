@@ -18,7 +18,41 @@ unsafe fn inner_part1(s: &str) -> u64 {
 
     let mut sum = 0;
     asm!(
+        "jmp     7f",
         "2:",                                //
+
+        "imul  rax, {by}",                   // x *= by
+        "mov   {t}, {y}",                    // t = y
+        "imul  {t}, {bx}",                   // t *= bx
+        "sub   rax, {t}",                    // x -= t       x = x * by - y * bx
+        "imul  {bx}, {ay}",                  // bx *= ay
+        "imul  {ax}, {by}",                  // ax *= by
+        "sub   {ax}, {bx}",                  // ax -= bx     ax = by * ax - bx * ay
+
+        "cqo",                               //
+        "idiv  {ax}",                        // rax = x / ax, rdx = x % ax
+        "test  rdx, rdx",                    //
+        "jne   6f",                          // jump rdx != 0
+
+        "mov   {t}, rax",                    // t = rax
+        "imul  {ay}, rax",                   // ay *= rax
+        "sub   {y}, {ay}",                   // y -= ay      y = y - ay * a
+        "mov   rax, {y}",                    //
+        "cqo",                               //
+        "idiv  {by}",                        // rax = y / by, rdx = y % by
+        "test  rdx, rdx",                    //
+        "jne   6f",                          // jump rdx != 0
+
+        "lea   {t}, [{t} + 2*{t}]",          // t = 3 * t
+        "add   {sum}, {t}",                  // sum += t
+        "add   {sum}, rax",                  // sum += rax
+
+        "6:",
+        "add   {s}, 63",                     // s += 63
+        "cmp   {end}, {s}",                  //
+        "jb    3f",                          // jump s <= end
+        "7:",
+
         "movzx {ax:e}, byte ptr [{s} + 12]", // ax = s[i + 12]
         "movzx {ay:e}, byte ptr [{s} + 18]", // ay = s[i + 18]
         "add   {ax:e}, {ax:e}",              // ax *= 2
@@ -83,50 +117,19 @@ unsafe fn inner_part1(s: &str) -> u64 {
         "add   {y}, -111 * '0'",             // y -= 111 * b'0'
         "movzx {t}, byte ptr [{s} + 61]",    // y = s[i + 61]
         "cmp   {t}, '\\n'",                  //
-        "je    5f",                          // jump t == b','
+        "je    2b",                          // jump t == b','
         "add   {y}, {y}",                    // y *= 2
         "lea   {y}, [{y} + 4*{y}]",          // y *= 5
         "lea   {y}, [{y} + {t} -'0']",       // y += t - b'0'
         "inc   {s}",                         // s += 1
         "movzx {t}, byte ptr [{s} + 61]",    // y = s[i + 61]
         "cmp   {t}, '\\n'",                  //
-        "je   5f",                           // jump t == b','
+        "je   2b",                           // jump t == b','
         "add   {y}, {y}",                    // y *= 2
         "lea   {y}, [{y} + 4*{y}]",          // y *= 5
         "lea   {y}, [{y} + {t} -'0']",       // y += t - b'0'
         "inc   {s}",                         // s += 1
-        "5:",
-
-        "imul  rax, {by}",                   // x *= by
-        "mov   {t}, {y}",                    // t = y
-        "imul  {t}, {bx}",                   // t *= bx
-        "sub   rax, {t}",                    // x -= t       x = x * by - y * bx
-        "imul  {bx}, {ay}",                  // bx *= ay
-        "imul  {ax}, {by}",                  // ax *= by
-        "sub   {ax}, {bx}",                  // ax -= bx     ax = by * ax - bx * ay
-
-        "cqo",                               //
-        "idiv  {ax}",                        // rax = x / ax, rdx = x % ax
-        "test  rdx, rdx",                    //
-        "jne   6f",                          // jump rdx != 0
-
-        "mov   {t}, rax",                    // t = rax
-        "imul  {ay}, rax",                   // ay *= rax
-        "sub   {y}, {ay}",                   // y -= ay      y = y - ay * a
-        "mov   rax, {y}",                    //
-        "cqo",                               //
-        "idiv  {by}",                        // rax = y / by, rdx = y % by
-        "test  rdx, rdx",                    //
-        "jne   6f",                          // jump rdx != 0
-
-        "lea   {t}, [{t} + 2*{t}]",          // t = 3 * t
-        "add   {sum}, {t}",                  // sum += t
-        "add   {sum}, rax",                  // sum += rax
-
-        "6:",
-        "add   {s}, 63",                     // s += 63
-        "cmp   {end}, {s}",                  //
-        "jae   2b",                          // jump s > end
+        "jmp   2b",
         "3:",
         s = inout(reg) s.as_ptr() => _,
         end = in(reg) s.as_ptr().offset(s.len() as isize),
