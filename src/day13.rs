@@ -20,12 +20,12 @@ unsafe fn inner_part1(s: &str) -> u64 {
     asm!(
         "2:",                                //
         "movzx {ax:e}, byte ptr [{s} + 12]", // ax = s[i + 12]
+        "movzx {ay:e}, byte ptr [{s} + 18]", // ay = s[i + 18]
         "add   {ax:e}, {ax:e}",              // ax *= 2
         "lea   {ax:e}, [{ax} + 4*{ax}]",     // ax *= 5
         "add   {ax:l}, byte ptr [{s} + 13]", // ax += s[i + 13]
         "add   {ax:l}, -16",                 // ax -= 16
         "movzx {ax}, {ax:l}",                // ax = ax & 0xFF
-        "movzx {ay:e}, byte ptr [{s} + 18]", // ay = s[i + 18]
         "add   {ay:e}, {ay:e}",              // ay *= 2
         "lea   {ay:e}, [{ay} + 4*{ay}]",     // ay *= 5
         "add   {ay:l}, byte ptr [{s} + 19]", // ay += s[i + 19]
@@ -33,12 +33,12 @@ unsafe fn inner_part1(s: &str) -> u64 {
         "movzx {ay}, {ay:l}",                // ay = ay & 0xFF
 
         "movzx {bx:e}, byte ptr [{s} + 33]", // bx = s[i + 33]
+        "movzx {by:e}, byte ptr [{s} + 39]", // by = s[i + 39]
         "add   {bx:e}, {bx:e}",              // bx *= 2
         "lea   {bx:e}, [{bx} + 4*{bx}]",     // bx *= 5
         "add   {bx:l}, byte ptr [{s} + 34]", // bx += s[i + 34]
         "add   {bx:l}, -16",                 // bx -= 16
         "movzx {bx}, {bx:l}",                // bx = bx & 0xFF
-        "movzx {by:e}, byte ptr [{s} + 39]", // by = s[i + 39]
         "add   {by:e}, {by:e}",              // by *= 2
         "lea   {by:e}, [{by} + 4*{by}]",     // by *= 5
         "add   {by:l}, byte ptr [{s} + 40]", // by += s[i + 40]
@@ -46,9 +46,9 @@ unsafe fn inner_part1(s: &str) -> u64 {
         "movzx {by}, {by:l}",                // by = by & 0xFF
 
         "movzx rax, byte ptr [{s} + 51]",    // x = s[i + 51]
+        "movzx {t}, byte ptr [{s} + 52]",    // t = s[i + 52]
         "add   rax, rax",                    // x *= 2
         "lea   rax, [rax + 4*rax]",          // x *= 5
-        "movzx {t}, byte ptr [{s} + 52]",    // t = s[i + 52]
         "add   rax, {t}",                    // x += t
         "add   rax, rax",                    // x *= 2
         "lea   rax, [rax + 4*rax]",          // x *= 5
@@ -72,9 +72,9 @@ unsafe fn inner_part1(s: &str) -> u64 {
         "4:",
 
         "movzx {y}, byte ptr [{s} + 58]",    // y = s[i + 58]
+        "movzx {t}, byte ptr [{s} + 59]",    // t = s[i + 59]
         "add   {y}, {y}",                    // y *= 2
         "lea   {y}, [{y} + 4*{y}]",          // y *= 5
-        "movzx {t}, byte ptr [{s} + 59]",    // t = s[i + 59]
         "add   {y}, {t}",                    // y += t
         "add   {y}, {y}",                    // y *= 2
         "lea   {y}, [{y} + 4*{y}]",          // y *= 5
