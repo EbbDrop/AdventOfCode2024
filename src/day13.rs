@@ -18,8 +18,84 @@ unsafe fn inner_part1(s: &str) -> u64 {
 
     let mut sum = 0;
     asm!(
-        "jmp     7f",
         "2:",                                //
+        "movzx {ax:e}, byte ptr [{s} + 12]", // ax = s[i + 12]
+        "add   {ax:e}, {ax:e}",              // ax *= 2
+        "lea   {ax:e}, [{ax} + 4*{ax}]",     // ax *= 5
+        "add   {ax:l}, byte ptr [{s} + 13]", // ax += s[i + 13]
+        "add   {ax:l}, -16",                 // ax -= 16
+        "movzx {ax}, {ax:l}",                // ax = ax & 0xFF
+        "movzx {ay:e}, byte ptr [{s} + 18]", // ay = s[i + 18]
+        "add   {ay:e}, {ay:e}",              // ay *= 2
+        "lea   {ay:e}, [{ay} + 4*{ay}]",     // ay *= 5
+        "add   {ay:l}, byte ptr [{s} + 19]", // ay += s[i + 19]
+        "add   {ay:l}, -16",                 // ay -= 16
+        "movzx {ay}, {ay:l}",                // ay = ay & 0xFF
+
+        "movzx {bx:e}, byte ptr [{s} + 33]", // bx = s[i + 33]
+        "add   {bx:e}, {bx:e}",              // bx *= 2
+        "lea   {bx:e}, [{bx} + 4*{bx}]",     // bx *= 5
+        "add   {bx:l}, byte ptr [{s} + 34]", // bx += s[i + 34]
+        "add   {bx:l}, -16",                 // bx -= 16
+        "movzx {bx}, {bx:l}",                // bx = bx & 0xFF
+        "movzx {by:e}, byte ptr [{s} + 39]", // by = s[i + 39]
+        "add   {by:e}, {by:e}",              // by *= 2
+        "lea   {by:e}, [{by} + 4*{by}]",     // by *= 5
+        "add   {by:l}, byte ptr [{s} + 40]", // by += s[i + 40]
+        "add   {by:l}, -16",                 // by -= 16
+        "movzx {by}, {by:l}",                // by = by & 0xFF
+
+        "movzx rax, byte ptr [{s} + 51]",    // x = s[i + 51]
+        "add   rax, rax",                    // x *= 2
+        "lea   rax, [rax + 4*rax]",          // x *= 5
+        "movzx {t}, byte ptr [{s} + 52]",    // t = s[i + 52]
+        "add   rax, {t}",                    // x += t
+        "add   rax, rax",                    // x *= 2
+        "lea   rax, [rax + 4*rax]",          // x *= 5
+        "movzx {t}, byte ptr [{s} + 53]",    // t = s[i + 53]
+        "add   rax, {t}",                    // x += t
+        "add   rax, -111 * '0'",             // x -= 111 * b'0'
+        "movzx {t}, byte ptr [{s} + 54]",    // x = s[i + 54]
+        "cmp   {t}, ','",                    //
+        "je    4f",                          // jump t == b','
+        "add   rax, rax",                    // x *= 2
+        "lea   rax, [rax + 4*rax]",          // x *= 5
+        "lea   rax, [rax + {t} -'0']",       // x += t - b'0'
+        "inc   {s}",                         // s += 1
+        "movzx {t}, byte ptr [{s} + 54]",    // x = s[i + 54]
+        "cmp   {t}, ','",                    //
+        "je   4f",                           // jump t == b','
+        "add   rax, rax",                    // x *= 2
+        "lea   rax, [rax + 4*rax]",          // x *= 5
+        "lea   rax, [rax + {t} -'0']",       // x += t - b'0'
+        "inc   {s}",                         // s += 1
+        "4:",
+
+        "movzx {y}, byte ptr [{s} + 58]",    // y = s[i + 58]
+        "add   {y}, {y}",                    // y *= 2
+        "lea   {y}, [{y} + 4*{y}]",          // y *= 5
+        "movzx {t}, byte ptr [{s} + 59]",    // t = s[i + 59]
+        "add   {y}, {t}",                    // y += t
+        "add   {y}, {y}",                    // y *= 2
+        "lea   {y}, [{y} + 4*{y}]",          // y *= 5
+        "movzx {t}, byte ptr [{s} + 60]",    // t = s[i + 60]
+        "add   {y}, {t}",                    // y += t
+        "add   {y}, -111 * '0'",             // y -= 111 * b'0'
+        "movzx {t}, byte ptr [{s} + 61]",    // y = s[i + 61]
+        "cmp   {t}, '\\n'",                  //
+        "je    5f",                          // jump t == b','
+        "add   {y}, {y}",                    // y *= 2
+        "lea   {y}, [{y} + 4*{y}]",          // y *= 5
+        "lea   {y}, [{y} + {t} -'0']",       // y += t - b'0'
+        "inc   {s}",                         // s += 1
+        "movzx {t}, byte ptr [{s} + 61]",    // y = s[i + 61]
+        "cmp   {t}, '\\n'",                  //
+        "je   5f",                           // jump t == b','
+        "add   {y}, {y}",                    // y *= 2
+        "lea   {y}, [{y} + 4*{y}]",          // y *= 5
+        "lea   {y}, [{y} + {t} -'0']",       // y += t - b'0'
+        "inc   {s}",                         // s += 1
+        "5:",
 
         "imul  rax, {by}",                   // x *= by
         "mov   {t}, {y}",                    // t = y
@@ -50,86 +126,7 @@ unsafe fn inner_part1(s: &str) -> u64 {
         "6:",
         "add   {s}, 63",                     // s += 63
         "cmp   {end}, {s}",                  //
-        "jb    3f",                          // jump s <= end
-        "7:",
-
-        "movzx {ax:e}, byte ptr [{s} + 12]", // ax = s[i + 12]
-        "movzx {ay:e}, byte ptr [{s} + 18]", // ay = s[i + 18]
-        "add   {ax:e}, {ax:e}",              // ax *= 2
-        "lea   {ax:e}, [{ax} + 4*{ax}]",     // ax *= 5
-        "add   {ax:l}, byte ptr [{s} + 13]", // ax += s[i + 13]
-        "add   {ax:l}, -16",                 // ax -= 16
-        "movzx {ax}, {ax:l}",                // ax = ax & 0xFF
-        "add   {ay:e}, {ay:e}",              // ay *= 2
-        "lea   {ay:e}, [{ay} + 4*{ay}]",     // ay *= 5
-        "add   {ay:l}, byte ptr [{s} + 19]", // ay += s[i + 19]
-        "add   {ay:l}, -16",                 // ay -= 16
-        "movzx {ay}, {ay:l}",                // ay = ay & 0xFF
-
-        "movzx {bx:e}, byte ptr [{s} + 33]", // bx = s[i + 33]
-        "movzx {by:e}, byte ptr [{s} + 39]", // by = s[i + 39]
-        "add   {bx:e}, {bx:e}",              // bx *= 2
-        "lea   {bx:e}, [{bx} + 4*{bx}]",     // bx *= 5
-        "add   {bx:l}, byte ptr [{s} + 34]", // bx += s[i + 34]
-        "add   {bx:l}, -16",                 // bx -= 16
-        "movzx {bx}, {bx:l}",                // bx = bx & 0xFF
-        "add   {by:e}, {by:e}",              // by *= 2
-        "lea   {by:e}, [{by} + 4*{by}]",     // by *= 5
-        "add   {by:l}, byte ptr [{s} + 40]", // by += s[i + 40]
-        "add   {by:l}, -16",                 // by -= 16
-        "movzx {by}, {by:l}",                // by = by & 0xFF
-
-        "movzx rax, byte ptr [{s} + 51]",    // x = s[i + 51]
-        "movzx {t}, byte ptr [{s} + 52]",    // t = s[i + 52]
-        "add   rax, rax",                    // x *= 2
-        "lea   rax, [rax + 4*rax]",          // x *= 5
-        "add   rax, {t}",                    // x += t
-        "add   rax, rax",                    // x *= 2
-        "lea   rax, [rax + 4*rax]",          // x *= 5
-        "movzx {t}, byte ptr [{s} + 53]",    // t = s[i + 53]
-        "add   rax, {t}",                    // x += t
-        "add   rax, -111 * '0'",             // x -= 111 * b'0'
-        "movzx {t}, byte ptr [{s} + 54]",    // x = s[i + 54]
-        "cmp   {t}, ','",                    //
-        "je    4f",                          // jump t == b','
-        "add   rax, rax",                    // x *= 2
-        "lea   rax, [rax + 4*rax]",          // x *= 5
-        "lea   rax, [rax + {t} -'0']",       // x += t - b'0'
-        "inc   {s}",                         // s += 1
-        "movzx {t}, byte ptr [{s} + 54]",    // x = s[i + 54]
-        "cmp   {t}, ','",                    //
-        "je   4f",                           // jump t == b','
-        "add   rax, rax",                    // x *= 2
-        "lea   rax, [rax + 4*rax]",          // x *= 5
-        "lea   rax, [rax + {t} -'0']",       // x += t - b'0'
-        "inc   {s}",                         // s += 1
-        "4:",
-
-        "movzx {y}, byte ptr [{s} + 58]",    // y = s[i + 58]
-        "movzx {t}, byte ptr [{s} + 59]",    // t = s[i + 59]
-        "add   {y}, {y}",                    // y *= 2
-        "lea   {y}, [{y} + 4*{y}]",          // y *= 5
-        "add   {y}, {t}",                    // y += t
-        "add   {y}, {y}",                    // y *= 2
-        "lea   {y}, [{y} + 4*{y}]",          // y *= 5
-        "movzx {t}, byte ptr [{s} + 60]",    // t = s[i + 60]
-        "add   {y}, {t}",                    // y += t
-        "add   {y}, -111 * '0'",             // y -= 111 * b'0'
-        "movzx {t}, byte ptr [{s} + 61]",    // y = s[i + 61]
-        "cmp   {t}, '\\n'",                  //
-        "je    2b",                          // jump t == b','
-        "add   {y}, {y}",                    // y *= 2
-        "lea   {y}, [{y} + 4*{y}]",          // y *= 5
-        "lea   {y}, [{y} + {t} -'0']",       // y += t - b'0'
-        "inc   {s}",                         // s += 1
-        "movzx {t}, byte ptr [{s} + 61]",    // y = s[i + 61]
-        "cmp   {t}, '\\n'",                  //
-        "je   2b",                           // jump t == b','
-        "add   {y}, {y}",                    // y *= 2
-        "lea   {y}, [{y} + 4*{y}]",          // y *= 5
-        "lea   {y}, [{y} + {t} -'0']",       // y += t - b'0'
-        "inc   {s}",                         // s += 1
-        "jmp   2b",
+        "jae   2b",                          // jump s > end
         "3:",
         s = inout(reg) s.as_ptr() => _,
         end = in(reg) s.as_ptr().offset(s.len() as isize),
