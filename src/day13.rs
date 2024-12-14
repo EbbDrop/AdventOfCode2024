@@ -45,29 +45,29 @@ unsafe fn inner_part1(s: &str) -> u64 {
         "add   {by:l}, -16",                 // by -= 16
         "movzx {by}, {by:l}",                // by = by & 0xFF
 
-        "movzx {x}, byte ptr [{s} + 51]",    // x = s[i + 51]
-        "add   {x}, {x}",                    // x *= 2
-        "lea   {x}, [{x} + 4*{x}]",          // x *= 5
+        "movzx rax, byte ptr [{s} + 51]",    // x = s[i + 51]
+        "add   rax, rax",                    // x *= 2
+        "lea   rax, [rax + 4*rax]",          // x *= 5
         "movzx {t}, byte ptr [{s} + 52]",    // t = s[i + 52]
-        "add   {x}, {t}",                    // x += t
-        "add   {x}, {x}",                    // x *= 2
-        "lea   {x}, [{x} + 4*{x}]",          // x *= 5
+        "add   rax, {t}",                    // x += t
+        "add   rax, rax",                    // x *= 2
+        "lea   rax, [rax + 4*rax]",          // x *= 5
         "movzx {t}, byte ptr [{s} + 53]",    // t = s[i + 53]
-        "add   {x}, {t}",                    // x += t
-        "add   {x}, -111 * '0'",             // x -= 111 * b'0'
+        "add   rax, {t}",                    // x += t
+        "add   rax, -111 * '0'",             // x -= 111 * b'0'
         "movzx {t}, byte ptr [{s} + 54]",    // x = s[i + 54]
         "cmp   {t}, ','",                    //
         "je    4f",                          // jump t == b','
-        "add   {x}, {x}",                    // x *= 2
-        "lea   {x}, [{x} + 4*{x}]",          // x *= 5
-        "lea   {x}, [{x} + {t} -'0']",       // x += t - b'0'
+        "add   rax, rax",                    // x *= 2
+        "lea   rax, [rax + 4*rax]",          // x *= 5
+        "lea   rax, [rax + {t} -'0']",       // x += t - b'0'
         "inc   {s}",                         // s += 1
         "movzx {t}, byte ptr [{s} + 54]",    // x = s[i + 54]
         "cmp   {t}, ','",                    //
         "je   4f",                           // jump t == b','
-        "add   {x}, {x}",                    // x *= 2
-        "lea   {x}, [{x} + 4*{x}]",          // x *= 5
-        "lea   {x}, [{x} + {t} -'0']",       // x += t - b'0'
+        "add   rax, rax",                    // x *= 2
+        "lea   rax, [rax + 4*rax]",          // x *= 5
+        "lea   rax, [rax + {t} -'0']",       // x += t - b'0'
         "inc   {s}",                         // s += 1
         "4:",
 
@@ -97,15 +97,14 @@ unsafe fn inner_part1(s: &str) -> u64 {
         "inc   {s}",                         // s += 1
         "5:",
 
-        "imul  {x}, {by}",                   // x *= by
+        "imul  rax, {by}",                   // x *= by
         "mov   {t}, {y}",                    // t = y
         "imul  {t}, {bx}",                   // t *= bx
-        "sub   {x}, {t}",                    // x -= t       x = x * by - y * bx
+        "sub   rax, {t}",                    // x -= t       x = x * by - y * bx
         "imul  {bx}, {ay}",                  // bx *= ay
         "imul  {ax}, {by}",                  // ax *= by
         "sub   {ax}, {bx}",                  // ax -= bx     ax = by * ax - bx * ay
 
-        "mov   rax, {x}",                    //
         "cqo",                               //
         "idiv  {ax}",                        // rax = x / ax, rdx = x % ax
         "test  rdx, rdx",                    //
@@ -138,7 +137,6 @@ unsafe fn inner_part1(s: &str) -> u64 {
         ay = out(reg) _,
         bx = out(reg) _,
         by = out(reg) _,
-        x = out(reg) _,
         y = out(reg) _,
         sum = inout(reg) sum,
     );
