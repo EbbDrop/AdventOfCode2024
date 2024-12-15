@@ -223,7 +223,6 @@ fn inner_part2(s: &[u8]) -> u32 {
             f.fill(0);
         };
 
-        println!("{}, {}", x, y);
         *LUT.get_unchecked((x as usize) << 7 | y as usize)
     }
 }
