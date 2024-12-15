@@ -165,18 +165,25 @@ fn inner_part2(s: &[u8]) -> u64 {
         a[k] = (x, y, vx, vy);
     }
 
-    let mut f = [0i32; WIDTH as usize * HIGHT as usize];
-    'sycles: for s in 5000.. {
-        for (x, y, vx, vy) in a {
-            let x = (x + vx * s).rem_euclid(WIDTH);
-            let y = (y + vy * s).rem_euclid(HIGHT);
+    unsafe {
+        let mut f = [0i32; WIDTH as usize * HIGHT as usize];
+        'sycles: for s in 5000.. {
+            for (x, y, vx, vy) in a {
+                std::hint::assert_unchecked(x + vx * s != i32::MIN);
+                std::hint::assert_unchecked(y + vy * s != i32::MIN);
+                let x = (x + vx * s).rem_euclid(WIDTH);
+                let y = (y + vy * s).rem_euclid(HIGHT);
 
-            if f[(y * WIDTH + x) as usize] == s {
-                continue 'sycles;
+                if *f.get_unchecked((y * WIDTH + x) as usize) == s {
+                    continue 'sycles;
+                }
+                *f.get_unchecked_mut((y * WIDTH + x) as usize) = s;
             }
-            f[(y * WIDTH + x) as usize] = s;
+            if s > WIDTH * HIGHT {
+                return (s - (WIDTH * HIGHT)) as u64;
+            }
+            return s as u64;
         }
-        return (s % 10403) as u64;
     }
 
     0
