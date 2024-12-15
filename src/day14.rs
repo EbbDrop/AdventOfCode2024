@@ -192,35 +192,67 @@ fn inner_part2(s: &[u8]) -> u32 {
     }
 
     unsafe {
-        let mut f = [0u8; 103];
+        let mut xs = [0u8; 103];
+        let mut ys = [0u8; 103];
 
         let mut s = 0;
-        let x = 'x_loop: loop {
-            for (x, _, vx, _) in a {
+        let (x, y) = 'outer: loop {
+            for (x, y, vx, vy) in a {
                 let x = ((x as u16).unchecked_add((vx as u16).unchecked_mul(s))) % WIDTH;
-                *f.get_unchecked_mut(x as usize) += 1;
-                if *f.get_unchecked_mut(x as usize) >= 20 {
-                    break 'x_loop s;
-                }
-            }
-
-            s += 1;
-            f.fill(0);
-        };
-        f.fill(0);
-
-        let mut s = 0;
-        let y = 'y_loop: loop {
-            for (_, y, _, vy) in a {
                 let y = ((y as u16).unchecked_add((vy as u16).unchecked_mul(s))) % HIGHT;
-                *f.get_unchecked_mut(y as usize) += 1;
-                if *f.get_unchecked_mut(y as usize) >= 20 {
-                    break 'y_loop s;
+
+                *xs.get_unchecked_mut(x as usize) += 1;
+                if *xs.get_unchecked_mut(x as usize) >= 20 {
+                    if *ys.get_unchecked_mut(y as usize) >= 20 {
+                        break 'outer (s, s);
+                    }
+
+                    let x = s;
+                    ys.fill(0);
+                    s += 1;
+
+                    loop {
+                        for (_, y, _, vy) in a {
+                            let y =
+                                ((y as u16).unchecked_add((vy as u16).unchecked_mul(s))) % HIGHT;
+
+                            *ys.get_unchecked_mut(y as usize) += 1;
+                            if *ys.get_unchecked_mut(y as usize) >= 20 {
+                                break 'outer (x, s);
+                            }
+                        }
+                        s += 1;
+                        xs.fill(0);
+                    }
+                }
+                *ys.get_unchecked_mut(y as usize) += 1;
+                if *ys.get_unchecked_mut(y as usize) >= 20 {
+                    if *xs.get_unchecked_mut(x as usize) >= 20 {
+                        break 'outer (s, s);
+                    }
+                    let y = s;
+                    xs.fill(0);
+                    s += 1;
+
+                    loop {
+                        for (x, _, vx, _) in a {
+                            let x =
+                                ((x as u16).unchecked_add((vx as u16).unchecked_mul(s))) % WIDTH;
+
+                            *xs.get_unchecked_mut(x as usize) += 1;
+                            if *xs.get_unchecked_mut(x as usize) >= 20 {
+                                break 'outer (s, y);
+                            }
+                        }
+                        s += 1;
+                        xs.fill(0);
+                    }
                 }
             }
 
             s += 1;
-            f.fill(0);
+            xs.fill(0);
+            ys.fill(0);
         };
 
         *LUT.get_unchecked((x as usize) << 7 | y as usize)
