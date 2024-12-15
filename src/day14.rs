@@ -10,6 +10,25 @@ const WIDTH: i32 = 101;
 #[cfg(not(test))]
 const HIGHT: i32 = 103;
 
+static LUT: [u64; (WIDTH * HIGHT) as usize] = const {
+    let mut lut = [0u64; (WIDTH * HIGHT) as usize];
+
+    let mut x = 0;
+    while x < WIDTH as u64 {
+        let mut y = 0;
+        while y < HIGHT as u64 {
+            // From wlfram alpha
+            let ticks = (x + (52 * x + 51 * y) * 101) % (101 * 103);
+            lut[(y * WIDTH as u64 + x) as usize] = ticks;
+
+            y += 1;
+        }
+        x += 1;
+    }
+
+    lut
+};
+
 #[aoc(day14, part1)]
 pub fn part1(s: &str) -> u64 {
     #[expect(unused_unsafe)]
@@ -166,27 +185,40 @@ fn inner_part2(s: &[u8]) -> u64 {
     }
 
     unsafe {
-        let mut f = [0i32; WIDTH as usize * HIGHT as usize];
-        'sycles: for s in 5000.. {
-            for (x, y, vx, vy) in a {
+        let mut f = [0u8; 103];
+
+        let mut s = 0;
+        let x = 'x_loop: loop {
+            for (x, _, vx, _) in a {
                 std::hint::assert_unchecked(x + vx * s != i32::MIN);
-                std::hint::assert_unchecked(y + vy * s != i32::MIN);
                 let x = (x + vx * s).rem_euclid(WIDTH);
-                let y = (y + vy * s).rem_euclid(HIGHT);
-
-                if *f.get_unchecked((y * WIDTH + x) as usize) == s {
-                    continue 'sycles;
+                *f.get_unchecked_mut(x as usize) += 1;
+                if *f.get_unchecked_mut(x as usize) >= 31 {
+                    break 'x_loop s;
                 }
-                *f.get_unchecked_mut((y * WIDTH + x) as usize) = s;
             }
-            if s > WIDTH * HIGHT {
-                return (s - (WIDTH * HIGHT)) as u64;
-            }
-            return s as u64;
-        }
-    }
 
-    0
+            s += 1;
+            f.fill(0);
+        };
+        f.fill(0);
+        let mut s = 0;
+        let y = 'y_loop: loop {
+            for (_, y, _, vy) in a {
+                std::hint::assert_unchecked(y + vy * s != i32::MIN);
+                let y = (y + vy * s).rem_euclid(HIGHT);
+                *f.get_unchecked_mut(y as usize) += 1;
+                if *f.get_unchecked_mut(y as usize) >= 33 {
+                    break 'y_loop s;
+                }
+            }
+
+            s += 1;
+            f.fill(0);
+        };
+
+        LUT[(y * WIDTH + x) as usize]
+    }
 }
 
 #[cfg(test)]
