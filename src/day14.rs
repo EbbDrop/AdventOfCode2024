@@ -126,44 +126,42 @@ fn inner_part1(s: &[u8]) -> u64 {
 
 #[aoc(day14, part2)]
 pub fn part2(s: &str) -> u32 {
-    #[expect(unused_unsafe)]
-    unsafe {
-        inner_part2(s.as_bytes())
-    }
+    unsafe { inner_part2(s.as_bytes()) }
 }
 
-// #[target_feature(enable = "avx2,bmi1,bmi2,cmpxchg16b,lzcnt,movbe,popcnt")]
-fn inner_part2(s: &[u8]) -> u32 {
+#[target_feature(enable = "avx2,bmi1,bmi2,cmpxchg16b,lzcnt,movbe,popcnt")]
+unsafe fn inner_part2(s: &[u8]) -> u32 {
     let mut a = [(0, 0, 0, 0); 500];
 
     let mut i = 2;
     for k in 0..500 {
         let mut x = 0;
-        while s[i] != b',' {
+        while *s.get_unchecked(i) != b',' {
             x *= 10;
-            x += (s[i] - b'0') as u8;
+            x += (*s.get_unchecked(i) - b'0') as u8;
             i += 1;
         }
         i += 1;
 
         let mut y = 0;
-        while s[i] != b' ' {
+        while *s.get_unchecked(i) != b' ' {
             y *= 10;
-            y += (s[i] - b'0') as u8;
+            y += (*s.get_unchecked(i) - b'0') as u8;
             i += 1;
         }
         i += 3;
 
-        let mut vx = 0;
-        let neg = if s[i] == b'-' {
+        let neg = if *s.get_unchecked(i) == b'-' {
             i += 1;
             true
         } else {
             false
         };
-        while s[i] != b',' {
+        i += 1;
+        let mut vx = (*s.get_unchecked(i - 1) - b'0') as i16;
+        while *s.get_unchecked(i) != b',' {
             vx *= 10;
-            vx += (s[i] - b'0') as i16;
+            vx += (*s.get_unchecked(i) - b'0') as i16;
             i += 1;
         }
         if neg {
@@ -171,16 +169,17 @@ fn inner_part2(s: &[u8]) -> u32 {
         }
         i += 1;
 
-        let mut vy = 0;
-        let neg = if s[i] == b'-' {
+        let neg = if *s.get_unchecked(i) == b'-' {
             i += 1;
             true
         } else {
             false
         };
-        while s[i] != b'\n' {
+        i += 1;
+        let mut vy = (*s.get_unchecked(i - 1) - b'0') as i16;
+        while *s.get_unchecked(i) != b'\n' {
             vy *= 10;
-            vy += (s[i] - b'0') as i16;
+            vy += (*s.get_unchecked(i) - b'0') as i16;
             i += 1;
         }
         if neg {
