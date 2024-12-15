@@ -33,14 +33,11 @@ static LUT: [u32; (WIDTH as usize) << 7 | HIGHT as usize] = const {
 
 #[aoc(day14, part1)]
 pub fn part1(s: &str) -> u64 {
-    #[expect(unused_unsafe)]
-    unsafe {
-        inner_part1(s.as_bytes())
-    }
+    unsafe { inner_part1(s.as_bytes()) }
 }
 
-// #[target_feature(enable = "avx2,bmi1,bmi2,cmpxchg16b,lzcnt,movbe,popcnt")]
-fn inner_part1(s: &[u8]) -> u64 {
+#[target_feature(enable = "avx2,bmi1,bmi2,cmpxchg16b,lzcnt,movbe,popcnt")]
+unsafe fn inner_part1(s: &[u8]) -> u64 {
     let mut tl = 0;
     let mut tr = 0;
     let mut bl = 0;
@@ -49,31 +46,32 @@ fn inner_part1(s: &[u8]) -> u64 {
     let mut i = 2;
     while i < s.len() {
         let mut x = 0;
-        while s[i] != b',' {
+        while *s.get_unchecked(i) != b',' {
             x *= 10;
-            x += (s[i] - b'0') as i16;
+            x += (*s.get_unchecked(i) - b'0') as i16;
             i += 1;
         }
         i += 1;
 
         let mut y = 0;
-        while s[i] != b' ' {
+        while *s.get_unchecked(i) != b' ' {
             y *= 10;
-            y += (s[i] - b'0') as i16;
+            y += (*s.get_unchecked(i) - b'0') as i16;
             i += 1;
         }
         i += 3;
 
-        let mut vx = 0;
-        let neg = if s[i] == b'-' {
+        let neg = if *s.get_unchecked(i) == b'-' {
             i += 1;
             true
         } else {
             false
         };
-        while s[i] != b',' {
+        i += 1;
+        let mut vx = (*s.get_unchecked(i - 1) - b'0') as i16;
+        while *s.get_unchecked(i) != b',' {
             vx *= 10;
-            vx += (s[i] - b'0') as i16;
+            vx += (*s.get_unchecked(i) - b'0') as i16;
             i += 1;
         }
         if neg {
@@ -81,16 +79,17 @@ fn inner_part1(s: &[u8]) -> u64 {
         }
         i += 1;
 
-        let mut vy = 0;
-        let neg = if s[i] == b'-' {
+        let neg = if *s.get_unchecked(i) == b'-' {
             i += 1;
             true
         } else {
             false
         };
-        while s[i] != b'\n' {
+        i += 1;
+        let mut vy = (*s.get_unchecked(i - 1) - b'0') as i16;
+        while *s.get_unchecked(i) != b'\n' {
             vy *= 10;
-            vy += (s[i] - b'0') as i16;
+            vy += (*s.get_unchecked(i) - b'0') as i16;
             i += 1;
         }
         if neg {
@@ -187,7 +186,7 @@ unsafe fn inner_part2(s: &[u8]) -> u32 {
         }
         i += 3;
 
-        a[k] = (x as u8, y as u8, vx as u8, vy as u8);
+        *a.get_unchecked_mut(k) = (x as u8, y as u8, vx as u8, vy as u8);
     }
 
     unsafe {
