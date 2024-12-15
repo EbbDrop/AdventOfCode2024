@@ -166,7 +166,7 @@ fn inner_part2(s: &[u8]) -> u64 {
     }
 
     let mut f = [0i32; WIDTH as usize * HIGHT as usize];
-    'sycles: for s in 0.. {
+    'sycles: for s in 5000.. {
         for (x, y, vx, vy) in a {
             let x = (x + vx * s).rem_euclid(WIDTH);
             let y = (y + vy * s).rem_euclid(HIGHT);
@@ -176,7 +176,7 @@ fn inner_part2(s: &[u8]) -> u64 {
             }
             f[(y * WIDTH + x) as usize] = s;
         }
-        return s as u64;
+        return (s % 10403) as u64;
     }
 
     0
