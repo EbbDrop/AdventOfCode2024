@@ -208,10 +208,10 @@ fn inner_part2(s: &[u8]) -> u32 {
                     }
 
                     let x = s;
-                    ys.fill(0);
-                    s += 1;
 
                     loop {
+                        ys.fill(0);
+                        s += 1;
                         for (_, y, _, vy) in a {
                             let y =
                                 ((y as u16).unchecked_add((vy as u16).unchecked_mul(s))) % HIGHT;
@@ -221,8 +221,6 @@ fn inner_part2(s: &[u8]) -> u32 {
                                 break 'outer (x, s);
                             }
                         }
-                        s += 1;
-                        xs.fill(0);
                     }
                 }
                 *ys.get_unchecked_mut(y as usize) += 1;
@@ -231,10 +229,10 @@ fn inner_part2(s: &[u8]) -> u32 {
                         break 'outer (s, s);
                     }
                     let y = s;
-                    xs.fill(0);
-                    s += 1;
 
                     loop {
+                        xs.fill(0);
+                        s += 1;
                         for (x, _, vx, _) in a {
                             let x =
                                 ((x as u16).unchecked_add((vx as u16).unchecked_mul(s))) % WIDTH;
@@ -244,8 +242,6 @@ fn inner_part2(s: &[u8]) -> u32 {
                                 break 'outer (s, y);
                             }
                         }
-                        s += 1;
-                        xs.fill(0);
                     }
                 }
             }
