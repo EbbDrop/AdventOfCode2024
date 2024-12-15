@@ -187,8 +187,8 @@ fn inner_part2(s: &[u8]) -> u64 {
     unsafe {
         let mut f = [0u8; 103];
 
-        let mut s = 0;
-        let x = 'x_loop: loop {
+        let mut s = 50;
+        let mut x = 'x_loop: loop {
             for (x, _, vx, _) in a {
                 std::hint::assert_unchecked(x + vx * s != i32::MIN);
                 let x = (x + vx * s).rem_euclid(WIDTH);
@@ -201,9 +201,13 @@ fn inner_part2(s: &[u8]) -> u64 {
             s += 1;
             f.fill(0);
         };
+        if x > WIDTH {
+            x -= WIDTH;
+        }
         f.fill(0);
-        let mut s = 0;
-        let y = 'y_loop: loop {
+
+        let mut s = 50;
+        let mut y = 'y_loop: loop {
             for (_, y, _, vy) in a {
                 std::hint::assert_unchecked(y + vy * s != i32::MIN);
                 let y = (y + vy * s).rem_euclid(HIGHT);
@@ -216,6 +220,9 @@ fn inner_part2(s: &[u8]) -> u64 {
             s += 1;
             f.fill(0);
         };
+        if y > HIGHT {
+            y -= HIGHT;
+        }
 
         LUT[(y * WIDTH + x) as usize]
     }
