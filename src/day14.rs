@@ -160,7 +160,7 @@ fn inner_part2(s: &[u8]) -> u64 {
             i += 1;
         }
         if neg {
-            vx *= -1;
+            vx = WIDTH - vx;
         }
         i += 1;
 
@@ -177,7 +177,7 @@ fn inner_part2(s: &[u8]) -> u64 {
             i += 1;
         }
         if neg {
-            vy *= -1;
+            vy = HIGHT - vy;
         }
         i += 3;
 
@@ -191,7 +191,7 @@ fn inner_part2(s: &[u8]) -> u64 {
         let x = 'x_loop: loop {
             for (x, _, vx, _) in a {
                 std::hint::assert_unchecked(x + vx * s != i32::MIN);
-                let x = (x + vx * s).rem_euclid(WIDTH);
+                let x = (x + vx * s) % WIDTH;
                 *f.get_unchecked_mut(x as usize) += 1;
                 if *f.get_unchecked_mut(x as usize) >= 20 {
                     break 'x_loop s;
@@ -207,7 +207,7 @@ fn inner_part2(s: &[u8]) -> u64 {
         let y = 'y_loop: loop {
             for (_, y, _, vy) in a {
                 std::hint::assert_unchecked(y + vy * s != i32::MIN);
-                let y = (y + vy * s).rem_euclid(HIGHT);
+                let y = (y + vy * s) % HIGHT;
                 *f.get_unchecked_mut(y as usize) += 1;
                 if *f.get_unchecked_mut(y as usize) >= 20 {
                     break 'y_loop s;
