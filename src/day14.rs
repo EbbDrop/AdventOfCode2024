@@ -10,8 +10,8 @@ const WIDTH: i32 = 101;
 #[cfg(not(test))]
 const HIGHT: i32 = 103;
 
-static LUT: [u64; (WIDTH * HIGHT) as usize] = const {
-    let mut lut = [0u64; (WIDTH * HIGHT) as usize];
+static LUT: [u64; (WIDTH << 7 | HIGHT) as usize] = const {
+    let mut lut = [0u64; (WIDTH << 7 | HIGHT) as usize];
 
     let mut x = 0;
     while x < WIDTH as u64 {
@@ -19,7 +19,7 @@ static LUT: [u64; (WIDTH * HIGHT) as usize] = const {
         while y < HIGHT as u64 {
             // From wlfram alpha
             let ticks = (x + (52 * x + 51 * y) * 101) % (101 * 103);
-            lut[(y * WIDTH as u64 + x) as usize] = ticks;
+            lut[(x << 7 | y) as usize] = ticks;
 
             y += 1;
         }
@@ -218,7 +218,7 @@ fn inner_part2(s: &[u8]) -> u64 {
             f.fill(0);
         };
 
-        LUT[(y * WIDTH + x) as usize]
+        *LUT.get_unchecked((x << 7 | y) as usize)
     }
 }
 
