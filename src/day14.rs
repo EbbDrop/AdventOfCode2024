@@ -1,17 +1,19 @@
+use std::hint::assert_unchecked;
+
 use aoc_runner_derive::aoc;
 
 #[cfg(test)]
-const WIDTH: i32 = 11;
+const WIDTH: u16 = 11;
 #[cfg(test)]
-const HIGHT: i32 = 7;
+const HIGHT: u16 = 7;
 
 #[cfg(not(test))]
-const WIDTH: i32 = 101;
+const WIDTH: u16 = 101;
 #[cfg(not(test))]
-const HIGHT: i32 = 103;
+const HIGHT: u16 = 103;
 
-static LUT: [u64; (WIDTH << 7 | HIGHT) as usize] = const {
-    let mut lut = [0u64; (WIDTH << 7 | HIGHT) as usize];
+static LUT: [u32; (WIDTH as usize) << 7 | HIGHT as usize] = const {
+    let mut lut = [0; (WIDTH as usize) << 7 | HIGHT as usize];
 
     let mut x = 0;
     while x < WIDTH as u64 {
@@ -19,7 +21,7 @@ static LUT: [u64; (WIDTH << 7 | HIGHT) as usize] = const {
         while y < HIGHT as u64 {
             // From wlfram alpha
             let ticks = (x + (52 * x + 51 * y) * 101) % (101 * 103);
-            lut[(x << 7 | y) as usize] = ticks;
+            lut[(x << 7 | y) as usize] = ticks as u32;
 
             y += 1;
         }
@@ -49,7 +51,7 @@ fn inner_part1(s: &[u8]) -> u64 {
         let mut x = 0;
         while s[i] != b',' {
             x *= 10;
-            x += (s[i] - b'0') as i32;
+            x += (s[i] - b'0') as i16;
             i += 1;
         }
         i += 1;
@@ -57,7 +59,7 @@ fn inner_part1(s: &[u8]) -> u64 {
         let mut y = 0;
         while s[i] != b' ' {
             y *= 10;
-            y += (s[i] - b'0') as i32;
+            y += (s[i] - b'0') as i16;
             i += 1;
         }
         i += 3;
@@ -71,11 +73,11 @@ fn inner_part1(s: &[u8]) -> u64 {
         };
         while s[i] != b',' {
             vx *= 10;
-            vx += (s[i] - b'0') as i32;
+            vx += (s[i] - b'0') as i16;
             i += 1;
         }
         if neg {
-            vx *= -1;
+            vx = WIDTH as i16 - vx;
         }
         i += 1;
 
@@ -88,16 +90,21 @@ fn inner_part1(s: &[u8]) -> u64 {
         };
         while s[i] != b'\n' {
             vy *= 10;
-            vy += (s[i] - b'0') as i32;
+            vy += (s[i] - b'0') as i16;
             i += 1;
         }
         if neg {
-            vy *= -1;
+            vy = HIGHT as i16 - vy;
         }
         i += 3;
 
-        let x = (x + vx * 100).rem_euclid(WIDTH);
-        let y = (y + vy * 100).rem_euclid(HIGHT);
+        unsafe {
+            assert_unchecked((x + vx * 100) >= 0);
+            assert_unchecked((y + vy * 100) >= 0);
+        }
+
+        let x = (x + vx * 100) as u16 % WIDTH;
+        let y = (y + vy * 100) as u16 % HIGHT;
 
         if x < WIDTH / 2 {
             if y < HIGHT / 2 {
@@ -118,7 +125,7 @@ fn inner_part1(s: &[u8]) -> u64 {
 }
 
 #[aoc(day14, part2)]
-pub fn part2(s: &str) -> u64 {
+pub fn part2(s: &str) -> u32 {
     #[expect(unused_unsafe)]
     unsafe {
         inner_part2(s.as_bytes())
@@ -126,7 +133,7 @@ pub fn part2(s: &str) -> u64 {
 }
 
 // #[target_feature(enable = "avx2,bmi1,bmi2,cmpxchg16b,lzcnt,movbe,popcnt")]
-fn inner_part2(s: &[u8]) -> u64 {
+fn inner_part2(s: &[u8]) -> u32 {
     let mut a = [(0, 0, 0, 0); 500];
 
     let mut i = 2;
@@ -134,7 +141,7 @@ fn inner_part2(s: &[u8]) -> u64 {
         let mut x = 0;
         while s[i] != b',' {
             x *= 10;
-            x += (s[i] - b'0') as i32;
+            x += (s[i] - b'0') as u8;
             i += 1;
         }
         i += 1;
@@ -142,7 +149,7 @@ fn inner_part2(s: &[u8]) -> u64 {
         let mut y = 0;
         while s[i] != b' ' {
             y *= 10;
-            y += (s[i] - b'0') as i32;
+            y += (s[i] - b'0') as u8;
             i += 1;
         }
         i += 3;
@@ -156,11 +163,11 @@ fn inner_part2(s: &[u8]) -> u64 {
         };
         while s[i] != b',' {
             vx *= 10;
-            vx += (s[i] - b'0') as i32;
+            vx += (s[i] - b'0') as i16;
             i += 1;
         }
         if neg {
-            vx = WIDTH - vx;
+            vx = WIDTH as i16 - vx;
         }
         i += 1;
 
@@ -173,15 +180,15 @@ fn inner_part2(s: &[u8]) -> u64 {
         };
         while s[i] != b'\n' {
             vy *= 10;
-            vy += (s[i] - b'0') as i32;
+            vy += (s[i] - b'0') as i16;
             i += 1;
         }
         if neg {
-            vy = HIGHT - vy;
+            vy = HIGHT as i16 - vy;
         }
         i += 3;
 
-        a[k] = (x, y, vx, vy);
+        a[k] = (x as u8, y as u8, vx as u8, vy as u8);
     }
 
     unsafe {
@@ -190,8 +197,7 @@ fn inner_part2(s: &[u8]) -> u64 {
         let mut s = 0;
         let x = 'x_loop: loop {
             for (x, _, vx, _) in a {
-                std::hint::assert_unchecked(x + vx * s != i32::MIN);
-                let x = (x + vx * s) % WIDTH;
+                let x = ((x as u16).unchecked_add((vx as u16).unchecked_mul(s))) % WIDTH;
                 *f.get_unchecked_mut(x as usize) += 1;
                 if *f.get_unchecked_mut(x as usize) >= 20 {
                     break 'x_loop s;
@@ -206,8 +212,7 @@ fn inner_part2(s: &[u8]) -> u64 {
         let mut s = 0;
         let y = 'y_loop: loop {
             for (_, y, _, vy) in a {
-                std::hint::assert_unchecked(y + vy * s != i32::MIN);
-                let y = (y + vy * s) % HIGHT;
+                let y = ((y as u16).unchecked_add((vy as u16).unchecked_mul(s))) % HIGHT;
                 *f.get_unchecked_mut(y as usize) += 1;
                 if *f.get_unchecked_mut(y as usize) >= 20 {
                     break 'y_loop s;
@@ -218,7 +223,8 @@ fn inner_part2(s: &[u8]) -> u64 {
             f.fill(0);
         };
 
-        *LUT.get_unchecked((x << 7 | y) as usize)
+        println!("{}, {}", x, y);
+        *LUT.get_unchecked((x as usize) << 7 | y as usize)
     }
 }
 
