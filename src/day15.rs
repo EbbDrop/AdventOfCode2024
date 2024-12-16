@@ -30,39 +30,72 @@ fn inner_part1(s: &[u8]) -> u64 {
             i += 1;
             continue;
         }
+        let mut moves_left = 1;
+        while s[i + 1] == c {
+            i += 1;
+            moves_left += 1;
+        }
+
         if c == b'<' {
-            let p = memchr::memrchr2(b'.', b'#', &field[..robot]).unwrap();
-            if field[p] == b'.' {
-                field[p] = field[robot - 1];
-                field[robot - 1] = b'.';
-                robot -= 1;
+            let mut p = memchr::memrchr2(b'.', b'#', &field[..robot]).unwrap();
+            while moves_left > 0 {
+                if field[p] == b'.' {
+                    field.swap(robot - 1, p);
+                    robot -= 1;
+                    moves_left -= 1;
+                    p -= 1;
+                } else if field[p] == b'O' {
+                    p = memchr::memrchr2(b'.', b'#', &field[..p]).unwrap();
+                } else {
+                    moves_left = 0;
+                }
             }
         } else if c == b'v' {
             let mut p = robot + SIZE1;
-            while field[p] == b'O' {
-                p += SIZE1;
-            }
-            if field[p] == b'.' {
-                field[p] = field[robot + SIZE1];
-                field[robot + SIZE1] = b'.';
-                robot += SIZE1;
+
+            while moves_left > 0 {
+                if field[p] == b'.' {
+                    field.swap(robot + SIZE1, p);
+                    robot += SIZE1;
+                    moves_left -= 1;
+                    p += SIZE1;
+                } else if field[p] == b'O' {
+                    while field[p] == b'O' {
+                        p += SIZE1;
+                    }
+                } else {
+                    moves_left = 0;
+                }
             }
         } else if c == b'^' {
             let mut p = robot - SIZE1;
-            while field[p] == b'O' {
-                p -= SIZE1;
-            }
-            if field[p] == b'.' {
-                field[p] = field[robot - SIZE1];
-                field[robot - SIZE1] = b'.';
-                robot -= SIZE1;
+            while moves_left > 0 {
+                if field[p] == b'.' {
+                    field.swap(robot - SIZE1, p);
+                    robot -= SIZE1;
+                    moves_left -= 1;
+                    p -= SIZE1;
+                } else if field[p] == b'O' {
+                    while field[p] == b'O' {
+                        p -= SIZE1;
+                    }
+                } else {
+                    moves_left = 0;
+                }
             }
         } else {
-            let p = memchr::memchr2(b'.', b'#', &field[robot + 1..]).unwrap() + robot + 1;
-            if field[p] == b'.' {
-                field[p] = field[robot + 1];
-                field[robot + 1] = b'.';
-                robot += 1;
+            let mut p = memchr::memchr2(b'.', b'#', &field[robot + 1..]).unwrap() + robot + 1;
+            while moves_left > 0 {
+                if field[p] == b'.' {
+                    field.swap(robot + 1, p);
+                    robot += 1;
+                    moves_left -= 1;
+                    p += 1;
+                } else if field[p] == b'O' {
+                    p = memchr::memchr2(b'.', b'#', &field[p + 1..]).unwrap() + p + 1;
+                } else {
+                    moves_left = 0;
+                }
             }
         }
 
@@ -221,8 +254,8 @@ fn inner_part2(s: &[u8]) -> u64 {
             }
         }
 
-        let mut new_field = field.clone();
-        new_field[robot] = b'@';
+        // let mut new_field = field.clone();
+        // new_field[robot] = b'@';
 
         // println!(
         //     "Move: {}\n{}",
@@ -274,7 +307,20 @@ vvv<<^>^v^^><<>>><>^<<><^vv^^<>vvv<>><^^v>^>vv<>v<<<<v<^v>^<^^>>>^<v<v
 >^>>^v>vv>^<<^v<>><<><<v<<v><>v<^vv<<<>^^v^>^^>>><<^v>>v^v><^^>>^<>vv^
 <><^^>^^^<><vvvvv^v<v<<>^v<v>v<<^><<><<><<<^^<<<^<<>><<><^^^>^^<>^>v<>
 ^^>vv<^v^v<vv>^<><v<^v>^^^>>>^^vvv^>vvv<>>>^<^>>>>>^<<^v>^vvv<>^<><<v>
-v^^>>><<^^<>>^v^<v^vv<>v^<<>^<^v^v><^<<<><<^<v><v<>vv>>v><v^<vv<>v^<<^";
+v^^>>><<^^<>>^v^<v^vv<>v^<<>^<^v^v><^<<<><<^<v><v<>vv>>v><v^<vv<>v^<<^
+";
+
+    //     const EXAMPLE: &str = r"########
+    // #..O.O.#
+    // ##@.O..#
+    // #...O..#
+    // #.#.O..#
+    // #...O..#
+    // #......#
+    // ########
+
+    // <^^>>>vv<v>>v<<
+    // ";
 
     #[test]
     fn example_part1() {
