@@ -186,7 +186,7 @@ unsafe fn inner_part2(s: &[u8]) -> u64 {
     const WIDTH: usize = SIZE * 2;
     const HIGHT: usize = SIZE;
 
-    let mut field = [0; HIGHT * WIDTH];
+    let mut field = [MaybeUninit::uninit(); HIGHT * WIDTH];
 
     let mut robot = 0;
 
@@ -194,30 +194,30 @@ unsafe fn inner_part2(s: &[u8]) -> u64 {
     for i in 0..SIZE * SIZE1 {
         match *s.get_unchecked(i) {
             b'#' => {
-                *field.get_unchecked_mut(j + 0) = b'#';
-                *field.get_unchecked_mut(j + 1) = b'#';
+                field.get_unchecked_mut(j + 0).write(b'#');
+                field.get_unchecked_mut(j + 1).write(b'#');
             }
             b'O' => {
-                *field.get_unchecked_mut(j + 0) = b'[';
-                *field.get_unchecked_mut(j + 1) = b']';
+                field.get_unchecked_mut(j + 0).write(b'[');
+                field.get_unchecked_mut(j + 1).write(b']');
             }
             b'@' => {
                 robot = j;
-                *field.get_unchecked_mut(j + 0) = b'.';
-                *field.get_unchecked_mut(j + 1) = b'.';
+                field.get_unchecked_mut(j + 0).write(b'.');
+                field.get_unchecked_mut(j + 1).write(b'.');
             }
             b'\n' => {
                 j -= 2;
             }
             _ => {
-                *field.get_unchecked_mut(j + 0) = b'.';
-                *field.get_unchecked_mut(j + 1) = b'.';
+                field.get_unchecked_mut(j + 0).write(b'.');
+                field.get_unchecked_mut(j + 1).write(b'.');
             }
         }
         j += 2;
     }
 
-    // let mut field = std::mem::transmute::<_, [u8; WIDTH * HIGHT]>(field);
+    let mut field = std::mem::transmute::<_, [u8; WIDTH * HIGHT]>(field);
 
     let mut stack = ArrayVec::from_array_empty([0; 20]);
     let mut creates = ArrayVec::from_array_empty([0; 20]);
