@@ -16,8 +16,8 @@ pub fn part1(s: &str) -> u64 {
     unsafe { inner_part1(s.as_bytes()) }
 }
 
-unsafe fn memchr2(needle1: u8, needle2: u8, haystack: &[u8]) -> usize {
-    let mut i = 0;
+#[inline(always)]
+unsafe fn memchr2(needle1: u8, needle2: u8, haystack: &[u8], mut i: usize) -> usize {
     loop {
         if *haystack.get_unchecked(i) == needle1 || *haystack.get_unchecked(i) == needle2 {
             return i;
@@ -26,8 +26,8 @@ unsafe fn memchr2(needle1: u8, needle2: u8, haystack: &[u8]) -> usize {
     }
 }
 
-unsafe fn memrchr2(needle1: u8, needle2: u8, haystack: &[u8]) -> usize {
-    let mut i = haystack.len() - 1;
+#[inline(always)]
+unsafe fn memrchr2(needle1: u8, needle2: u8, haystack: &[u8], mut i: usize) -> usize {
     loop {
         if *haystack.get_unchecked(i) == needle1 || *haystack.get_unchecked(i) == needle2 {
             return i;
@@ -71,7 +71,7 @@ unsafe fn inner_part1(s: &[u8]) -> u64 {
         }
 
         if c == b'<' {
-            let mut p = memrchr2(b'.', b'#', &field[..robot]);
+            let mut p = memrchr2(b'.', b'#', &field, robot - 1);
             while moves_left > 0 {
                 if *field.get_unchecked(p) == b'.' {
                     if *field.get_unchecked(robot - 1) == b'O' {
@@ -83,7 +83,7 @@ unsafe fn inner_part1(s: &[u8]) -> u64 {
                     moves_left -= 1;
                     p -= 1;
                 } else if *field.get_unchecked(p) == b'O' {
-                    p = memrchr2(b'.', b'#', &field[..p]);
+                    p = memrchr2(b'.', b'#', &field, p - 1);
                 } else {
                     moves_left = 0;
                 }
@@ -130,7 +130,7 @@ unsafe fn inner_part1(s: &[u8]) -> u64 {
                 }
             }
         } else {
-            let mut p = memchr2(b'.', b'#', &field[robot + 1..]) + robot + 1;
+            let mut p = memchr2(b'.', b'#', &field, robot + 1);
             while moves_left > 0 {
                 if *field.get_unchecked(p) == b'.' {
                     if *field.get_unchecked(robot + 1) == b'O' {
@@ -142,7 +142,7 @@ unsafe fn inner_part1(s: &[u8]) -> u64 {
                     moves_left -= 1;
                     p += 1;
                 } else if *field.get_unchecked(p) == b'O' {
-                    p = memchr2(b'.', b'#', &field[p + 1..]) + p + 1;
+                    p = memchr2(b'.', b'#', &field, p + 1);
                 } else {
                     moves_left = 0;
                 }
@@ -239,7 +239,7 @@ unsafe fn inner_part2(s: &[u8]) -> u64 {
             continue;
         }
         if c == b'<' {
-            let p = memrchr2(b'.', b'#', &field[..robot]);
+            let p = memrchr2(b'.', b'#', &field, robot - 1);
             if *field.get_unchecked(p) == b'.' {
                 for i in p..=robot - 1 {
                     *field.get_unchecked_mut(i) = *field.get_unchecked(i + 1);
@@ -319,7 +319,7 @@ unsafe fn inner_part2(s: &[u8]) -> u64 {
                 robot -= WIDTH;
             }
         } else {
-            let p = memchr2(b'.', b'#', &field[robot + 1..]) + robot + 1;
+            let p = memchr2(b'.', b'#', &field, robot + 1);
             if *field.get_unchecked(p) == b'.' {
                 for i in (robot + 1..=p).rev() {
                     *field.get_unchecked_mut(i) = *field.get_unchecked(i - 1);
