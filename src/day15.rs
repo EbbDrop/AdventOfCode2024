@@ -1,3 +1,5 @@
+use std::mem::MaybeUninit;
+
 use aoc_runner_derive::aoc;
 // use memchr::{memchr2, memrchr2};
 use tinyvec::ArrayVec;
@@ -36,11 +38,9 @@ unsafe fn memrchr2(needle1: u8, needle2: u8, haystack: &[u8]) -> usize {
 
 #[target_feature(enable = "avx2,bmi1,bmi2,cmpxchg16b,lzcnt,movbe,popcnt")]
 unsafe fn inner_part1(s: &[u8]) -> u64 {
-    let robot_i = memchr::memchr(b'@', s).unwrap();
-    let mut robot = (robot_i / SIZE1) * SIZE + robot_i % SIZE1;
+    let mut field = [MaybeUninit::uninit(); SIZE * SIZE];
 
-    let mut field = [0; SIZE * SIZE];
-
+    let mut robot = 0;
     let mut sum = 0;
 
     for y in 0..SIZE {
@@ -49,10 +49,16 @@ unsafe fn inner_part1(s: &[u8]) -> u64 {
             if c == b'O' {
                 sum += 100 * y + x;
             }
-            *field.get_unchecked_mut(y * SIZE + x) = c;
+            if c == b'@' {
+                robot = y * SIZE + x;
+
+                field.get_unchecked_mut(y * SIZE + x).write(b'.');
+            } else {
+                field.get_unchecked_mut(y * SIZE + x).write(c);
+            }
         }
     }
-    *field.get_unchecked_mut(robot) = b'.';
+    let mut field = field.as_ptr().cast::<[u8; SIZE * SIZE]>().read();
 
     let mut i = SIZE * SIZE1 + 1;
     while i < s.len() {
