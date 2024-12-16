@@ -189,7 +189,6 @@ unsafe fn inner_part2(s: &[u8]) -> u64 {
     let mut field = [MaybeUninit::uninit(); HIGHT * WIDTH];
 
     let mut robot = 0;
-    let mut sum = 0;
 
     let mut j = 0;
     for i in 0..SIZE * SIZE1 {
@@ -199,7 +198,6 @@ unsafe fn inner_part2(s: &[u8]) -> u64 {
                 field.get_unchecked_mut(j + 1).write(b'#');
             }
             b'O' => {
-                sum += j;
                 field.get_unchecked_mut(j + 0).write(b'[');
                 field.get_unchecked_mut(j + 1).write(b']');
             }
@@ -243,7 +241,6 @@ unsafe fn inner_part2(s: &[u8]) -> u64 {
         if c == b'<' {
             let p = memrchr2(b'.', b'#', &field[..robot]);
             if *field.get_unchecked(p) == b'.' {
-                sum -= (robot - 1 - p) / 2;
                 for i in p..=robot - 1 {
                     *field.get_unchecked_mut(i) = *field.get_unchecked(i + 1);
                 }
@@ -273,7 +270,6 @@ unsafe fn inner_part2(s: &[u8]) -> u64 {
                 }
                 creates.sort_unstable_by(|a, b| b.cmp(a));
 
-                sum += 100 * creates.len();
                 for c in &creates {
                     let c = *c;
                     *field.get_unchecked_mut(c) = b'.';
@@ -310,7 +306,6 @@ unsafe fn inner_part2(s: &[u8]) -> u64 {
                 }
                 creates.sort_unstable();
 
-                sum -= 100 * creates.len();
                 for c in &creates {
                     let c = *c;
                     *field.get_unchecked_mut(c) = b'.';
@@ -326,7 +321,6 @@ unsafe fn inner_part2(s: &[u8]) -> u64 {
         } else {
             let p = memchr2(b'.', b'#', &field[robot + 1..]) + robot + 1;
             if *field.get_unchecked(p) == b'.' {
-                sum += (p - robot - 1) / 2;
                 for i in (robot + 1..=p).rev() {
                     *field.get_unchecked_mut(i) = *field.get_unchecked(i - 1);
                 }
@@ -353,14 +347,12 @@ unsafe fn inner_part2(s: &[u8]) -> u64 {
         i += 1;
     }
 
-    // let mut sum = 0;
-    // for y in 0..HIGHT {
-    //     for x in 0..WIDTH {
-    //         if field[y * WIDTH + x] == b'[' {
-    //             sum += 100 * y + x;
-    //         }
-    //     }
-    // }
+    let mut sum = 0;
+    for i in 0..WIDTH * HIGHT {
+        if *field.get_unchecked(i) == b'[' {
+            sum += i;
+        }
+    }
 
     sum as u64
 }
