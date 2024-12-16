@@ -1,4 +1,5 @@
 use aoc_runner_derive::aoc;
+// use memchr::{memchr2, memrchr2};
 use tinyvec::ArrayVec;
 
 #[cfg(test)]
@@ -14,6 +15,16 @@ pub fn part1(s: &str) -> u64 {
     unsafe {
         inner_part1(s.as_bytes())
     }
+}
+
+fn memchr2(needle1: u8, needle2: u8, haystack: &[u8]) -> Option<usize> {
+    haystack.iter().position(|c| *c == needle1 || *c == needle2)
+}
+
+fn memrchr2(needle1: u8, needle2: u8, haystack: &[u8]) -> Option<usize> {
+    haystack
+        .iter()
+        .rposition(|c| *c == needle1 || *c == needle2)
 }
 
 // #[target_feature(enable = "avx2,bmi1,bmi2,cmpxchg16b,lzcnt,movbe,popcnt")]
@@ -37,7 +48,7 @@ fn inner_part1(s: &[u8]) -> u64 {
         }
 
         if c == b'<' {
-            let mut p = memchr::memrchr2(b'.', b'#', &field[..robot]).unwrap();
+            let mut p = memrchr2(b'.', b'#', &field[..robot]).unwrap();
             while moves_left > 0 {
                 if field[p] == b'.' {
                     field.swap(robot - 1, p);
@@ -45,7 +56,7 @@ fn inner_part1(s: &[u8]) -> u64 {
                     moves_left -= 1;
                     p -= 1;
                 } else if field[p] == b'O' {
-                    p = memchr::memrchr2(b'.', b'#', &field[..p]).unwrap();
+                    p = memrchr2(b'.', b'#', &field[..p]).unwrap();
                 } else {
                     moves_left = 0;
                 }
@@ -84,7 +95,7 @@ fn inner_part1(s: &[u8]) -> u64 {
                 }
             }
         } else {
-            let mut p = memchr::memchr2(b'.', b'#', &field[robot + 1..]).unwrap() + robot + 1;
+            let mut p = memchr2(b'.', b'#', &field[robot + 1..]).unwrap() + robot + 1;
             while moves_left > 0 {
                 if field[p] == b'.' {
                     field.swap(robot + 1, p);
@@ -92,7 +103,7 @@ fn inner_part1(s: &[u8]) -> u64 {
                     moves_left -= 1;
                     p += 1;
                 } else if field[p] == b'O' {
-                    p = memchr::memchr2(b'.', b'#', &field[p + 1..]).unwrap() + p + 1;
+                    p = memchr2(b'.', b'#', &field[p + 1..]).unwrap() + p + 1;
                 } else {
                     moves_left = 0;
                 }
@@ -169,7 +180,7 @@ fn inner_part2(s: &[u8]) -> u64 {
             continue;
         }
         if c == b'<' {
-            let p = memchr::memrchr2(b'.', b'#', &field[..robot]).unwrap();
+            let p = memrchr2(b'.', b'#', &field[..robot]).unwrap();
             if field[p] == b'.' {
                 for i in p..=robot - 1 {
                     field[i] = field[i + 1];
@@ -245,7 +256,7 @@ fn inner_part2(s: &[u8]) -> u64 {
                 robot -= WIDTH1;
             }
         } else {
-            let p = memchr::memchr2(b'.', b'#', &field[robot + 1..]).unwrap() + robot + 1;
+            let p = memchr2(b'.', b'#', &field[robot + 1..]).unwrap() + robot + 1;
             if field[p] == b'.' {
                 for i in (robot + 1..=p).rev() {
                     field[i] = field[i - 1];
