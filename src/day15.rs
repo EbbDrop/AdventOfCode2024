@@ -58,7 +58,7 @@ unsafe fn inner_part1(s: &[u8]) -> u64 {
             }
         }
     }
-    let mut field = field.as_ptr().cast::<[u8; SIZE * SIZE]>().read();
+    let mut field = std::mem::transmute::<_, [u8; SIZE * SIZE]>(field);
 
     let mut i = SIZE * SIZE1 + 1;
     while i < s.len() {
@@ -218,7 +218,7 @@ unsafe fn inner_part2(s: &[u8]) -> u64 {
             }
         }
     }
-    let mut field = field.as_ptr().cast::<[u8; WIDTH * HIGHT]>().read();
+    let mut field = std::mem::transmute::<_, [u8; WIDTH * HIGHT]>(field);
 
     let mut stack = ArrayVec::from_array_empty([0; 20]);
     let mut creates = ArrayVec::from_array_empty([0; 20]);
