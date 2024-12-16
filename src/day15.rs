@@ -174,129 +174,218 @@ fn inner_part2(s: &[u8]) -> u64 {
             moves_left += 1;
         }
 
-        println!("Move {}*{}:", c as char, moves_left);
+        // println!("Move {}*{}:", c as char, moves_left);
 
-        if c == b'<' {
-            while moves_left > 0 {
-                let mut p = memchr::memrchr2(b'.', b'#', &field[..robot]).unwrap();
+        if moves_left == 1 {
+            if c == b'<' {
+                let p = memchr::memrchr2(b'.', b'#', &field[..robot]).unwrap();
                 if field[p] == b'.' {
-                    let creates = p + 1..robot;
-                    while field[p - 1] == b'.' && moves_left != 1 {
-                        p -= 1;
-                        moves_left -= 1;
-                        robot -= 1;
+                    for i in p..=robot - 1 {
+                        field[i] = field[i + 1];
                     }
-                    moves_left -= 1;
                     robot -= 1;
-                    field.copy_within(creates.start..creates.end, p);
-                    field[robot..creates.end].fill(b'.');
-                } else {
-                    moves_left = 0;
                 }
-            }
-        } else if c == b'v' {
-            'cancel: while moves_left > 0 {
-                let mut max_move = moves_left;
-                stack.push(robot + WIDTH1);
-                while let Some(t) = stack.pop() {
-                    if field[t] == b']' {
-                        if !creates.contains(&(t - 1)) {
-                            creates.push(t - 1);
-                            stack.push(t + WIDTH1);
-                            stack.push(t + WIDTH1 - 1);
-                        }
-                    } else if field[t] == b'[' {
-                        if !creates.contains(&(t)) {
-                            creates.push(t);
-                            stack.push(t + WIDTH1);
-                            stack.push(t + WIDTH1 + 1);
-                        }
-                    } else if field[t] == b'#' {
-                        stack.clear();
-                        creates.clear();
-                        break 'cancel;
-                    } else {
-                        for i in 1..max_move {
-                            if field[t + WIDTH1 * i] != b'.' {
-                                max_move = i;
-                                break;
+            } else if c == b'v' {
+                'cancel: {
+                    stack.push(robot + WIDTH1);
+                    while let Some(t) = stack.pop() {
+                        if field[t] == b']' {
+                            if !creates.contains(&(t - 1)) {
+                                creates.push(t - 1);
+                                stack.push(t + WIDTH1);
+                                stack.push(t + WIDTH1 - 1);
                             }
+                        } else if field[t] == b'[' {
+                            if !creates.contains(&(t)) {
+                                creates.push(t);
+                                stack.push(t + WIDTH1);
+                                stack.push(t + WIDTH1 + 1);
+                            }
+                        } else if field[t] == b'#' {
+                            stack.clear();
+                            creates.clear();
+                            break 'cancel;
                         }
                     }
+                    creates.sort_unstable_by(|a, b| b.cmp(a));
+
+                    for c in &creates {
+                        let c = *c;
+                        field.swap(c, c + WIDTH1);
+                        field.swap(c + 1, c + WIDTH1 + 1);
+                    }
+                    stack.clear();
+                    creates.clear();
+
+                    robot += WIDTH1;
                 }
-                creates.sort_unstable_by(|a, b| b.cmp(a));
-
-                for c in &creates {
-                    let c = *c;
-                    field.swap(c, c + WIDTH1 * max_move);
-                    field.swap(c + 1, c + WIDTH1 * max_move + 1);
-                }
-                stack.clear();
-                creates.clear();
-
-                robot += WIDTH1 * max_move;
-                moves_left -= max_move;
-            }
-        } else if c == b'^' {
-            'cancel: while moves_left > 0 {
-                let mut max_move = moves_left;
-
-                stack.push(robot - WIDTH1);
-                while let Some(t) = stack.pop() {
-                    if field[t] == b']' {
-                        if !creates.contains(&(t - 1)) {
-                            creates.push(t - 1);
-                            stack.push(t - WIDTH1);
-                            stack.push(t - WIDTH1 - 1);
-                        }
-                    } else if field[t] == b'[' {
-                        if !creates.contains(&t) {
-                            creates.push(t);
-                            stack.push(t - WIDTH1);
-                            stack.push(t - WIDTH1 + 1);
-                        }
-                    } else if field[t] == b'#' {
-                        stack.clear();
-                        creates.clear();
-                        break 'cancel;
-                    } else {
-                        for i in 1..max_move {
-                            if field[t - WIDTH1 * i] != b'.' {
-                                max_move = i;
-                                break;
+            } else if c == b'^' {
+                'cancel: {
+                    stack.push(robot - WIDTH1);
+                    while let Some(t) = stack.pop() {
+                        if field[t] == b']' {
+                            if !creates.contains(&(t - 1)) {
+                                creates.push(t - 1);
+                                stack.push(t - WIDTH1);
+                                stack.push(t - WIDTH1 - 1);
                             }
+                        } else if field[t] == b'[' {
+                            if !creates.contains(&t) {
+                                creates.push(t);
+                                stack.push(t - WIDTH1);
+                                stack.push(t - WIDTH1 + 1);
+                            }
+                        } else if field[t] == b'#' {
+                            stack.clear();
+                            creates.clear();
+                            break 'cancel;
                         }
                     }
-                }
-                creates.sort_unstable();
+                    creates.sort_unstable();
 
-                for c in &creates {
-                    let c = *c;
-                    field.swap(c, c - WIDTH1 * max_move);
-                    field.swap(c + 1, c - WIDTH1 * max_move + 1);
-                }
-                stack.clear();
-                creates.clear();
+                    for c in &creates {
+                        let c = *c;
+                        field.swap(c, c - WIDTH1);
+                        field.swap(c + 1, c - WIDTH1 + 1);
+                    }
+                    stack.clear();
+                    creates.clear();
 
-                robot -= WIDTH1 * max_move;
-                moves_left -= max_move;
+                    robot -= WIDTH1;
+                }
+            } else {
+                let p = memchr::memchr2(b'.', b'#', &field[robot + 1..]).unwrap() + robot + 1;
+                if field[p] == b'.' {
+                    for i in (robot + 1..=p).rev() {
+                        field[i] = field[i - 1];
+                    }
+                    robot += 1;
+                }
             }
         } else {
-            while moves_left > 0 {
-                let mut p = memchr::memchr2(b'.', b'#', &field[robot + 1..]).unwrap() + robot + 1;
-                if field[p] == b'.' {
-                    let creates = robot + 1..p;
-                    while field[p + 1] == b'.' && moves_left != 1 {
-                        p += 1;
+            if c == b'<' {
+                while moves_left > 0 {
+                    let mut p = memchr::memrchr2(b'.', b'#', &field[..robot]).unwrap();
+                    if field[p] == b'.' {
+                        let creates = p + 1..robot;
+                        while field[p - 1] == b'.' && moves_left != 1 {
+                            p -= 1;
+                            moves_left -= 1;
+                            robot -= 1;
+                        }
+                        moves_left -= 1;
+                        robot -= 1;
+                        field.copy_within(creates.start..creates.end, p);
+                        field[robot..creates.end].fill(b'.');
+                    } else {
+                        moves_left = 0;
+                    }
+                }
+            } else if c == b'v' {
+                'cancel: while moves_left > 0 {
+                    let mut max_move = moves_left;
+                    stack.push(robot + WIDTH1);
+                    while let Some(t) = stack.pop() {
+                        if field[t] == b']' {
+                            if !creates.contains(&(t - 1)) {
+                                creates.push(t - 1);
+                                stack.push(t + WIDTH1);
+                                stack.push(t + WIDTH1 - 1);
+                            }
+                        } else if field[t] == b'[' {
+                            if !creates.contains(&(t)) {
+                                creates.push(t);
+                                stack.push(t + WIDTH1);
+                                stack.push(t + WIDTH1 + 1);
+                            }
+                        } else if field[t] == b'#' {
+                            stack.clear();
+                            creates.clear();
+                            break 'cancel;
+                        } else {
+                            for i in 1..max_move {
+                                if field[t + WIDTH1 * i] != b'.' {
+                                    max_move = i;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    creates.sort_unstable_by(|a, b| b.cmp(a));
+
+                    for c in &creates {
+                        let c = *c;
+                        field.swap(c, c + WIDTH1 * max_move);
+                        field.swap(c + 1, c + WIDTH1 * max_move + 1);
+                    }
+                    stack.clear();
+                    creates.clear();
+
+                    robot += WIDTH1 * max_move;
+                    moves_left -= max_move;
+                }
+            } else if c == b'^' {
+                'cancel: while moves_left > 0 {
+                    let mut max_move = moves_left;
+
+                    stack.push(robot - WIDTH1);
+                    while let Some(t) = stack.pop() {
+                        if field[t] == b']' {
+                            if !creates.contains(&(t - 1)) {
+                                creates.push(t - 1);
+                                stack.push(t - WIDTH1);
+                                stack.push(t - WIDTH1 - 1);
+                            }
+                        } else if field[t] == b'[' {
+                            if !creates.contains(&t) {
+                                creates.push(t);
+                                stack.push(t - WIDTH1);
+                                stack.push(t - WIDTH1 + 1);
+                            }
+                        } else if field[t] == b'#' {
+                            stack.clear();
+                            creates.clear();
+                            break 'cancel;
+                        } else {
+                            for i in 1..max_move {
+                                if field[t - WIDTH1 * i] != b'.' {
+                                    max_move = i;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    creates.sort_unstable();
+
+                    for c in &creates {
+                        let c = *c;
+                        field.swap(c, c - WIDTH1 * max_move);
+                        field.swap(c + 1, c - WIDTH1 * max_move + 1);
+                    }
+                    stack.clear();
+                    creates.clear();
+
+                    robot -= WIDTH1 * max_move;
+                    moves_left -= max_move;
+                }
+            } else {
+                while moves_left > 0 {
+                    let mut p =
+                        memchr::memchr2(b'.', b'#', &field[robot + 1..]).unwrap() + robot + 1;
+                    if field[p] == b'.' {
+                        let creates = robot + 1..p;
+                        while field[p + 1] == b'.' && moves_left != 1 {
+                            p += 1;
+                            moves_left -= 1;
+                            robot += 1;
+                        }
                         moves_left -= 1;
                         robot += 1;
+                        field.copy_within(creates.start..creates.end, robot + 1);
+                        field[creates.start..=robot].fill(b'.');
+                    } else {
+                        moves_left = 0;
                     }
-                    moves_left -= 1;
-                    robot += 1;
-                    field.copy_within(creates.start..creates.end, robot + 1);
-                    field[creates.start..=robot].fill(b'.');
-                } else {
-                    moves_left = 0;
                 }
             }
         }
