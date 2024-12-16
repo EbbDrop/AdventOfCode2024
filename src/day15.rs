@@ -150,15 +150,15 @@ fn inner_part2(s: &[u8]) -> u64 {
                     if field[t] == b']' {
                         if !creates.contains(&(t - 1)) {
                             creates.push(t - 1);
+                            stack.push(t + WIDTH1);
+                            stack.push(t + WIDTH1 - 1);
                         }
-                        stack.push(t + WIDTH1);
-                        stack.push(t + WIDTH1 - 1);
                     } else if field[t] == b'[' {
                         if !creates.contains(&(t)) {
                             creates.push(t);
+                            stack.push(t + WIDTH1);
+                            stack.push(t + WIDTH1 + 1);
                         }
-                        stack.push(t + WIDTH1);
-                        stack.push(t + WIDTH1 + 1);
                     } else if field[t] == b'#' {
                         stack.clear();
                         creates.clear();
@@ -184,15 +184,15 @@ fn inner_part2(s: &[u8]) -> u64 {
                     if field[t] == b']' {
                         if !creates.contains(&(t - 1)) {
                             creates.push(t - 1);
+                            stack.push(t - WIDTH1);
+                            stack.push(t - WIDTH1 - 1);
                         }
-                        stack.push(t - WIDTH1);
-                        stack.push(t - WIDTH1 - 1);
                     } else if field[t] == b'[' {
                         if !creates.contains(&t) {
                             creates.push(t);
+                            stack.push(t - WIDTH1);
+                            stack.push(t - WIDTH1 + 1);
                         }
-                        stack.push(t - WIDTH1);
-                        stack.push(t - WIDTH1 + 1);
                     } else if field[t] == b'#' {
                         stack.clear();
                         creates.clear();
