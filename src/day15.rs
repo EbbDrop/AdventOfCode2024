@@ -188,42 +188,51 @@ pub fn part2(s: &str) -> u64 {
 unsafe fn inner_part2(s: &[u8]) -> u64 {
     const WIDTH: usize = SIZE * 2;
     const HIGHT: usize = SIZE;
-    const WIDTH1: usize = WIDTH + 1;
+
+    let mut field = [MaybeUninit::uninit(); HIGHT * WIDTH];
 
     let mut robot = 0;
-    let mut field = [0; HIGHT * WIDTH1];
-    let mut j = 0;
-    for i in 0..(WIDTH / 2) * (WIDTH / 2 + 1) {
-        match *s.get_unchecked(i) {
-            b'#' => {
-                *field.get_unchecked_mut(j + 0) = b'#';
-                *field.get_unchecked_mut(j + 1) = b'#';
-            }
-            b'O' => {
-                *field.get_unchecked_mut(j + 0) = b'[';
-                *field.get_unchecked_mut(j + 1) = b']';
-            }
-            b'@' => {
-                robot = j;
-                *field.get_unchecked_mut(j + 0) = b'.';
-                *field.get_unchecked_mut(j + 1) = b'.';
-            }
-            b'\n' => {
-                *field.get_unchecked_mut(j) = b'\n';
-                j -= 1;
-            }
-            _ => {
-                *field.get_unchecked_mut(j + 0) = b'.';
-                *field.get_unchecked_mut(j + 1) = b'.';
+    let mut sum = 0;
+
+    for y in 0..SIZE {
+        for x in 0..SIZE {
+            match *s.get_unchecked(y * SIZE1 + x) {
+                b'#' => {
+                    field.get_unchecked_mut(y * WIDTH + x * 2 + 0).write(b'#');
+                    field.get_unchecked_mut(y * WIDTH + x * 2 + 1).write(b'#');
+                }
+                b'O' => {
+                    sum += 100 * y + x * 2;
+                    field.get_unchecked_mut(y * WIDTH + x * 2 + 0).write(b'[');
+                    field.get_unchecked_mut(y * WIDTH + x * 2 + 1).write(b']');
+                }
+                b'@' => {
+                    robot = y * WIDTH + x * 2;
+                    field.get_unchecked_mut(y * WIDTH + x * 2 + 0).write(b'.');
+                    field.get_unchecked_mut(y * WIDTH + x * 2 + 1).write(b'.');
+                }
+                _ => {
+                    field.get_unchecked_mut(y * WIDTH + x * 2 + 0).write(b'.');
+                    field.get_unchecked_mut(y * WIDTH + x * 2 + 1).write(b'.');
+                }
             }
         }
-        j += 2;
     }
+    let mut field = field.as_ptr().cast::<[u8; WIDTH * HIGHT]>().read();
 
     let mut stack = ArrayVec::from_array_empty([0; 20]);
     let mut creates = ArrayVec::from_array_empty([0; 20]);
 
-    let mut i = (WIDTH / 2) * (WIDTH / 2 + 1);
+    // let mut new_field = field.clone();
+    // *new_field.get_unchecked_mut(robot) = b'@';
+    // for y in 0..HIGHT {
+    //     println!(
+    //         "{}",
+    //         String::from_utf8_lossy(&new_field[y * WIDTH..(y + 1) * WIDTH])
+    //     );
+    // }
+
+    let mut i = SIZE * SIZE1;
     while i < s.len() {
         let c = *s.get_unchecked(i);
         if c == b'\n' {
@@ -233,6 +242,7 @@ unsafe fn inner_part2(s: &[u8]) -> u64 {
         if c == b'<' {
             let p = memrchr2(b'.', b'#', &field[..robot]);
             if *field.get_unchecked(p) == b'.' {
+                sum -= (robot - 1 - p) / 2;
                 for i in p..=robot - 1 {
                     *field.get_unchecked_mut(i) = *field.get_unchecked(i + 1);
                 }
@@ -240,19 +250,19 @@ unsafe fn inner_part2(s: &[u8]) -> u64 {
             }
         } else if c == b'v' {
             'cancel: {
-                stack.push(robot + WIDTH1);
+                stack.push(robot + WIDTH);
                 while let Some(t) = stack.pop() {
                     if *field.get_unchecked(t) == b']' {
                         if !creates.contains(&(t - 1)) {
                             creates.push(t - 1);
-                            stack.push(t + WIDTH1);
-                            stack.push(t + WIDTH1 - 1);
+                            stack.push(t + WIDTH);
+                            stack.push(t + WIDTH - 1);
                         }
                     } else if *field.get_unchecked(t) == b'[' {
                         if !creates.contains(&(t)) {
                             creates.push(t);
-                            stack.push(t + WIDTH1);
-                            stack.push(t + WIDTH1 + 1);
+                            stack.push(t + WIDTH);
+                            stack.push(t + WIDTH + 1);
                         }
                     } else if *field.get_unchecked(t) == b'#' {
                         stack.clear();
@@ -262,33 +272,34 @@ unsafe fn inner_part2(s: &[u8]) -> u64 {
                 }
                 creates.sort_unstable_by(|a, b| b.cmp(a));
 
+                sum += 100 * creates.len();
                 for c in &creates {
                     let c = *c;
                     *field.get_unchecked_mut(c) = b'.';
                     *field.get_unchecked_mut(c + 1) = b'.';
-                    *field.get_unchecked_mut(c + WIDTH1) = b'[';
-                    *field.get_unchecked_mut(c + WIDTH1 + 1) = b']';
+                    *field.get_unchecked_mut(c + WIDTH) = b'[';
+                    *field.get_unchecked_mut(c + WIDTH + 1) = b']';
                 }
                 stack.clear();
                 creates.clear();
 
-                robot += WIDTH1;
+                robot += WIDTH;
             }
         } else if c == b'^' {
             'cancel: {
-                stack.push(robot - WIDTH1);
+                stack.push(robot - WIDTH);
                 while let Some(t) = stack.pop() {
                     if *field.get_unchecked(t) == b']' {
                         if !creates.contains(&(t - 1)) {
                             creates.push(t - 1);
-                            stack.push(t - WIDTH1);
-                            stack.push(t - WIDTH1 - 1);
+                            stack.push(t - WIDTH);
+                            stack.push(t - WIDTH - 1);
                         }
                     } else if *field.get_unchecked(t) == b'[' {
                         if !creates.contains(&t) {
                             creates.push(t);
-                            stack.push(t - WIDTH1);
-                            stack.push(t - WIDTH1 + 1);
+                            stack.push(t - WIDTH);
+                            stack.push(t - WIDTH + 1);
                         }
                     } else if *field.get_unchecked(t) == b'#' {
                         stack.clear();
@@ -298,21 +309,23 @@ unsafe fn inner_part2(s: &[u8]) -> u64 {
                 }
                 creates.sort_unstable();
 
+                sum -= 100 * creates.len();
                 for c in &creates {
                     let c = *c;
                     *field.get_unchecked_mut(c) = b'.';
                     *field.get_unchecked_mut(c + 1) = b'.';
-                    *field.get_unchecked_mut(c - WIDTH1) = b'[';
-                    *field.get_unchecked_mut(c - WIDTH1 + 1) = b']';
+                    *field.get_unchecked_mut(c - WIDTH) = b'[';
+                    *field.get_unchecked_mut(c - WIDTH + 1) = b']';
                 }
                 stack.clear();
                 creates.clear();
 
-                robot -= WIDTH1;
+                robot -= WIDTH;
             }
         } else {
             let p = memchr2(b'.', b'#', &field[robot + 1..]) + robot + 1;
             if *field.get_unchecked(p) == b'.' {
+                sum += (p - robot - 1) / 2;
                 for i in (robot + 1..=p).rev() {
                     *field.get_unchecked_mut(i) = *field.get_unchecked(i - 1);
                 }
@@ -321,13 +334,15 @@ unsafe fn inner_part2(s: &[u8]) -> u64 {
         }
 
         // let mut new_field = field.clone();
-        // *new_field.get_unchecked(robot) = b'@';
+        // *new_field.get_unchecked_mut(robot) = b'@';
+        // for y in 0..HIGHT {
+        //     println!(
+        //         "{}",
+        //         String::from_utf8_lossy(&new_field[y * WIDTH..(y + 1) * WIDTH])
+        //     );
+        // }
+        // println!("{}\n", sum);
 
-        // println!(
-        //     "Move: {}\n{}",
-        //     c as char,
-        //     String::from_utf8_lossy(&new_field)
-        // );
         // use std::io::{stdin, stdout, Read, Write};
         // let mut stdout = stdout();
         // stdout.write(b"Press Enter to continue...").unwrap();
@@ -337,14 +352,14 @@ unsafe fn inner_part2(s: &[u8]) -> u64 {
         i += 1;
     }
 
-    let mut sum = 0;
-    for y in 0..HIGHT {
-        for x in 0..WIDTH {
-            if field[y * WIDTH1 + x] == b'[' {
-                sum += 100 * y + x;
-            }
-        }
-    }
+    // let mut sum = 0;
+    // for y in 0..HIGHT {
+    //     for x in 0..WIDTH {
+    //         if field[y * WIDTH + x] == b'[' {
+    //             sum += 100 * y + x;
+    //         }
+    //     }
+    // }
 
     sum as u64
 }
