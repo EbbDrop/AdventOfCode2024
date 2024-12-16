@@ -1,5 +1,3 @@
-use std::collections::BTreeSet;
-
 use aoc_runner_derive::aoc;
 use tinyvec::ArrayVec;
 
@@ -128,7 +126,7 @@ fn inner_part2(s: &[u8]) -> u64 {
     }
 
     let mut stack = ArrayVec::from_array_empty([0; 20]);
-    let mut creates = BTreeSet::new();
+    let mut creates = ArrayVec::from_array_empty([0; 20]);
 
     let mut i = (WIDTH / 2) * (WIDTH / 2 + 1);
     while i < s.len() {
@@ -150,11 +148,15 @@ fn inner_part2(s: &[u8]) -> u64 {
                 stack.push(robot + WIDTH1);
                 while let Some(t) = stack.pop() {
                     if field[t] == b']' {
-                        creates.insert(t - 1);
+                        if !creates.contains(&(t - 1)) {
+                            creates.push(t - 1);
+                        }
                         stack.push(t + WIDTH1);
                         stack.push(t + WIDTH1 - 1);
                     } else if field[t] == b'[' {
-                        creates.insert(t);
+                        if !creates.contains(&(t)) {
+                            creates.push(t);
+                        }
                         stack.push(t + WIDTH1);
                         stack.push(t + WIDTH1 + 1);
                     } else if field[t] == b'#' {
@@ -163,11 +165,15 @@ fn inner_part2(s: &[u8]) -> u64 {
                         break 'cancel;
                     }
                 }
+                creates.sort_unstable_by(|a, b| b.cmp(a));
 
-                while let Some(c) = creates.pop_last() {
+                for c in &creates {
+                    let c = *c;
                     field.swap(c, c + WIDTH1);
                     field.swap(c + 1, c + WIDTH1 + 1);
                 }
+                stack.clear();
+                creates.clear();
 
                 robot += WIDTH1;
             }
@@ -176,11 +182,15 @@ fn inner_part2(s: &[u8]) -> u64 {
                 stack.push(robot - WIDTH1);
                 while let Some(t) = stack.pop() {
                     if field[t] == b']' {
-                        creates.insert(t - 1);
+                        if !creates.contains(&(t - 1)) {
+                            creates.push(t - 1);
+                        }
                         stack.push(t - WIDTH1);
                         stack.push(t - WIDTH1 - 1);
                     } else if field[t] == b'[' {
-                        creates.insert(t);
+                        if !creates.contains(&t) {
+                            creates.push(t);
+                        }
                         stack.push(t - WIDTH1);
                         stack.push(t - WIDTH1 + 1);
                     } else if field[t] == b'#' {
@@ -189,11 +199,15 @@ fn inner_part2(s: &[u8]) -> u64 {
                         break 'cancel;
                     }
                 }
+                creates.sort_unstable();
 
-                while let Some(c) = creates.pop_first() {
+                for c in &creates {
+                    let c = *c;
                     field.swap(c, c - WIDTH1);
                     field.swap(c + 1, c - WIDTH1 + 1);
                 }
+                stack.clear();
+                creates.clear();
 
                 robot -= WIDTH1;
             }
@@ -206,6 +220,20 @@ fn inner_part2(s: &[u8]) -> u64 {
                 robot += 1;
             }
         }
+
+        let mut new_field = field.clone();
+        new_field[robot] = b'@';
+
+        // println!(
+        //     "Move: {}\n{}",
+        //     c as char,
+        //     String::from_utf8_lossy(&new_field)
+        // );
+        // use std::io::{stdin, stdout, Read, Write};
+        // let mut stdout = stdout();
+        // stdout.write(b"Press Enter to continue...").unwrap();
+        // stdout.flush().unwrap();
+        // stdin().read(&mut [0]).unwrap();
 
         i += 1;
     }
