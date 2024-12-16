@@ -36,9 +36,22 @@ unsafe fn memrchr2(needle1: u8, needle2: u8, haystack: &[u8]) -> usize {
 
 #[target_feature(enable = "avx2,bmi1,bmi2,cmpxchg16b,lzcnt,movbe,popcnt")]
 unsafe fn inner_part1(s: &[u8]) -> u64 {
-    let mut robot = memchr::memchr(b'@', s).unwrap();
-    let mut field = [0; SIZE * SIZE1];
-    field.copy_from_slice(&s[..SIZE * SIZE1]);
+    let robot_i = memchr::memchr(b'@', s).unwrap();
+    let mut robot = (robot_i / SIZE1) * SIZE + robot_i % SIZE1;
+
+    let mut field = [0; SIZE * SIZE];
+
+    let mut sum = 0;
+
+    for y in 0..SIZE {
+        for x in 0..SIZE {
+            let c = *s.get_unchecked(y * SIZE1 + x);
+            if c == b'O' {
+                sum += 100 * y + x;
+            }
+            *field.get_unchecked_mut(y * SIZE + x) = c;
+        }
+    }
     *field.get_unchecked_mut(robot) = b'.';
 
     let mut i = SIZE * SIZE1 + 1;
@@ -58,8 +71,11 @@ unsafe fn inner_part1(s: &[u8]) -> u64 {
             let mut p = memrchr2(b'.', b'#', &field[..robot]);
             while moves_left > 0 {
                 if *field.get_unchecked(p) == b'.' {
-                    *field.get_unchecked_mut(p) = *field.get_unchecked(robot - 1);
-                    *field.get_unchecked_mut(robot - 1) = b'.';
+                    if *field.get_unchecked(robot - 1) == b'O' {
+                        sum -= robot - 1 - p;
+                        *field.get_unchecked_mut(p) = b'O';
+                        *field.get_unchecked_mut(robot - 1) = b'.';
+                    }
                     robot -= 1;
                     moves_left -= 1;
                     p -= 1;
@@ -70,35 +86,41 @@ unsafe fn inner_part1(s: &[u8]) -> u64 {
                 }
             }
         } else if c == b'v' {
-            let mut p = robot + SIZE1;
+            let mut p = robot + SIZE;
 
             while moves_left > 0 {
                 if *field.get_unchecked(p) == b'.' {
-                    *field.get_unchecked_mut(p) = *field.get_unchecked(robot + SIZE1);
-                    *field.get_unchecked_mut(robot + SIZE1) = b'.';
-                    robot += SIZE1;
+                    if *field.get_unchecked(robot + SIZE) == b'O' {
+                        sum += 100 * (p - robot - SIZE) / SIZE;
+                        *field.get_unchecked_mut(p) = b'O';
+                        *field.get_unchecked_mut(robot + SIZE) = b'.';
+                    }
+                    robot += SIZE;
                     moves_left -= 1;
-                    p += SIZE1;
+                    p += SIZE;
                 } else if *field.get_unchecked(p) == b'O' {
                     while *field.get_unchecked(p) == b'O' {
-                        p += SIZE1;
+                        p += SIZE;
                     }
                 } else {
                     moves_left = 0;
                 }
             }
         } else if c == b'^' {
-            let mut p = robot - SIZE1;
+            let mut p = robot - SIZE;
             while moves_left > 0 {
                 if *field.get_unchecked(p) == b'.' {
-                    *field.get_unchecked_mut(p) = *field.get_unchecked(robot - SIZE1);
-                    *field.get_unchecked_mut(robot - SIZE1) = b'.';
-                    robot -= SIZE1;
+                    if *field.get_unchecked(robot - SIZE) == b'O' {
+                        sum -= 100 * (robot - SIZE - p) / SIZE;
+                        *field.get_unchecked_mut(p) = b'O';
+                        *field.get_unchecked_mut(robot - SIZE) = b'.';
+                    }
+                    robot -= SIZE;
                     moves_left -= 1;
-                    p -= SIZE1;
+                    p -= SIZE;
                 } else if *field.get_unchecked(p) == b'O' {
                     while *field.get_unchecked(p) == b'O' {
-                        p -= SIZE1;
+                        p -= SIZE;
                     }
                 } else {
                     moves_left = 0;
@@ -108,8 +130,11 @@ unsafe fn inner_part1(s: &[u8]) -> u64 {
             let mut p = memchr2(b'.', b'#', &field[robot + 1..]) + robot + 1;
             while moves_left > 0 {
                 if *field.get_unchecked(p) == b'.' {
-                    *field.get_unchecked_mut(p) = *field.get_unchecked(robot + 1);
-                    *field.get_unchecked_mut(robot + 1) = b'.';
+                    if *field.get_unchecked(robot + 1) == b'O' {
+                        sum += p - robot - 1;
+                        *field.get_unchecked_mut(p) = b'O';
+                        *field.get_unchecked_mut(robot + 1) = b'.';
+                    }
                     robot += 1;
                     moves_left -= 1;
                     p += 1;
@@ -121,17 +146,29 @@ unsafe fn inner_part1(s: &[u8]) -> u64 {
             }
         }
 
+        // let mut new_field = field.clone();
+        // *new_field.get_unchecked_mut(robot) = b'@';
+
+        // println!("Move: {}", c as char,);
+        // for y in 0..SIZE {
+        //     println!(
+        //         "{}",
+        //         String::from_utf8_lossy(&new_field[y * SIZE..(y + 1) * SIZE]),
+        //     );
+        // }
+        // println!("Sum: {}", sum);
+
         i += 1;
     }
 
-    let mut sum = 0;
-    for y in 0..SIZE {
-        for x in 0..SIZE {
-            if field[y * SIZE1 + x] == b'O' {
-                sum += 100 * y + x;
-            }
-        }
-    }
+    // let mut sum = 0;
+    // for y in 0..SIZE {
+    //     for x in 0..SIZE {
+    //         if field[y * SIZE1 + x] == b'O' {
+    //             sum += 100 * y + x;
+    //         }
+    //     }
+    // }
 
     sum as u64
 }
