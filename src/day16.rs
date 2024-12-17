@@ -26,21 +26,12 @@ enum Direction {
 }
 
 impl Direction {
-    fn all_not_eq(&self) -> [Direction; 3] {
+    fn cw_not_back(&self) -> [Direction; 3] {
         match self {
-            Direction::N => [Direction::N, Direction::E, Direction::W],
+            Direction::N => [Direction::W, Direction::N, Direction::E],
             Direction::E => [Direction::N, Direction::E, Direction::S],
             Direction::S => [Direction::E, Direction::S, Direction::W],
-            Direction::W => [Direction::N, Direction::S, Direction::W],
-        }
-    }
-
-    fn sides(&self) -> [Direction; 2] {
-        match self {
-            Direction::N => [Direction::E, Direction::W],
-            Direction::E => [Direction::N, Direction::S],
-            Direction::S => [Direction::E, Direction::W],
-            Direction::W => [Direction::N, Direction::S],
+            Direction::W => [Direction::S, Direction::W, Direction::N],
         }
     }
 
@@ -76,26 +67,46 @@ fn hueristic(i: u32, d: Direction) -> u32 {
 
 fn get_succ(i: u32, dir: Direction, map: &[u8]) -> Option<(u32, Direction, u32, u32)> {
     let mut new_i = (i as i32 + dir.step()) as u32;
+    let mut new_dir = dir;
 
     let mut len = 1;
+    let mut cost = 1;
 
     if map[new_i as usize] == b'#' {
         return None;
     }
 
-    while {
-        dir.sides()
-            .into_iter()
-            .all(|d| map[(new_i as i32 + d.step()) as usize] == b'#')
-    } {
-        new_i = (new_i as i32 + dir.step()) as u32;
-        if map[new_i as usize] == b'#' {
-            return None;
+    loop {
+        match dir
+            .cw_not_back()
+            .map(|d| map[(new_i as i32 + d.step()) as usize] == b'#')
+        {
+            [true, true, true] => return None,
+            [false, true, true] => {
+                new_dir = new_dir.cw_not_back()[0];
+                new_i = (new_i as i32 + new_dir.step()) as u32;
+                len += 1;
+                cost += 1001;
+            }
+            [true, false, true] => {
+                new_i = (new_i as i32 + new_dir.step()) as u32;
+                len += 1;
+                cost += 1;
+            }
+            [true, true, false] => {
+                new_dir = new_dir.cw_not_back()[2];
+                new_i = (new_i as i32 + new_dir.step()) as u32;
+                len += 1;
+                cost += 1001;
+            }
+            _ => break,
         }
-        len += 1;
+        if new_i == END {
+            break;
+        }
     }
 
-    Some((new_i, dir, len, len))
+    Some((new_i, new_dir, cost, len))
 }
 
 // #[target_feature(enable = "avx2,bmi1,bmi2,cmpxchg16b,lzcnt,movbe,popcnt")]
@@ -134,7 +145,7 @@ fn inner_part1(s: &[u8]) -> u64 {
         if costs[state.i as usize] < state.cost {
             continue;
         }
-        for dir in state.d.all_not_eq() {
+        for dir in state.d.cw_not_back() {
             if let Some((new_i, new_d, move_cost, _)) = get_succ(state.i, dir, s) {
                 let new_cost = state.cost + move_cost + if dir != state.d { 1000 } else { 0 };
 
@@ -200,7 +211,7 @@ fn inner_part2(s: &[u8]) -> u64 {
         if costs[get_idx(state.i, state.d)] < state.cost {
             continue;
         }
-        for dir in state.d.all_not_eq() {
+        for dir in state.d.cw_not_back() {
             if let Some((new_i, new_d, move_cost, move_len)) = get_succ(state.i, dir, s) {
                 let new_cost = state.cost + move_cost + if dir != state.d { 1000 } else { 0 };
 
