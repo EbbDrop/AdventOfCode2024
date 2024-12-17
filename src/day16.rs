@@ -187,7 +187,6 @@ fn inner_part2(s: &[u8]) -> u64 {
     let mut min_cost = u32::MAX;
 
     let mut prev = [[0u32; 3]; MAX_INDX * 4];
-    let mut lens = [[0u32; 3]; MAX_INDX * 4];
 
     while let Some(state) = to_see.pop() {
         // println!("{}, {:?}", state.i, state.d);
@@ -207,8 +206,11 @@ fn inner_part2(s: &[u8]) -> u64 {
                 if new_cost < costs[get_idx(new_i, new_d)] {
                     costs[get_idx(new_i, new_d)] = new_cost;
 
-                    prev[get_idx(new_i, new_d)] = [get_idx(state.i, state.d) as u32, 0, 0];
-                    lens[get_idx(new_i, new_d)] = [move_len - 1, 0, 0];
+                    prev[get_idx(new_i, new_d)] = [
+                        get_idx(state.i, state.d) as u32 | (move_len - 1) << 20,
+                        0,
+                        0,
+                    ];
 
                     let h = hueristic(new_i, new_d);
                     to_see
@@ -221,12 +223,12 @@ fn inner_part2(s: &[u8]) -> u64 {
                         .unwrap();
                 } else if new_cost == costs[get_idx(new_i, new_d)] {
                     for i in 0..3 {
-                        let p = prev[get_idx(new_i, new_d)][i];
+                        let p = prev[get_idx(new_i, new_d)][i] & 0xFFFFF;
                         if p == get_idx(state.i, state.d) as u32 {
                             break;
                         } else if p == 0 {
-                            prev[get_idx(new_i, new_d)][i] = get_idx(state.i, state.d) as u32;
-                            lens[get_idx(new_i, new_d)][i] = move_len - 1;
+                            prev[get_idx(new_i, new_d)][i] =
+                                get_idx(state.i, state.d) as u32 | (move_len - 1) << 20;
                             break;
                         }
                     }
@@ -243,7 +245,6 @@ fn inner_part2(s: &[u8]) -> u64 {
     }
 
     let mut visited_small = [false; MAX_INDX];
-    let mut visited = [false; MAX_INDX * 4];
 
     let mut stack = heapless::Vec::<u32, 64>::new();
     stack.push(get_idx(END, Direction::E) as u32).unwrap();
@@ -256,28 +257,28 @@ fn inner_part2(s: &[u8]) -> u64 {
             sum += 1;
         }
 
-        if !visited[i as usize] {
-            visited[i as usize] = true;
+        let mut done = [0; 2];
+        'branches: for j in 0..3 {
+            let prev = prev[i as usize][j];
+            let len = prev >> 20;
+            let prev = prev & 0xFFFFF;
 
-            let mut done = [0; 2];
-            'branches: for j in 0..3 {
-                if prev[i as usize][j] != 0 {
-                    let next_i = prev[i as usize][j];
-                    stack.push(next_i).unwrap();
+            if prev != 0 {
+                stack.push(prev).unwrap();
 
-                    for l in 0..j {
-                        if done[l] == next_i % MAX_INDX as u32 {
-                            continue 'branches;
-                        }
+                for l in 0..j {
+                    if done[l] == prev % MAX_INDX as u32 {
+                        continue 'branches;
                     }
-                    done[j] = next_i % MAX_INDX as u32;
-
-                    sum += lens[i as usize][j];
-                } else {
-                    break;
                 }
+                done[j] = prev % MAX_INDX as u32;
+
+                sum += len;
+            } else {
+                break;
             }
         }
+        prev[i as usize] = [0, 0, 0];
     }
 
     // for i in 0..(SIZE * SIZE1) - 1 {
