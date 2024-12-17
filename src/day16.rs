@@ -8,8 +8,8 @@ const SIZE: usize = 141;
 const SIZE1: usize = SIZE + 1;
 const MAX_INDX: usize = SIZE * SIZE1;
 
-const START: usize = (SIZE - 2) * SIZE1 + 1;
-const END: usize = SIZE1 + SIZE - 2;
+const START: u32 = ((SIZE - 2) * SIZE1 + 1) as u32;
+const END: u32 = (SIZE1 + SIZE - 2) as u32;
 
 #[aoc(day16, part1)]
 pub fn part1(s: &str) -> u64 {
@@ -37,11 +37,11 @@ impl Direction {
         }
     }
 
-    fn step(&self) -> isize {
+    fn step(&self) -> i32 {
         match self {
-            Direction::N => -(SIZE1 as isize),
+            Direction::N => -(SIZE1 as i32),
             Direction::E => 1,
-            Direction::S => SIZE1 as isize,
+            Direction::S => SIZE1 as i32,
             Direction::W => -1,
         }
     }
@@ -49,16 +49,16 @@ impl Direction {
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
 struct State {
-    full_cost: u64,
-    cost: u64,
-    i: usize,
+    full_cost: u32,
+    cost: u32,
+    i: u32,
     d: Direction,
 }
 
-fn hueristic(i: usize, d: Direction) -> u64 {
-    let x = i % SIZE1;
-    let y = i / SIZE1;
-    (((SIZE - 1) - x) + y - 1) as u64
+fn hueristic(i: u32, d: Direction) -> u32 {
+    let x = i % SIZE1 as u32;
+    let y = i / SIZE1 as u32;
+    (((SIZE as u32 - 1) - x) + y - 1) as u32
         + match d {
             Direction::N => 0,
             Direction::E => 0,
@@ -67,10 +67,10 @@ fn hueristic(i: usize, d: Direction) -> u64 {
         }
 }
 
-fn get_succ(i: usize, dir: Direction, map: &[u8]) -> Option<(usize, Direction, u64)> {
-    let new_i = (i as isize + dir.step()) as usize;
+fn get_succ(i: u32, dir: Direction, map: &[u8]) -> Option<(u32, Direction, u32)> {
+    let new_i = (i as i32 + dir.step()) as u32;
 
-    if map[new_i] == b'#' {
+    if map[new_i as usize] == b'#' {
         return None;
     }
     Some((new_i, dir, 1))
@@ -88,8 +88,8 @@ fn inner_part1(s: &[u8]) -> u64 {
         })
         .unwrap();
 
-    let mut costs = [u64::MAX; SIZE * SIZE1];
-    costs[START] = 0;
+    let mut costs = [u32::MAX; SIZE * SIZE1];
+    costs[START as usize] = 0;
 
     while let Some(state) = to_see.pop() {
         if state.i == END {
@@ -107,17 +107,17 @@ fn inner_part1(s: &[u8]) -> u64 {
             //     }
             // }
 
-            return state.cost;
+            return state.cost as u64;
         }
-        if costs[state.i] < state.cost {
+        if costs[state.i as usize] < state.cost {
             continue;
         }
         for dir in state.d.all_not_eq() {
             if let Some((new_i, new_d, move_cost)) = get_succ(state.i, dir, s) {
                 let new_cost = state.cost + move_cost + if dir != state.d { 1000 } else { 0 };
 
-                if new_cost < costs[new_i] {
-                    costs[new_i] = new_cost;
+                if new_cost < costs[new_i as usize] {
+                    costs[new_i as usize] = new_cost;
                     // prev[new_i] = state.i;
                     let h = hueristic(new_i, new_d);
                     to_see
@@ -144,8 +144,8 @@ pub fn part2(s: &str) -> u64 {
     }
 }
 
-fn get_idx(i: usize, d: Direction) -> usize {
-    (d as usize) * MAX_INDX + i
+fn get_idx(i: u32, d: Direction) -> usize {
+    (d as usize) * MAX_INDX + i as usize
 }
 
 // #[target_feature(enable = "avx2,bmi1,bmi2,cmpxchg16b,lzcnt,movbe,popcnt")]
@@ -160,11 +160,11 @@ fn inner_part2(s: &[u8]) -> u64 {
         })
         .unwrap();
 
-    let mut costs = [u64::MAX; MAX_INDX * 4];
+    let mut costs = [u32::MAX; MAX_INDX * 4];
     costs[get_idx(START, Direction::E)] = 0;
-    let mut min_cost = u64::MAX;
+    let mut min_cost = u32::MAX;
 
-    let mut prev = [[0usize; 3]; MAX_INDX * 4];
+    let mut prev = [[0u32; 3]; MAX_INDX * 4];
 
     while let Some(state) = to_see.pop() {
         // println!("{}, {:?}", state.i, state.d);
@@ -184,7 +184,7 @@ fn inner_part2(s: &[u8]) -> u64 {
                 if new_cost < costs[get_idx(new_i, new_d)] {
                     costs[get_idx(new_i, new_d)] = new_cost;
 
-                    prev[get_idx(new_i, new_d)] = [get_idx(state.i, state.d), 0, 0];
+                    prev[get_idx(new_i, new_d)] = [get_idx(state.i, state.d) as u32, 0, 0];
 
                     let h = hueristic(new_i, new_d);
                     to_see
@@ -197,10 +197,10 @@ fn inner_part2(s: &[u8]) -> u64 {
                         .unwrap();
                 } else if new_cost == costs[get_idx(new_i, new_d)] {
                     for p in &mut prev[get_idx(new_i, new_d)] {
-                        if *p == get_idx(state.i, state.d) {
+                        if *p == get_idx(state.i, state.d) as u32 {
                             break;
                         } else if *p == 0 {
-                            *p = get_idx(state.i, state.d);
+                            *p = get_idx(state.i, state.d) as u32;
                             break;
                         }
                     }
@@ -216,30 +216,27 @@ fn inner_part2(s: &[u8]) -> u64 {
         }
     }
 
-    let mut visited = [false; MAX_INDX * 4];
     let mut visited_small = [false; MAX_INDX];
 
-    let mut stack = heapless::Vec::<usize, 64>::new();
-    stack.push(get_idx(END, Direction::E)).unwrap();
-    stack.push(get_idx(END, Direction::N)).unwrap();
+    let mut stack = heapless::Vec::<u32, 64>::new();
+    stack.push(get_idx(END, Direction::E) as u32).unwrap();
+    stack.push(get_idx(END, Direction::N) as u32).unwrap();
 
     let mut sum = 0;
     while let Some(i) = stack.pop() {
-        if !visited_small[i % MAX_INDX] {
-            visited_small[i % MAX_INDX] = true;
+        if !visited_small[i as usize % MAX_INDX] {
+            visited_small[i as usize % MAX_INDX] = true;
             sum += 1;
         }
-        if !visited[i] {
-            visited[i] = true;
 
-            for p in prev[i] {
-                if p != 0 {
-                    stack.push(p).unwrap();
-                } else {
-                    break;
-                }
+        for p in prev[i as usize] {
+            if p != 0 {
+                stack.push(p).unwrap();
+            } else {
+                break;
             }
         }
+        prev[i as usize] = [0, 0, 0];
     }
 
     // for i in 0..(SIZE * SIZE1) - 1 {
