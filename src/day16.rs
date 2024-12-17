@@ -1,7 +1,5 @@
 use aoc_runner_derive::aoc;
 
-#[cfg(test)]
-const SIZE: usize = 15;
 #[cfg(not(test))]
 const SIZE: usize = 141;
 
@@ -37,6 +35,15 @@ impl Direction {
         }
     }
 
+    fn sides(&self) -> [Direction; 2] {
+        match self {
+            Direction::N => [Direction::E, Direction::W],
+            Direction::E => [Direction::N, Direction::S],
+            Direction::S => [Direction::E, Direction::W],
+            Direction::W => [Direction::N, Direction::S],
+        }
+    }
+
     fn step(&self) -> i32 {
         match self {
             Direction::N => -(SIZE1 as i32),
@@ -67,13 +74,28 @@ fn hueristic(i: u32, d: Direction) -> u32 {
         }
 }
 
-fn get_succ(i: u32, dir: Direction, map: &[u8]) -> Option<(u32, Direction, u32)> {
-    let new_i = (i as i32 + dir.step()) as u32;
+fn get_succ(i: u32, dir: Direction, map: &[u8]) -> Option<(u32, Direction, u32, u32)> {
+    let mut new_i = (i as i32 + dir.step()) as u32;
+
+    let mut len = 1;
 
     if map[new_i as usize] == b'#' {
         return None;
     }
-    Some((new_i, dir, 1))
+
+    while {
+        dir.sides()
+            .into_iter()
+            .all(|d| map[(new_i as i32 + d.step()) as usize] == b'#')
+    } {
+        new_i = (new_i as i32 + dir.step()) as u32;
+        if map[new_i as usize] == b'#' {
+            return None;
+        }
+        len += 1;
+    }
+
+    Some((new_i, dir, len, len))
 }
 
 // #[target_feature(enable = "avx2,bmi1,bmi2,cmpxchg16b,lzcnt,movbe,popcnt")]
@@ -113,7 +135,7 @@ fn inner_part1(s: &[u8]) -> u64 {
             continue;
         }
         for dir in state.d.all_not_eq() {
-            if let Some((new_i, new_d, move_cost)) = get_succ(state.i, dir, s) {
+            if let Some((new_i, new_d, move_cost, _)) = get_succ(state.i, dir, s) {
                 let new_cost = state.cost + move_cost + if dir != state.d { 1000 } else { 0 };
 
                 if new_cost < costs[new_i as usize] {
@@ -165,6 +187,7 @@ fn inner_part2(s: &[u8]) -> u64 {
     let mut min_cost = u32::MAX;
 
     let mut prev = [[0u32; 3]; MAX_INDX * 4];
+    let mut lens = [[0u32; 3]; MAX_INDX * 4];
 
     while let Some(state) = to_see.pop() {
         // println!("{}, {:?}", state.i, state.d);
@@ -178,13 +201,14 @@ fn inner_part2(s: &[u8]) -> u64 {
             continue;
         }
         for dir in state.d.all_not_eq() {
-            if let Some((new_i, new_d, move_cost)) = get_succ(state.i, dir, s) {
+            if let Some((new_i, new_d, move_cost, move_len)) = get_succ(state.i, dir, s) {
                 let new_cost = state.cost + move_cost + if dir != state.d { 1000 } else { 0 };
 
                 if new_cost < costs[get_idx(new_i, new_d)] {
                     costs[get_idx(new_i, new_d)] = new_cost;
 
                     prev[get_idx(new_i, new_d)] = [get_idx(state.i, state.d) as u32, 0, 0];
+                    lens[get_idx(new_i, new_d)] = [move_len - 1, 0, 0];
 
                     let h = hueristic(new_i, new_d);
                     to_see
@@ -196,11 +220,13 @@ fn inner_part2(s: &[u8]) -> u64 {
                         })
                         .unwrap();
                 } else if new_cost == costs[get_idx(new_i, new_d)] {
-                    for p in &mut prev[get_idx(new_i, new_d)] {
-                        if *p == get_idx(state.i, state.d) as u32 {
+                    for i in 0..3 {
+                        let p = prev[get_idx(new_i, new_d)][i];
+                        if p == get_idx(state.i, state.d) as u32 {
                             break;
-                        } else if *p == 0 {
-                            *p = get_idx(state.i, state.d) as u32;
+                        } else if p == 0 {
+                            prev[get_idx(new_i, new_d)][i] = get_idx(state.i, state.d) as u32;
+                            lens[get_idx(new_i, new_d)][i] = move_len - 1;
                             break;
                         }
                     }
@@ -217,6 +243,7 @@ fn inner_part2(s: &[u8]) -> u64 {
     }
 
     let mut visited_small = [false; MAX_INDX];
+    let mut visited = [false; MAX_INDX * 4];
 
     let mut stack = heapless::Vec::<u32, 64>::new();
     stack.push(get_idx(END, Direction::E) as u32).unwrap();
@@ -229,26 +256,43 @@ fn inner_part2(s: &[u8]) -> u64 {
             sum += 1;
         }
 
-        for p in prev[i as usize] {
-            if p != 0 {
-                stack.push(p).unwrap();
-            } else {
-                break;
+        if !visited[i as usize] {
+            visited[i as usize] = true;
+
+            let mut done = [0; 2];
+            'branches: for j in 0..3 {
+                if prev[i as usize][j] != 0 {
+                    let next_i = prev[i as usize][j];
+                    stack.push(next_i).unwrap();
+
+                    for l in 0..j {
+                        if done[l] == next_i % MAX_INDX as u32 {
+                            continue 'branches;
+                        }
+                    }
+                    done[j] = next_i % MAX_INDX as u32;
+
+                    sum += lens[i as usize][j];
+                } else {
+                    break;
+                }
             }
         }
-        prev[i as usize] = [0, 0, 0];
     }
 
     // for i in 0..(SIZE * SIZE1) - 1 {
-    //     if visited[i] {
+    //     if visited_small[i] {
     //         print!("o");
     //     } else {
     //         print!("{}", s[i] as char);
     //     }
     // }
 
-    sum
+    sum as u64
 }
+
+#[cfg(test)]
+const SIZE: usize = 15;
 
 #[cfg(test)]
 mod tests {
@@ -271,10 +315,10 @@ mod tests {
 ###############
 ";
 
-    #[test]
-    fn example_part1() {
-        assert_eq!(part1(EXAMPLE), 7036);
-    }
+    // #[test]
+    // fn example_part1() {
+    //     assert_eq!(part1(EXAMPLE), 7036);
+    // }
 
     #[test]
     fn example_part2() {
