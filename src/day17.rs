@@ -12,64 +12,60 @@ use aoc_runner_derive::aoc;
 // 5 5: out out b
 // 3 0: jnz a!=0 -> 0
 
-#[aoc(day17, part1)]
-pub fn part1(s: &str) -> &'static str {
-    unsafe { inner_part1(s.as_bytes()) }
-}
-
 static mut RESULT: [u8; 128] = [0; 128];
 
-#[target_feature(enable = "avx2,bmi1,bmi2,cmpxchg16b,lzcnt,movbe,popcnt")]
-unsafe fn inner_part1(s: &[u8]) -> &'static str {
-    let mut i = 13;
-    let mut a = (*s.get_unchecked(12) - b'0') as u64;
-    while *s.get_unchecked(i) != b'\n' {
-        a *= 10;
-        a += (*s.get_unchecked(i) - b'0') as u64;
-        i += 1;
-    }
-    i += 39;
+#[aoc(day17, part1)]
+pub fn part1(s: &str) -> &'static str {
+    unsafe {
+        let s = s.as_bytes();
+        let mut i = 13;
+        let mut a = (*s.get_unchecked(12) - b'0') as u64;
+        while *s.get_unchecked(i) != b'\n' {
+            a *= 10;
+            a += (*s.get_unchecked(i) - b'0') as u64;
+            i += 1;
+        }
+        i += 39;
 
-    let x = (*s.get_unchecked(i + 6) - b'0') as u64;
+        let x = (*s.get_unchecked(i + 6) - b'0') as u64;
 
-    let o1 = *s.get_unchecked(i + 12);
-    let o2 = *s.get_unchecked(i + 16);
-    let o3 = *s.get_unchecked(i + 20);
-    let o4 = *s.get_unchecked(i + 24);
+        let o1 = *s.get_unchecked(i + 12);
+        let o2 = *s.get_unchecked(i + 16);
+        let o3 = *s.get_unchecked(i + 20);
+        let o4 = *s.get_unchecked(i + 24);
 
-    let y = match (o1, o2, o3, o4) {
-        (b'1', b'4', b'0', b'5') => *s.get_unchecked(i + 14) - b'0',
-        (b'1', b'4', b'5', b'0') => *s.get_unchecked(i + 14) - b'0',
-        (b'1', b'0', b'4', b'5') => *s.get_unchecked(i + 14) - b'0',
-        (b'0', b'1', b'4', b'5') => *s.get_unchecked(i + 18) - b'0',
-        (b'0', b'4', b'1', b'5') => *s.get_unchecked(i + 22) - b'0',
-        (b'4', b'1', b'0', b'5') => *s.get_unchecked(i + 18) - b'0',
-        (b'4', b'1', b'5', b'0') => *s.get_unchecked(i + 18) - b'0',
-        (b'4', b'0', b'1', b'5') => *s.get_unchecked(i + 22) - b'0',
-        _ => unreachable_unchecked(),
-    } as u64;
+        let y = match (o1, o2, o3, o4) {
+            (b'1', b'4', b'0', b'5') => *s.get_unchecked(i + 14) - b'0',
+            (b'1', b'4', b'5', b'0') => *s.get_unchecked(i + 14) - b'0',
+            (b'1', b'0', b'4', b'5') => *s.get_unchecked(i + 14) - b'0',
+            (b'0', b'1', b'4', b'5') => *s.get_unchecked(i + 18) - b'0',
+            (b'0', b'4', b'1', b'5') => *s.get_unchecked(i + 22) - b'0',
+            (b'4', b'1', b'0', b'5') => *s.get_unchecked(i + 18) - b'0',
+            (b'4', b'1', b'5', b'0') => *s.get_unchecked(i + 18) - b'0',
+            (b'4', b'0', b'1', b'5') => *s.get_unchecked(i + 22) - b'0',
+            _ => unreachable_unchecked(),
+        } as u64;
 
-    let result_ptr = (&raw mut RESULT).cast::<u8>();
-    let mut out_ptr = result_ptr;
-    let result_ptr = result_ptr.cast_const();
+        let result_ptr = (&raw mut RESULT).cast::<u8>();
+        let mut out_ptr = result_ptr;
+        let result_ptr = result_ptr.cast_const();
 
-    while a != 0 {
-        let b = a % 8;
-        let b = b ^ x;
-        let c = a >> b;
-        let b = b ^ y ^ c;
+        while a != 0 {
+            let b = a % 8;
+            let b = b ^ x;
+            let c = a >> b;
+            let b = b ^ y ^ c;
 
-        unsafe {
             out_ptr.write((b % 8) as u8 + b'0');
             out_ptr.offset(1).write(b',');
             out_ptr = out_ptr.offset(2);
+            a = a / 8;
         }
-        a = a / 8;
+
+        let out_len = out_ptr.offset_from(result_ptr);
+
+        str::from_utf8_unchecked(&RESULT[..(out_len - 1) as usize])
     }
-
-    let out_len = unsafe { out_ptr.offset_from(result_ptr) };
-
-    unsafe { str::from_utf8_unchecked(&RESULT[..(out_len - 1) as usize]) }
 }
 
 const fn find_a_r(p: &[u64], x: u64, y: u64, pa: u64) -> Option<u64> {
@@ -145,66 +141,65 @@ static LUT: [u64; 8 * 8 * 8 * 8] = const {
 
 #[aoc(day17, part2)]
 pub fn part2(s: &str) -> u64 {
-    unsafe { inner_part2(s.as_bytes()) }
-}
+    unsafe {
+        let s = s.as_bytes();
 
-#[target_feature(enable = "avx2,bmi1,bmi2,cmpxchg16b,lzcnt,movbe,popcnt")]
-unsafe fn inner_part2(s: &[u8]) -> u64 {
-    let mut i = 13;
-    while *s.get_unchecked(i) != b'\n' {
-        i += 1;
+        let mut i = 13;
+        while *s.get_unchecked(i) != b'\n' {
+            i += 1;
+        }
+        i += 39;
+
+        let x = (*s.get_unchecked(i + 6) - b'0') as usize;
+
+        let o1 = *s.get_unchecked(i + 12);
+        let o2 = *s.get_unchecked(i + 16);
+        let o3 = *s.get_unchecked(i + 20);
+        let o4 = *s.get_unchecked(i + 24);
+
+        let a = match (o1, o2, o3, o4) {
+            (b'1', b'4', b'0', b'5') => {
+                let y = (*s.get_unchecked(i + 14) - b'0') as usize;
+                let z = (*s.get_unchecked(i + 18) - b'0') as usize;
+                *LUT.get_unchecked(x * 512 + y * 64 + z * 8 + 0)
+            }
+            (b'1', b'4', b'5', b'0') => {
+                let y = (*s.get_unchecked(i + 14) - b'0') as usize;
+                let z = (*s.get_unchecked(i + 18) - b'0') as usize;
+                *LUT.get_unchecked(x * 512 + y * 64 + z * 8 + 1)
+            }
+            (b'1', b'0', b'4', b'5') => {
+                let y = (*s.get_unchecked(i + 14) - b'0') as usize;
+                let z = (*s.get_unchecked(i + 22) - b'0') as usize;
+                *LUT.get_unchecked(x * 512 + y * 64 + z * 8 + 2)
+            }
+            (b'0', b'1', b'4', b'5') => {
+                let y = (*s.get_unchecked(i + 18) - b'0') as usize;
+                let z = (*s.get_unchecked(i + 22) - b'0') as usize;
+                *LUT.get_unchecked(x * 512 + y * 64 + z * 8 + 3)
+            }
+            (b'0', b'4', b'1', b'5') => {
+                let y = (*s.get_unchecked(i + 22) - b'0') as usize;
+                let z = (*s.get_unchecked(i + 18) - b'0') as usize;
+                *LUT.get_unchecked(x * 512 + y * 64 + z * 8 + 4)
+            }
+            (b'4', b'1', b'0', b'5') => {
+                let y = (*s.get_unchecked(i + 18) - b'0') as usize;
+                let z = (*s.get_unchecked(i + 14) - b'0') as usize;
+                *LUT.get_unchecked(x * 512 + y * 64 + z * 8 + 5)
+            }
+            (b'4', b'1', b'5', b'0') => {
+                let y = (*s.get_unchecked(i + 18) - b'0') as usize;
+                let z = (*s.get_unchecked(i + 14) - b'0') as usize;
+                *LUT.get_unchecked(x * 512 + y * 64 + z * 8 + 6)
+            }
+            (b'4', b'0', b'1', b'5') => {
+                let y = (*s.get_unchecked(i + 22) - b'0') as usize;
+                let z = (*s.get_unchecked(i + 14) - b'0') as usize;
+                *LUT.get_unchecked(x * 512 + y * 64 + z * 8 + 7)
+            }
+            _ => unreachable_unchecked(),
+        };
+        a
     }
-    i += 39;
-
-    let x = (*s.get_unchecked(i + 6) - b'0') as usize;
-
-    let o1 = *s.get_unchecked(i + 12);
-    let o2 = *s.get_unchecked(i + 16);
-    let o3 = *s.get_unchecked(i + 20);
-    let o4 = *s.get_unchecked(i + 24);
-
-    let a = match (o1, o2, o3, o4) {
-        (b'1', b'4', b'0', b'5') => {
-            let y = (*s.get_unchecked(i + 14) - b'0') as usize;
-            let z = (*s.get_unchecked(i + 18) - b'0') as usize;
-            *LUT.get_unchecked(x * 512 + y * 64 + z * 8 + 0)
-        }
-        (b'1', b'4', b'5', b'0') => {
-            let y = (*s.get_unchecked(i + 14) - b'0') as usize;
-            let z = (*s.get_unchecked(i + 18) - b'0') as usize;
-            *LUT.get_unchecked(x * 512 + y * 64 + z * 8 + 1)
-        }
-        (b'1', b'0', b'4', b'5') => {
-            let y = (*s.get_unchecked(i + 14) - b'0') as usize;
-            let z = (*s.get_unchecked(i + 22) - b'0') as usize;
-            *LUT.get_unchecked(x * 512 + y * 64 + z * 8 + 2)
-        }
-        (b'0', b'1', b'4', b'5') => {
-            let y = (*s.get_unchecked(i + 18) - b'0') as usize;
-            let z = (*s.get_unchecked(i + 22) - b'0') as usize;
-            *LUT.get_unchecked(x * 512 + y * 64 + z * 8 + 3)
-        }
-        (b'0', b'4', b'1', b'5') => {
-            let y = (*s.get_unchecked(i + 22) - b'0') as usize;
-            let z = (*s.get_unchecked(i + 18) - b'0') as usize;
-            *LUT.get_unchecked(x * 512 + y * 64 + z * 8 + 4)
-        }
-        (b'4', b'1', b'0', b'5') => {
-            let y = (*s.get_unchecked(i + 18) - b'0') as usize;
-            let z = (*s.get_unchecked(i + 14) - b'0') as usize;
-            *LUT.get_unchecked(x * 512 + y * 64 + z * 8 + 5)
-        }
-        (b'4', b'1', b'5', b'0') => {
-            let y = (*s.get_unchecked(i + 18) - b'0') as usize;
-            let z = (*s.get_unchecked(i + 14) - b'0') as usize;
-            *LUT.get_unchecked(x * 512 + y * 64 + z * 8 + 6)
-        }
-        (b'4', b'0', b'1', b'5') => {
-            let y = (*s.get_unchecked(i + 22) - b'0') as usize;
-            let z = (*s.get_unchecked(i + 14) - b'0') as usize;
-            *LUT.get_unchecked(x * 512 + y * 64 + z * 8 + 7)
-        }
-        _ => unreachable_unchecked(),
-    };
-    a
 }
