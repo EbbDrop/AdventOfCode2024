@@ -59,7 +59,7 @@ pub fn part1(s: &str) -> &'static str {
 
         let out_len = out_ptr.offset_from(result_ptr);
 
-        str::from_utf8_unchecked(&RESULT[..(out_len - 1) as usize])
+        str::from_utf8_unchecked((*&raw const RESULT).get_unchecked(..(out_len - 1) as usize))
     }
 }
 
