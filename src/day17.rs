@@ -69,7 +69,7 @@ unsafe fn inner_part1(s: &[u8]) -> &'static str {
 
     let out_len = unsafe { out_ptr.offset_from(result_ptr) };
 
-    unsafe { str::from_utf8(&RESULT[..(out_len - 1) as usize]).unwrap() }
+    unsafe { str::from_utf8_unchecked(&RESULT[..(out_len - 1) as usize]) }
 }
 
 const fn find_a_r(p: &[u64], x: u64, y: u64, pa: u64) -> Option<u64> {
