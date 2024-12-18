@@ -30,20 +30,12 @@ pub fn part1(s: &str) -> &'static str {
         let x = (*s.get_unchecked(i + 6) - b'0') as u64;
 
         let o1 = *s.get_unchecked(i + 12);
-        let o2 = *s.get_unchecked(i + 16);
         let o3 = *s.get_unchecked(i + 20);
-        let o4 = *s.get_unchecked(i + 24);
 
-        let y = match (o1, o2, o3, o4) {
-            (b'1', b'4', b'0', b'5') => *s.get_unchecked(i + 14) - b'0',
-            (b'1', b'4', b'5', b'0') => *s.get_unchecked(i + 14) - b'0',
-            (b'1', b'0', b'4', b'5') => *s.get_unchecked(i + 14) - b'0',
-            (b'0', b'1', b'4', b'5') => *s.get_unchecked(i + 18) - b'0',
-            (b'0', b'4', b'1', b'5') => *s.get_unchecked(i + 22) - b'0',
-            (b'4', b'1', b'0', b'5') => *s.get_unchecked(i + 18) - b'0',
-            (b'4', b'1', b'5', b'0') => *s.get_unchecked(i + 18) - b'0',
-            (b'4', b'0', b'1', b'5') => *s.get_unchecked(i + 22) - b'0',
-            _ => unreachable_unchecked(),
+        let y = match (o1, o3) {
+            (b'1', _) => *s.get_unchecked(i + 14) - b'0',
+            (_, b'1') => *s.get_unchecked(i + 22) - b'0',
+            _ => *s.get_unchecked(i + 18) - b'0',
         } as u64;
 
         let result_ptr = (&raw mut RESULT).cast::<u8>();
@@ -153,47 +145,45 @@ pub fn part2(s: &str) -> u64 {
         let x = (*s.get_unchecked(i + 6) - b'0') as usize;
 
         let o1 = *s.get_unchecked(i + 12);
-        let o2 = *s.get_unchecked(i + 16);
         let o3 = *s.get_unchecked(i + 20);
-        let o4 = *s.get_unchecked(i + 24);
 
-        let a = match (o1, o2, o3, o4) {
-            (b'1', b'4', b'0', b'5') => {
+        let a = match (o1, o3) {
+            (b'1', b'0') => {
                 let y = (*s.get_unchecked(i + 14) - b'0') as usize;
                 let z = (*s.get_unchecked(i + 18) - b'0') as usize;
                 *LUT.get_unchecked(x * 512 + y * 64 + z * 8 + 0)
             }
-            (b'1', b'4', b'5', b'0') => {
+            (b'1', b'5') => {
                 let y = (*s.get_unchecked(i + 14) - b'0') as usize;
                 let z = (*s.get_unchecked(i + 18) - b'0') as usize;
                 *LUT.get_unchecked(x * 512 + y * 64 + z * 8 + 1)
             }
-            (b'1', b'0', b'4', b'5') => {
+            (b'1', b'4') => {
                 let y = (*s.get_unchecked(i + 14) - b'0') as usize;
                 let z = (*s.get_unchecked(i + 22) - b'0') as usize;
                 *LUT.get_unchecked(x * 512 + y * 64 + z * 8 + 2)
             }
-            (b'0', b'1', b'4', b'5') => {
+            (b'0', b'4') => {
                 let y = (*s.get_unchecked(i + 18) - b'0') as usize;
                 let z = (*s.get_unchecked(i + 22) - b'0') as usize;
                 *LUT.get_unchecked(x * 512 + y * 64 + z * 8 + 3)
             }
-            (b'0', b'4', b'1', b'5') => {
+            (b'0', b'1') => {
                 let y = (*s.get_unchecked(i + 22) - b'0') as usize;
                 let z = (*s.get_unchecked(i + 18) - b'0') as usize;
                 *LUT.get_unchecked(x * 512 + y * 64 + z * 8 + 4)
             }
-            (b'4', b'1', b'0', b'5') => {
+            (b'4', b'0') => {
                 let y = (*s.get_unchecked(i + 18) - b'0') as usize;
                 let z = (*s.get_unchecked(i + 14) - b'0') as usize;
                 *LUT.get_unchecked(x * 512 + y * 64 + z * 8 + 5)
             }
-            (b'4', b'1', b'5', b'0') => {
+            (b'4', b'5') => {
                 let y = (*s.get_unchecked(i + 18) - b'0') as usize;
                 let z = (*s.get_unchecked(i + 14) - b'0') as usize;
                 *LUT.get_unchecked(x * 512 + y * 64 + z * 8 + 6)
             }
-            (b'4', b'0', b'1', b'5') => {
+            (b'4', b'1') => {
                 let y = (*s.get_unchecked(i + 22) - b'0') as usize;
                 let z = (*s.get_unchecked(i + 14) - b'0') as usize;
                 *LUT.get_unchecked(x * 512 + y * 64 + z * 8 + 7)
@@ -201,5 +191,36 @@ pub fn part2(s: &str) -> u64 {
             _ => unreachable_unchecked(),
         };
         a
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn test1() {
+        let s = r"Register A: 45483412
+Register B: 0
+Register C: 0
+
+Program: 2,4,1,3,7,5,0,3,4,1,1,5,5,5,3,0
+";
+
+        assert_eq!(part1(s), "1,5,0,5,2,0,1,3,5");
+        assert_eq!(part2(s), 236581108670061);
+    }
+
+    #[test]
+    fn test2() {
+        let s = r"Register A: 64751475
+Register B: 0
+Register C: 0
+
+Program: 2,4,1,2,7,5,4,5,1,3,5,5,0,3,3,0
+";
+
+        assert_eq!(part1(s), "3,1,4,3,1,7,1,6,3");
+        assert_eq!(part2(s), 37221270076916);
     }
 }
