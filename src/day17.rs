@@ -45,6 +45,7 @@ pub fn part1(s: &str) -> &'static str {
         let mut out_ptr = result_ptr;
         let result_ptr = result_ptr.cast_const();
 
+        std::hint::assert_unchecked(a != 0);
         while a != 0 {
             let b = a % 8;
             let b = b ^ x;
