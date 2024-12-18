@@ -12,10 +12,7 @@ use aoc_runner_derive::aoc;
 // 5 5: out out b
 // 3 0: jnz a!=0 -> 0
 
-#[repr(C, align(16))]
-struct Allign([u8; 17]);
-
-static mut RESULT: Allign = Allign([0; 17]);
+static mut RESULT: [u8; 128] = [0; 128];
 
 #[aoc(day17, part1)]
 pub fn part1(s: &str) -> &'static str {
@@ -45,31 +42,25 @@ pub fn part1(s: &str) -> &'static str {
         } as u64;
 
         let result_ptr = (&raw mut RESULT).cast::<u8>();
-        let out_ptr = result_ptr;
+        let mut out_ptr = result_ptr;
+        let result_ptr = result_ptr.cast_const();
 
-        let mut res = 0u128;
-        std::hint::assert_unchecked(a > 8);
-        while a > 8 {
+        std::hint::assert_unchecked(a != 0);
+        while a != 0 {
             let b = a % 8;
             let b = b ^ x;
             let c = a >> b;
             let b = b ^ y ^ c;
 
-            res = res >> 16;
-            res |= (((b % 8) as u8 + b'0') as u128) << 112;
-            res |= (b',' as u128) << 120;
+            out_ptr.write((b % 8) as u8 + b'0');
+            out_ptr.offset(1).write(b',');
+            out_ptr = out_ptr.offset(2);
             a = a / 8;
         }
-        let b = a % 8;
-        let b = b ^ x;
-        let c = a >> b;
-        let b = b ^ y ^ c;
-        let b = (b % 8) as u8 + b'0';
 
-        out_ptr.cast::<u128>().write(res);
-        out_ptr.offset(16).write(b);
+        let out_len = out_ptr.offset_from(result_ptr);
 
-        std::str::from_utf8_unchecked(&(*&raw const RESULT).0)
+        str::from_utf8_unchecked((*&raw const RESULT).get_unchecked(..(out_len - 1) as usize))
     }
 }
 
