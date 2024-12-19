@@ -420,7 +420,7 @@ mod tests {
 
     #[test]
     fn example_part2() {
-        assert_eq!(part2(EXAMPLE), "");
+        assert_eq!(part2(EXAMPLE), "6,1");
     }
 
     #[test]
