@@ -126,11 +126,11 @@ fn inner_part1(s: &[u8]) -> u64 {
     0
 }
 
-#[aoc(day18, part2)]
-pub fn part2(s: &str) -> String {
+// #[aoc(day18, part2)]
+pub fn part2(s: &str) -> &str {
     #[expect(unused_unsafe)]
     unsafe {
-        inner_part2(s.as_bytes()).to_owned()
+        inner_part2(s.as_bytes())
     }
 }
 
