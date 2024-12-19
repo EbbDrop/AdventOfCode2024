@@ -269,7 +269,7 @@ const LUT: [bool; 256] = const {
 };
 
 fn is_connected(map: &[bool; SIZE1 as usize * SIZE as usize]) -> bool {
-    let mut to_see = heapless::BinaryHeap::<_, heapless::binary_heap::Min, 128>::new();
+    let mut to_see = heapless::BinaryHeap::<_, heapless::binary_heap::Min, 1024>::new();
     to_see
         .push(State {
             cost: 0,
