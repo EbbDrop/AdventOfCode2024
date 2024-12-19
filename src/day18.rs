@@ -361,24 +361,24 @@ fn inner_part2(s: &[u8]) -> &str {
 
         map[idx] = true;
 
-        // if will_change {
-        // for py in 0..SIZE {
-        //     for px in 0..SIZE {
-        //         if py == y as u32 && px == x as u32 {
-        //             print!("O");
-        //         } else if map[py as usize * SIZE1 as usize + px as usize] {
-        //             print!("#");
-        //         } else {
-        //             print!(".");
-        //         }
-        //     }
-        //     println!("");
-        // }
-        // println!("");
-        if !is_connected(&map) {
-            return std::str::from_utf8(&s[start_i..i - 1]).unwrap();
+        if will_change {
+            // for py in 0..SIZE {
+            //     for px in 0..SIZE {
+            //         if py == y as u32 && px == x as u32 {
+            //             print!("O");
+            //         } else if map[py as usize * SIZE1 as usize + px as usize] {
+            //             print!("#");
+            //         } else {
+            //             print!(".");
+            //         }
+            //     }
+            //     println!("");
+            // }
+            // println!("{:07b}", luti);
+            if !is_connected(&map) {
+                return std::str::from_utf8(&s[start_i..i - 1]).unwrap();
+            }
         }
-        // }
     }
 }
 
