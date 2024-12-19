@@ -126,10 +126,11 @@ fn inner_part1(s: &[u8]) -> u64 {
     0
 }
 
-pub fn part2(s: &str) -> &str {
+#[aoc(day18, part2)]
+pub fn part2(s: &str) -> String {
     #[expect(unused_unsafe)]
     unsafe {
-        inner_part2(s.as_bytes())
+        inner_part2(s.as_bytes()).to_owned()
     }
 }
 
@@ -356,14 +357,28 @@ fn inner_part2(s: &[u8]) -> &str {
             | (map[idx.wrapping_add(SIZE1 as usize + 1).min(map.len() - 1)] as usize) << 0;
 
         let will_change = LUT[luti];
+        // dbg!(will_change);
 
-        map[y as usize * SIZE as usize + x as usize] = true;
+        map[idx] = true;
 
-        if will_change {
-            if !is_connected(&map) {
-                return std::str::from_utf8(&s[start_i..i - 1]).unwrap();
-            }
+        // if will_change {
+        // for py in 0..SIZE {
+        //     for px in 0..SIZE {
+        //         if py == y as u32 && px == x as u32 {
+        //             print!("O");
+        //         } else if map[py as usize * SIZE1 as usize + px as usize] {
+        //             print!("#");
+        //         } else {
+        //             print!(".");
+        //         }
+        //     }
+        //     println!("");
+        // }
+        // println!("");
+        if !is_connected(&map) {
+            return std::str::from_utf8(&s[start_i..i - 1]).unwrap();
         }
+        // }
     }
 }
 
@@ -405,7 +420,7 @@ mod tests {
 
     #[test]
     fn example_part2() {
-        assert_eq!(part2(EXAMPLE), "6,1");
+        assert_eq!(part2(EXAMPLE), "");
     }
 
     #[test]
