@@ -9,7 +9,7 @@ macro_rules! get_day_input {
 
 /// Create benchmarks for included days
 macro_rules! benches {
-    ($($day_num:literal => ($p1_sol:literal, $p2_sol:literal),)*) => {
+    ($($day_num:literal => ($p1_sol:literal $(, $p2_sol:literal)?),)*) => {
         paste! {
             $(
                 use advent_of_code_2024::[<day $day_num>]; // Replace `aoc24` with your crate name
@@ -21,12 +21,14 @@ macro_rules! benches {
                     assert_eq!([<day $day_num>]::part1(input).to_string(), $p1_sol.to_string());
                 }
 
+                $(
                 #[test]
                 pub fn [<test_day $day_num _part2>]() {
                     let input = get_day_input!($day_num);
 
                     assert_eq!([<day $day_num>]::part2(input).to_string(), $p2_sol.to_string());
                 }
+                )?
             )*
         }
     };
@@ -52,4 +54,5 @@ benches!(
     17 => ("3,6,3,7,0,7,0,3,0", "136904920099226"),
     // 18 => ("338", "20,44"),
     19 => ("267", "796449099271652"),
+    20 => ("1511", "1020507"),
 );
