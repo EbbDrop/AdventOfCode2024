@@ -243,8 +243,8 @@ unsafe fn inner_part2(s: &[u8]) -> u64 {
 
     let mut states1_start = 1;
     let mut states2_start;
-    let mut states1_other_states = &mut heapless::Vec::<(u16, u64), NFA_SIZE>::new();
-    let mut states2_other_states = &mut heapless::Vec::<(u16, u64), NFA_SIZE>::new();
+    let mut states1_other_states = heapless::Vec::<(u16, u64), NFA_SIZE>::new();
+    let mut states2_other_states = heapless::Vec::<(u16, u64), NFA_SIZE>::new();
 
     while i < s.len() {
         if *s.get_unchecked(i) == b'\n' {
@@ -280,10 +280,54 @@ unsafe fn inner_part2(s: &[u8]) -> u64 {
                 states2_other_states.push_unchecked((next.get_next(), *amount));
             }
         }
-        std::mem::swap(&mut states2_start, &mut states1_start);
-        std::mem::swap(&mut states2_other_states, &mut states1_other_states);
 
-        if states1_start == 0 && states1_other_states.is_empty() {
+        if states2_start == 0 && states2_other_states.is_empty() {
+            while i < s.len() && *s.get_unchecked(i) != b'\n' {
+                i += 1;
+            }
+        } else {
+            i += 1;
+        }
+
+        if i >= s.len() {
+            break;
+        }
+
+        if *s.get_unchecked(i) == b'\n' {
+            sum += states2_start;
+
+            states1_other_states.clear();
+            states1_start = 1;
+            i += 1;
+            continue;
+        }
+        let color = to_idx(*s.get_unchecked(i));
+
+        states1_other_states.clear();
+        states1_start = 0;
+
+        if states2_start > 0 {
+            let next = nfa.get_unchecked(0).get_unchecked(color);
+
+            if next.has_start() {
+                states1_start += states2_start;
+            }
+            if next.get_next() != 0 {
+                states1_other_states.push_unchecked((next.get_next(), states2_start));
+            }
+        }
+        for (s, amount) in states2_other_states.iter() {
+            let next = nfa.get_unchecked(*s as usize).get_unchecked(color);
+
+            if next.has_start() {
+                states1_start += amount;
+            }
+            if next.get_next() != 0 {
+                states1_other_states.push_unchecked((next.get_next(), *amount));
+            }
+        }
+
+        if states2_start == 0 && states2_other_states.is_empty() {
             while i < s.len() && *s.get_unchecked(i) != b'\n' {
                 i += 1;
             }
