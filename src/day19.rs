@@ -1,3 +1,5 @@
+use std::hint::assert_unchecked;
+
 use aoc_runner_derive::aoc;
 
 const ID_LUT: [usize; 127] = const {
@@ -17,7 +19,11 @@ const ID_LUT: [usize; 127] = const {
 // Transforms b, g, r, u ,w to 0, 1, 2, 3, 4
 #[inline(always)]
 fn to_idx(i: u8) -> usize {
-    unsafe { *ID_LUT.get_unchecked(i as usize) }
+    unsafe {
+        let r = *ID_LUT.get_unchecked(i as usize);
+        assert_unchecked(r < 5);
+        r
+    }
 }
 
 #[derive(Debug, Copy, Clone)]
