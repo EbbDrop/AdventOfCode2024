@@ -194,7 +194,7 @@ fn inner_part2(s: &[u8]) -> u64 {
             let mut nfa_trans = nfa[nfa_node][color];
             let next_nfa_node = nfa_trans.add_or_foolow(|| {
                 let new_nfa_node = nfa.len();
-                nfa.push([NfaTrans::None; 6]).unwrap();
+                nfa.push([NfaTrans::None; 5]).unwrap();
                 new_nfa_node
             });
             nfa[nfa_node][color] = nfa_trans;
