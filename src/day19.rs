@@ -110,8 +110,8 @@ unsafe fn inner_part1(s: &[u8]) -> u64 {
 
     let mut states1_start = true;
     let mut states2_start;
-    let mut states1_other_states = &mut heapless::Vec::<u16, NFA_SIZE>::new();
-    let mut states2_other_states = &mut heapless::Vec::<u16, NFA_SIZE>::new();
+    let mut states1_other_states = heapless::Vec::<u16, NFA_SIZE>::new();
+    let mut states2_other_states = heapless::Vec::<u16, NFA_SIZE>::new();
 
     while i < s.len() {
         if *s.get_unchecked(i) == b'\n' {
@@ -144,10 +144,51 @@ unsafe fn inner_part1(s: &[u8]) -> u64 {
                 states2_other_states.push_unchecked(next.get_next());
             }
         }
-        std::mem::swap(&mut states2_other_states, &mut states1_other_states);
-        std::mem::swap(&mut states2_start, &mut states1_start);
 
-        if states1_start == false && states1_other_states.is_empty() {
+        if states2_start == false && states2_other_states.is_empty() {
+            while i < s.len() && *s.get_unchecked(i) != b'\n' {
+                i += 1;
+            }
+        } else {
+            i += 1;
+        }
+
+        if i >= s.len() {
+            break;
+        }
+
+        if *s.get_unchecked(i) == b'\n' {
+            if states2_start {
+                sum += 1;
+            }
+            states1_other_states.clear();
+            states1_start = true;
+            i += 1;
+            continue;
+        }
+        let color = to_idx(*s.get_unchecked(i));
+
+        states1_other_states.clear();
+        states1_start = false;
+
+        if states2_start {
+            let next = nfa.get_unchecked(0).get_unchecked(color);
+
+            states1_start |= next.has_start();
+            if next.get_next() != 0 {
+                states1_other_states.push_unchecked(next.get_next());
+            }
+        }
+        for s in states2_other_states.iter() {
+            let next = nfa.get_unchecked(*s as usize).get_unchecked(color);
+
+            states1_start |= next.has_start();
+            if next.get_next() != 0 {
+                states1_other_states.push_unchecked(next.get_next());
+            }
+        }
+
+        if states2_start == false && states2_other_states.is_empty() {
             while i < s.len() && *s.get_unchecked(i) != b'\n' {
                 i += 1;
             }
