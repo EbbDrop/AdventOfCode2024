@@ -26,37 +26,39 @@ fn to_idx(i: u8) -> usize {
     }
 }
 
+const HAS_START: u16 = 1 << 15;
 #[derive(Debug, Copy, Clone)]
-enum NfaTrans {
-    None,
-    Start,
-    Next(usize),
-    Both(usize),
-}
+struct NfaTrans(u16);
 
 impl NfaTrans {
-    fn add_start(&mut self) {
-        match *self {
-            NfaTrans::None => *self = NfaTrans::Start,
-            NfaTrans::Next(n) => *self = NfaTrans::Both(n),
-            _ => {}
-        }
+    #[inline(always)]
+    const fn empty() -> Self {
+        NfaTrans(0)
     }
 
-    fn add_or_foolow(&mut self, new_nfa_node: impl FnOnce() -> usize) -> usize {
-        match *self {
-            NfaTrans::None => {
-                let new = new_nfa_node();
-                *self = NfaTrans::Next(new);
-                new
-            }
-            NfaTrans::Start => {
-                let new = new_nfa_node();
-                *self = NfaTrans::Both(new);
-                new
-            }
-            NfaTrans::Next(n) => n,
-            NfaTrans::Both(n) => n,
+    #[inline(always)]
+    fn has_start(&self) -> bool {
+        self.0 & HAS_START != 0
+    }
+
+    #[inline(always)]
+    fn get_next(&self) -> u16 {
+        self.0 & (!HAS_START)
+    }
+
+    #[inline(always)]
+    fn add_start(&mut self) {
+        self.0 |= HAS_START;
+    }
+
+    #[inline(always)]
+    fn add_or_foolow(&mut self, new_nfa_node: impl FnOnce() -> u16) -> u16 {
+        if self.get_next() == 0 {
+            let new = new_nfa_node();
+            self.0 |= new;
+            new
+        } else {
+            self.get_next()
         }
     }
 }
@@ -74,7 +76,7 @@ pub fn part1(s: &str) -> u64 {
 // #[target_feature(enable = "avx2,bmi1,bmi2,cmpxchg16b,lzcnt,movbe,popcnt")]
 fn inner_part1(s: &[u8]) -> u64 {
     let mut nfa = heapless::Vec::<[NfaTrans; 5], NFA_SIZE>::new();
-    nfa.push([NfaTrans::None; 5]).unwrap();
+    nfa.push([NfaTrans::empty(); 5]).unwrap();
 
     let mut i = 0;
     let mut nfa_node = 0;
@@ -93,21 +95,21 @@ fn inner_part1(s: &[u8]) -> u64 {
         } else {
             let mut nfa_trans = nfa[nfa_node][color];
             let next_nfa_node = nfa_trans.add_or_foolow(|| {
-                let new_nfa_node = nfa.len();
-                nfa.push([NfaTrans::None; 5]).unwrap();
+                let new_nfa_node = nfa.len() as u16;
+                nfa.push([NfaTrans::empty(); 5]).unwrap();
                 new_nfa_node
             });
             nfa[nfa_node][color] = nfa_trans;
 
-            nfa_node = next_nfa_node;
+            nfa_node = next_nfa_node as usize;
             i += 1;
         }
     }
 
     let mut sum = 0;
 
-    let mut states1 = &mut (true, heapless::Vec::<usize, NFA_SIZE>::new());
-    let mut states2 = &mut (false, heapless::Vec::<usize, NFA_SIZE>::new());
+    let mut states1 = &mut (true, heapless::Vec::<u16, NFA_SIZE>::new());
+    let mut states2 = &mut (false, heapless::Vec::<u16, NFA_SIZE>::new());
 
     while i < s.len() {
         if s[i] == b'\n' {
@@ -126,34 +128,18 @@ fn inner_part1(s: &[u8]) -> u64 {
 
         if states1.0 {
             let next = nfa[0][color];
-            match next {
-                NfaTrans::None => {}
-                NfaTrans::Start => {
-                    states2.0 = true;
-                }
-                NfaTrans::Next(n) => {
-                    states2.1.push(n).unwrap();
-                }
-                NfaTrans::Both(n) => {
-                    states2.0 = true;
-                    states2.1.push(n).unwrap();
-                }
+
+            states2.0 |= next.has_start();
+            if next.get_next() != 0 {
+                states2.1.push(next.get_next()).unwrap();
             }
         }
         for s in states1.1.iter() {
-            let next = nfa[*s][color];
-            match next {
-                NfaTrans::None => {}
-                NfaTrans::Start => {
-                    states2.0 = true;
-                }
-                NfaTrans::Next(n) => {
-                    states2.1.push(n).unwrap();
-                }
-                NfaTrans::Both(n) => {
-                    states2.0 = true;
-                    states2.1.push(n).unwrap();
-                }
+            let next = nfa[*s as usize][color];
+
+            states2.0 |= next.has_start();
+            if next.get_next() != 0 {
+                states2.1.push(next.get_next()).unwrap();
             }
         }
         std::mem::swap(&mut states2, &mut states1);
@@ -180,7 +166,7 @@ pub fn part2(s: &str) -> u64 {
 // #[target_feature(enable = "avx2,bmi1,bmi2,cmpxchg16b,lzcnt,movbe,popcnt")]
 fn inner_part2(s: &[u8]) -> u64 {
     let mut nfa = heapless::Vec::<[NfaTrans; 5], NFA_SIZE>::new();
-    nfa.push([NfaTrans::None; 5]).unwrap();
+    nfa.push([NfaTrans::empty(); 5]).unwrap();
 
     let mut i = 0;
     let mut nfa_node = 0;
@@ -199,25 +185,26 @@ fn inner_part2(s: &[u8]) -> u64 {
         } else {
             let mut nfa_trans = nfa[nfa_node][color];
             let next_nfa_node = nfa_trans.add_or_foolow(|| {
-                let new_nfa_node = nfa.len();
-                nfa.push([NfaTrans::None; 5]).unwrap();
+                let new_nfa_node = nfa.len() as u16;
+                nfa.push([NfaTrans::empty(); 5]).unwrap();
                 new_nfa_node
             });
             nfa[nfa_node][color] = nfa_trans;
 
-            nfa_node = next_nfa_node;
+            nfa_node = next_nfa_node as usize;
             i += 1;
         }
     }
 
     let mut sum = 0;
 
-    let mut states1 = &mut (1, heapless::Vec::<(usize, u64), NFA_SIZE>::new());
-    let mut states2 = &mut (0, heapless::Vec::<(usize, u64), NFA_SIZE>::new());
+    let mut states1 = &mut (1u64, heapless::Vec::<(u16, u64), NFA_SIZE>::new());
+    let mut states2 = &mut (0u64, heapless::Vec::<(u16, u64), NFA_SIZE>::new());
 
     while i < s.len() {
         if s[i] == b'\n' {
             sum += states1.0;
+
             states1.1.clear();
             states1.0 = 1;
             i += 1;
@@ -230,38 +217,26 @@ fn inner_part2(s: &[u8]) -> u64 {
 
         if states1.0 > 0 {
             let next = nfa[0][color];
-            match next {
-                NfaTrans::None => {}
-                NfaTrans::Start => {
-                    states2.0 += states1.0;
-                }
-                NfaTrans::Next(n) => {
-                    states2.1.push((n, states1.0)).unwrap();
-                }
-                NfaTrans::Both(n) => {
-                    states2.0 += states1.0;
-                    states2.1.push((n, states1.0)).unwrap();
-                }
+
+            if next.has_start() {
+                states2.0 += states1.0;
+            }
+            if next.get_next() != 0 {
+                states2.1.push((next.get_next(), states1.0)).unwrap();
             }
         }
         for (s, amount) in states1.1.iter() {
-            let next = nfa[*s][color];
-            match next {
-                NfaTrans::None => {}
-                NfaTrans::Start => {
-                    states2.0 += *amount;
-                }
-                NfaTrans::Next(n) => {
-                    states2.1.push((n, *amount)).unwrap();
-                }
-                NfaTrans::Both(n) => {
-                    states2.0 += *amount;
-                    states2.1.push((n, *amount)).unwrap();
-                }
+            let next = nfa[*s as usize][color];
+
+            if next.has_start() {
+                states2.0 += amount;
+            }
+            if next.get_next() != 0 {
+                states2.1.push((next.get_next(), *amount)).unwrap();
             }
         }
-
         std::mem::swap(&mut states2, &mut states1);
+
         if states1.0 == 0 && states1.1.is_empty() {
             while i < s.len() && s[i] != b'\n' {
                 i += 1;
