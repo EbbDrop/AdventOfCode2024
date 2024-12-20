@@ -1,20 +1,23 @@
 use aoc_runner_derive::aoc;
 
-// Transforms b, g, r, u ,w to 0, 1, 4, 3, 5
+const ID_LUT: [usize; 127] = const {
+    let mut lut = [0; 127];
+
+    lut[b'b' as usize] = 0;
+    lut[b'g' as usize] = 1;
+    lut[b'r' as usize] = 2;
+    lut[b'u' as usize] = 3;
+    lut[b'w' as usize] = 4;
+
+    lut
+};
+
+// Transforms b, g, r, u ,w to 0, 1, 4, 3, 5 NOT
+
+// Transforms b, g, r, u ,w to 0, 1, 2, 3, 4
 #[inline(always)]
 fn to_idx(i: u8) -> usize {
-    let o: usize;
-    unsafe {
-        std::arch::asm!(
-            "mov     {o:e}, 19",
-            "pext    {o:e}, {i:e}, {o:e}",
-            "add     {o:r}, -2",
-            i = in(reg) i as u32,
-            o = out(reg) o,
-            options(pure, nomem, nostack)
-        );
-    }
-    o
+    unsafe { *ID_LUT.get_unchecked(i as usize) }
 }
 
 #[derive(Debug, Copy, Clone)]
@@ -64,8 +67,8 @@ pub fn part1(s: &str) -> u64 {
 
 // #[target_feature(enable = "avx2,bmi1,bmi2,cmpxchg16b,lzcnt,movbe,popcnt")]
 fn inner_part1(s: &[u8]) -> u64 {
-    let mut nfa = heapless::Vec::<[NfaTrans; 6], NFA_SIZE>::new();
-    nfa.push([NfaTrans::None; 6]).unwrap();
+    let mut nfa = heapless::Vec::<[NfaTrans; 5], NFA_SIZE>::new();
+    nfa.push([NfaTrans::None; 5]).unwrap();
 
     let mut i = 0;
     let mut nfa_node = 0;
@@ -85,7 +88,7 @@ fn inner_part1(s: &[u8]) -> u64 {
             let mut nfa_trans = nfa[nfa_node][color];
             let next_nfa_node = nfa_trans.add_or_foolow(|| {
                 let new_nfa_node = nfa.len();
-                nfa.push([NfaTrans::None; 6]).unwrap();
+                nfa.push([NfaTrans::None; 5]).unwrap();
                 new_nfa_node
             });
             nfa[nfa_node][color] = nfa_trans;
@@ -170,8 +173,8 @@ pub fn part2(s: &str) -> u64 {
 
 // #[target_feature(enable = "avx2,bmi1,bmi2,cmpxchg16b,lzcnt,movbe,popcnt")]
 fn inner_part2(s: &[u8]) -> u64 {
-    let mut nfa = heapless::Vec::<[NfaTrans; 6], NFA_SIZE>::new();
-    nfa.push([NfaTrans::None; 6]).unwrap();
+    let mut nfa = heapless::Vec::<[NfaTrans; 5], NFA_SIZE>::new();
+    nfa.push([NfaTrans::None; 5]).unwrap();
 
     let mut i = 0;
     let mut nfa_node = 0;
