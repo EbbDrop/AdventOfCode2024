@@ -67,25 +67,24 @@ const NFA_SIZE: usize = 1024;
 
 #[aoc(day19, part1)]
 pub fn part1(s: &str) -> u64 {
-    #[expect(unused_unsafe)]
-    unsafe {
-        inner_part1(s.as_bytes())
-    }
+    unsafe { inner_part1(s.as_bytes()) }
 }
 
-// #[target_feature(enable = "avx2,bmi1,bmi2,cmpxchg16b,lzcnt,movbe,popcnt")]
-fn inner_part1(s: &[u8]) -> u64 {
+#[target_feature(enable = "avx2,bmi1,bmi2,cmpxchg16b,lzcnt,movbe,popcnt")]
+unsafe fn inner_part1(s: &[u8]) -> u64 {
     let mut nfa = heapless::Vec::<[NfaTrans; 5], NFA_SIZE>::new();
-    nfa.push([NfaTrans::empty(); 5]).unwrap();
+    nfa.push_unchecked([NfaTrans::empty(); 5]);
 
     let mut i = 0;
     let mut nfa_node = 0;
     loop {
-        let color = to_idx(s[i]);
-        let next = s[i + 1];
+        let color = to_idx(*s.get_unchecked(i));
+        let next = *s.get_unchecked(i + 1);
 
         if next == b',' || next == b'\n' {
-            nfa[nfa_node][color].add_start();
+            nfa.get_unchecked_mut(nfa_node)
+                .get_unchecked_mut(color)
+                .add_start();
 
             nfa_node = 0;
             i += 3;
@@ -93,13 +92,14 @@ fn inner_part1(s: &[u8]) -> u64 {
                 break;
             }
         } else {
-            let mut nfa_trans = nfa[nfa_node][color];
+            let mut nfa_trans = *nfa.get_unchecked(nfa_node).get_unchecked(color);
+
             let next_nfa_node = nfa_trans.add_or_foolow(|| {
                 let new_nfa_node = nfa.len() as u16;
-                nfa.push([NfaTrans::empty(); 5]).unwrap();
+                nfa.push_unchecked([NfaTrans::empty(); 5]);
                 new_nfa_node
             });
-            nfa[nfa_node][color] = nfa_trans;
+            *nfa.get_unchecked_mut(nfa_node).get_unchecked_mut(color) = nfa_trans;
 
             nfa_node = next_nfa_node as usize;
             i += 1;
@@ -108,44 +108,47 @@ fn inner_part1(s: &[u8]) -> u64 {
 
     let mut sum = 0;
 
-    let mut states1 = &mut (true, heapless::Vec::<u16, NFA_SIZE>::new());
-    let mut states2 = &mut (false, heapless::Vec::<u16, NFA_SIZE>::new());
+    let mut states1_start = true;
+    let mut states2_start;
+    let mut states1_other_states = &mut heapless::Vec::<u16, NFA_SIZE>::new();
+    let mut states2_other_states = &mut heapless::Vec::<u16, NFA_SIZE>::new();
 
     while i < s.len() {
-        if s[i] == b'\n' {
-            if states1.0 {
+        if *s.get_unchecked(i) == b'\n' {
+            if states1_start {
                 sum += 1;
             }
-            states1.1.clear();
-            states1.0 = true;
+            states1_other_states.clear();
+            states1_start = true;
             i += 1;
             continue;
         }
-        let color = to_idx(s[i]);
+        let color = to_idx(*s.get_unchecked(i));
 
-        states2.1.clear();
-        states2.0 = false;
+        states2_other_states.clear();
+        states2_start = false;
 
-        if states1.0 {
-            let next = nfa[0][color];
+        if states1_start {
+            let next = nfa.get_unchecked(0).get_unchecked(color);
 
-            states2.0 |= next.has_start();
+            states2_start |= next.has_start();
             if next.get_next() != 0 {
-                states2.1.push(next.get_next()).unwrap();
+                states2_other_states.push_unchecked(next.get_next());
             }
         }
-        for s in states1.1.iter() {
-            let next = nfa[*s as usize][color];
+        for s in states1_other_states.iter() {
+            let next = nfa.get_unchecked(*s as usize).get_unchecked(color);
 
-            states2.0 |= next.has_start();
+            states2_start |= next.has_start();
             if next.get_next() != 0 {
-                states2.1.push(next.get_next()).unwrap();
+                states2_other_states.push_unchecked(next.get_next());
             }
         }
-        std::mem::swap(&mut states2, &mut states1);
+        std::mem::swap(&mut states2_other_states, &mut states1_other_states);
+        std::mem::swap(&mut states2_start, &mut states1_start);
 
-        if states1.0 == false && states1.1.is_empty() {
-            while i < s.len() && s[i] != b'\n' {
+        if states1_start == false && states1_other_states.is_empty() {
+            while i < s.len() && *s.get_unchecked(i) != b'\n' {
                 i += 1;
             }
         } else {
@@ -157,25 +160,24 @@ fn inner_part1(s: &[u8]) -> u64 {
 
 #[aoc(day19, part2)]
 pub fn part2(s: &str) -> u64 {
-    #[expect(unused_unsafe)]
-    unsafe {
-        inner_part2(s.as_bytes())
-    }
+    unsafe { inner_part2(s.as_bytes()) }
 }
 
-// #[target_feature(enable = "avx2,bmi1,bmi2,cmpxchg16b,lzcnt,movbe,popcnt")]
-fn inner_part2(s: &[u8]) -> u64 {
+#[target_feature(enable = "avx2,bmi1,bmi2,cmpxchg16b,lzcnt,movbe,popcnt")]
+unsafe fn inner_part2(s: &[u8]) -> u64 {
     let mut nfa = heapless::Vec::<[NfaTrans; 5], NFA_SIZE>::new();
-    nfa.push([NfaTrans::empty(); 5]).unwrap();
+    nfa.push_unchecked([NfaTrans::empty(); 5]);
 
     let mut i = 0;
     let mut nfa_node = 0;
     loop {
-        let color = to_idx(s[i]);
-        let next = s[i + 1];
+        let color = to_idx(*s.get_unchecked(i));
+        let next = *s.get_unchecked(i + 1);
 
         if next == b',' || next == b'\n' {
-            nfa[nfa_node][color].add_start();
+            nfa.get_unchecked_mut(nfa_node)
+                .get_unchecked_mut(color)
+                .add_start();
 
             nfa_node = 0;
             i += 3;
@@ -183,13 +185,13 @@ fn inner_part2(s: &[u8]) -> u64 {
                 break;
             }
         } else {
-            let mut nfa_trans = nfa[nfa_node][color];
+            let mut nfa_trans = *nfa.get_unchecked(nfa_node).get_unchecked(color);
             let next_nfa_node = nfa_trans.add_or_foolow(|| {
                 let new_nfa_node = nfa.len() as u16;
-                nfa.push([NfaTrans::empty(); 5]).unwrap();
+                nfa.push_unchecked([NfaTrans::empty(); 5]);
                 new_nfa_node
             });
-            nfa[nfa_node][color] = nfa_trans;
+            *nfa.get_unchecked_mut(nfa_node).get_unchecked_mut(color) = nfa_trans;
 
             nfa_node = next_nfa_node as usize;
             i += 1;
@@ -198,47 +200,50 @@ fn inner_part2(s: &[u8]) -> u64 {
 
     let mut sum = 0;
 
-    let mut states1 = &mut (1u64, heapless::Vec::<(u16, u64), NFA_SIZE>::new());
-    let mut states2 = &mut (0u64, heapless::Vec::<(u16, u64), NFA_SIZE>::new());
+    let mut states1_start = 1;
+    let mut states2_start;
+    let mut states1_other_states = &mut heapless::Vec::<(u16, u64), NFA_SIZE>::new();
+    let mut states2_other_states = &mut heapless::Vec::<(u16, u64), NFA_SIZE>::new();
 
     while i < s.len() {
-        if s[i] == b'\n' {
-            sum += states1.0;
+        if *s.get_unchecked(i) == b'\n' {
+            sum += states1_start;
 
-            states1.1.clear();
-            states1.0 = 1;
+            states1_other_states.clear();
+            states1_start = 1;
             i += 1;
             continue;
         }
-        let color = to_idx(s[i]);
+        let color = to_idx(*s.get_unchecked(i));
 
-        states2.1.clear();
-        states2.0 = 0;
+        states2_other_states.clear();
+        states2_start = 0;
 
-        if states1.0 > 0 {
-            let next = nfa[0][color];
-
-            if next.has_start() {
-                states2.0 += states1.0;
-            }
-            if next.get_next() != 0 {
-                states2.1.push((next.get_next(), states1.0)).unwrap();
-            }
-        }
-        for (s, amount) in states1.1.iter() {
-            let next = nfa[*s as usize][color];
+        if states1_start > 0 {
+            let next = nfa.get_unchecked(0).get_unchecked(color);
 
             if next.has_start() {
-                states2.0 += amount;
+                states2_start += states1_start;
             }
             if next.get_next() != 0 {
-                states2.1.push((next.get_next(), *amount)).unwrap();
+                states2_other_states.push_unchecked((next.get_next(), states1_start));
             }
         }
-        std::mem::swap(&mut states2, &mut states1);
+        for (s, amount) in states1_other_states.iter() {
+            let next = nfa.get_unchecked(*s as usize).get_unchecked(color);
 
-        if states1.0 == 0 && states1.1.is_empty() {
-            while i < s.len() && s[i] != b'\n' {
+            if next.has_start() {
+                states2_start += amount;
+            }
+            if next.get_next() != 0 {
+                states2_other_states.push_unchecked((next.get_next(), *amount));
+            }
+        }
+        std::mem::swap(&mut states2_start, &mut states1_start);
+        std::mem::swap(&mut states2_other_states, &mut states1_other_states);
+
+        if states1_start == 0 && states1_other_states.is_empty() {
+            while i < s.len() && *s.get_unchecked(i) != b'\n' {
                 i += 1;
             }
         } else {
