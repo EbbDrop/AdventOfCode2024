@@ -147,7 +147,7 @@ struct Line {
     line_offset: u8,
 }
 
-const QUAD_SIZE: usize = 20;
+const QUAD_SIZE: usize = 32;
 const QUADS_SIZE: usize = SIZE.div_ceil(QUAD_SIZE);
 const QUADS_NEEDED: usize = 20usize.div_ceil(QUAD_SIZE);
 
