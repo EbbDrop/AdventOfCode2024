@@ -133,10 +133,7 @@ fn inner_part1(s: &[u8]) -> u64 {
 
 #[aoc(day20, part2)]
 pub fn part2(s: &str) -> u32 {
-    #[expect(unused_unsafe)]
-    unsafe {
-        inner_part2(s.as_bytes())
-    }
+    unsafe { inner_part2(s.as_bytes()) }
 }
 
 #[derive(Debug)]
@@ -155,7 +152,7 @@ const QUADS_NEEDED: usize = 20usize.div_ceil(QUAD_SIZE);
 unsafe fn inner_part2(s: &[u8]) -> u32 {
     let to_idx = |x, y| y as usize * SIZE1 + x as usize;
 
-    let start = memchr::memchr(b'S', s).unwrap();
+    let start = memchr::memchr(b'S', s).unwrap_unchecked();
 
     let mut lines = [const { heapless::Vec::<Line, 1024>::new() }; 4];
     let mut quads =
@@ -185,22 +182,23 @@ unsafe fn inner_part2(s: &[u8]) -> u32 {
 
     let qx = (x / QUAD_SIZE as u8) as usize;
     let qy = (y / QUAD_SIZE as u8) as usize;
-    quads[d as usize][qy * QUADS_SIZE + qx]
-        .push(lines[d as usize].len())
-        .unwrap();
+    quads
+        .get_unchecked_mut(d as usize)
+        .get_unchecked_mut(qy * QUADS_SIZE + qx)
+        .push_unchecked(lines.get_unchecked(d as usize).len());
 
     let mut prev_qx = qx;
     let mut prev_qy = qy;
     while *s.get_unchecked(to_idx(x, y)) != b'E' {
         let next = d.step(to_idx(x, y));
 
-        if s[next] == b'#' {
+        if *s.get_unchecked(next) == b'#' {
             cur_line.line_end = d.select_crosline(x, y);
-            lines[d as usize].push(cur_line).unwrap();
+            lines.get_unchecked_mut(d as usize).push_unchecked(cur_line);
 
             for side in d.sides() {
                 let side_i = side.step(to_idx(x, y));
-                if s[side_i] != b'#' {
+                if *s.get_unchecked(side_i) != b'#' {
                     d = side;
                     match d {
                         Dir::N => y -= 1,
@@ -221,9 +219,10 @@ unsafe fn inner_part2(s: &[u8]) -> u32 {
             };
             let qx = x as usize / QUAD_SIZE;
             let qy = y as usize / QUAD_SIZE;
-            quads[d as usize][qy * QUADS_SIZE + qx]
-                .push(lines[d as usize].len())
-                .unwrap();
+            quads
+                .get_unchecked_mut(d as usize)
+                .get_unchecked_mut(qy * QUADS_SIZE + qx)
+                .push_unchecked(lines.get_unchecked(d as usize).len());
             prev_qy = qy;
             prev_qx = qx;
         } else {
@@ -242,7 +241,7 @@ unsafe fn inner_part2(s: &[u8]) -> u32 {
 
             if prev_qy != qy || prev_qx != qx {
                 cur_line.line_end = pos_line_end;
-                lines[d as usize].push(cur_line).unwrap();
+                lines.get_unchecked_mut(d as usize).push_unchecked(cur_line);
 
                 cur_line = Line {
                     start_ns: ns,
@@ -250,9 +249,10 @@ unsafe fn inner_part2(s: &[u8]) -> u32 {
                     line_offset: d.select_inline(x, y),
                     line_end: 0,
                 };
-                quads[d as usize][qy * QUADS_SIZE + qx]
-                    .push(lines[d as usize].len())
-                    .unwrap();
+                quads
+                    .get_unchecked_mut(d as usize)
+                    .get_unchecked_mut(qy * QUADS_SIZE + qx)
+                    .push_unchecked(lines.get_unchecked(d as usize).len());
             }
 
             prev_qy = qy;
@@ -269,8 +269,11 @@ unsafe fn inner_part2(s: &[u8]) -> u32 {
             for qy in
                 qy.saturating_sub(QUADS_NEEDED)..qy.wrapping_add(QUADS_NEEDED + 1).min(QUADS_SIZE)
             {
-                for line_i in &quads[Dir::N as usize][qy * QUADS_SIZE + qx] {
-                    let Some(line) = lines[Dir::N as usize].get(*line_i) else {
+                for line_i in quads
+                    .get_unchecked(Dir::N as usize)
+                    .get_unchecked(qy * QUADS_SIZE + qx)
+                {
+                    let Some(line) = lines.get_unchecked(Dir::N as usize).get(*line_i) else {
                         continue;
                     };
                     let dist = x.abs_diff(line.line_offset as i16) as i16;
@@ -295,15 +298,11 @@ unsafe fn inner_part2(s: &[u8]) -> u32 {
                         sum += (cheat_start - cheat_end) as u32 + 1;
                     }
                 }
-            }
-        }
-        for qx in qx.saturating_sub(QUADS_NEEDED)..qx.wrapping_add(QUADS_NEEDED + 1).min(QUADS_SIZE)
-        {
-            for qy in
-                qy.saturating_sub(QUADS_NEEDED)..qy.wrapping_add(QUADS_NEEDED + 1).min(QUADS_SIZE)
-            {
-                for line_i in &quads[Dir::E as usize][qy * QUADS_SIZE + qx] {
-                    let Some(line) = lines[Dir::E as usize].get(*line_i) else {
+                for line_i in quads
+                    .get_unchecked(Dir::E as usize)
+                    .get_unchecked(qy * QUADS_SIZE + qx)
+                {
+                    let Some(line) = lines.get_unchecked(Dir::E as usize).get(*line_i) else {
                         continue;
                     };
                     let dist = y.abs_diff(line.line_offset as i16) as i16;
@@ -328,15 +327,11 @@ unsafe fn inner_part2(s: &[u8]) -> u32 {
                         sum += (cheat_end - cheat_start) as u32 + 1;
                     }
                 }
-            }
-        }
-        for qx in qx.saturating_sub(QUADS_NEEDED)..qx.wrapping_add(QUADS_NEEDED + 1).min(QUADS_SIZE)
-        {
-            for qy in
-                qy.saturating_sub(QUADS_NEEDED)..qy.wrapping_add(QUADS_NEEDED + 1).min(QUADS_SIZE)
-            {
-                for line_i in &quads[Dir::S as usize][qy * QUADS_SIZE + qx] {
-                    let Some(line) = lines[Dir::S as usize].get(*line_i) else {
+                for line_i in quads
+                    .get_unchecked(Dir::S as usize)
+                    .get_unchecked(qy * QUADS_SIZE + qx)
+                {
+                    let Some(line) = lines.get_unchecked(Dir::S as usize).get(*line_i) else {
                         continue;
                     };
                     let dist = x.abs_diff(line.line_offset as i16) as i16;
@@ -361,15 +356,11 @@ unsafe fn inner_part2(s: &[u8]) -> u32 {
                         sum += (cheat_end - cheat_start) as u32 + 1;
                     }
                 }
-            }
-        }
-        for qx in qx.saturating_sub(QUADS_NEEDED)..qx.wrapping_add(QUADS_NEEDED + 1).min(QUADS_SIZE)
-        {
-            for qy in
-                qy.saturating_sub(QUADS_NEEDED)..qy.wrapping_add(QUADS_NEEDED + 1).min(QUADS_SIZE)
-            {
-                for line_i in &quads[Dir::W as usize][qy * QUADS_SIZE + qx] {
-                    let Some(line) = lines[Dir::W as usize].get(*line_i) else {
+                for line_i in quads
+                    .get_unchecked(Dir::W as usize)
+                    .get_unchecked(qy * QUADS_SIZE + qx)
+                {
+                    let Some(line) = lines.get_unchecked(Dir::W as usize).get(*line_i) else {
                         continue;
                     };
                     let dist = y.abs_diff(line.line_offset as i16) as i16;
