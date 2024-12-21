@@ -155,10 +155,9 @@ const QUADS_NEEDED: usize = 20usize.div_ceil(QUAD_SIZE);
 fn inner_part2(s: &[u8]) -> u32 {
     let start = memchr::memchr(b'S', s).unwrap();
 
-    let mut lines = [const { heapless::Vec::<Line, 2048>::new() }; 4];
-    let mut quads = [const {
-        [const { heapless::Vec::<usize, { QUAD_SIZE * 2 }>::new() }; QUADS_SIZE * QUADS_SIZE]
-    }; 4];
+    let mut lines = [const { heapless::Vec::<Line, 1024>::new() }; 4];
+    let mut quads =
+        [const { [const { heapless::Vec::<usize, 32>::new() }; QUADS_SIZE * QUADS_SIZE] }; 4];
 
     let mut i = start;
     let mut d = if s[i - 1] == b'.' {
@@ -367,6 +366,8 @@ fn inner_part2(s: &[u8]) -> u32 {
             }
         }
     }
+    // dbg!(quads.iter().flat_map(|q| q.iter().map(|q| q.len())).max());
+    // dbg!(lines.iter().map(|l| l.len()).max());
     // dbg!(&quads);
     // dbg!(&lines);
 
