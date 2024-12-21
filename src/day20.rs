@@ -262,14 +262,13 @@ unsafe fn inner_part2(s: &[u8]) -> u32 {
         let qx = x as usize / QUAD_SIZE;
         let qy = y as usize / QUAD_SIZE;
 
+        let x = x as i16;
+        let y = y as i16;
         for qx in qx.saturating_sub(QUADS_NEEDED)..qx.wrapping_add(QUADS_NEEDED + 1).min(QUADS_SIZE)
         {
             for qy in
                 qy.saturating_sub(QUADS_NEEDED)..qy.wrapping_add(QUADS_NEEDED + 1).min(QUADS_SIZE)
             {
-                let x = x as i16;
-                let y = y as i16;
-
                 for line_i in &quads[Dir::N as usize][qy * QUADS_SIZE + qx] {
                     let Some(line) = lines[Dir::N as usize].get(*line_i) else {
                         continue;
@@ -296,6 +295,13 @@ unsafe fn inner_part2(s: &[u8]) -> u32 {
                         sum += (cheat_start - cheat_end) as u32 + 1;
                     }
                 }
+            }
+        }
+        for qx in qx.saturating_sub(QUADS_NEEDED)..qx.wrapping_add(QUADS_NEEDED + 1).min(QUADS_SIZE)
+        {
+            for qy in
+                qy.saturating_sub(QUADS_NEEDED)..qy.wrapping_add(QUADS_NEEDED + 1).min(QUADS_SIZE)
+            {
                 for line_i in &quads[Dir::E as usize][qy * QUADS_SIZE + qx] {
                     let Some(line) = lines[Dir::E as usize].get(*line_i) else {
                         continue;
@@ -322,6 +328,13 @@ unsafe fn inner_part2(s: &[u8]) -> u32 {
                         sum += (cheat_end - cheat_start) as u32 + 1;
                     }
                 }
+            }
+        }
+        for qx in qx.saturating_sub(QUADS_NEEDED)..qx.wrapping_add(QUADS_NEEDED + 1).min(QUADS_SIZE)
+        {
+            for qy in
+                qy.saturating_sub(QUADS_NEEDED)..qy.wrapping_add(QUADS_NEEDED + 1).min(QUADS_SIZE)
+            {
                 for line_i in &quads[Dir::S as usize][qy * QUADS_SIZE + qx] {
                     let Some(line) = lines[Dir::S as usize].get(*line_i) else {
                         continue;
@@ -348,6 +361,13 @@ unsafe fn inner_part2(s: &[u8]) -> u32 {
                         sum += (cheat_end - cheat_start) as u32 + 1;
                     }
                 }
+            }
+        }
+        for qx in qx.saturating_sub(QUADS_NEEDED)..qx.wrapping_add(QUADS_NEEDED + 1).min(QUADS_SIZE)
+        {
+            for qy in
+                qy.saturating_sub(QUADS_NEEDED)..qy.wrapping_add(QUADS_NEEDED + 1).min(QUADS_SIZE)
+            {
                 for line_i in &quads[Dir::W as usize][qy * QUADS_SIZE + qx] {
                     let Some(line) = lines[Dir::W as usize].get(*line_i) else {
                         continue;
