@@ -47,24 +47,6 @@ impl Dir {
             Dir::W => i.wrapping_sub(2),
         }
     }
-
-    fn select_crosline(&self, i: usize) -> u8 {
-        (match self {
-            Dir::N => i / SIZE1,
-            Dir::E => i % SIZE1,
-            Dir::S => i / SIZE1,
-            Dir::W => i % SIZE1,
-        }) as u8
-    }
-
-    fn select_inline(&self, i: usize) -> u8 {
-        (match self {
-            Dir::N => i % SIZE1,
-            Dir::E => i / SIZE1,
-            Dir::S => i % SIZE1,
-            Dir::W => i / SIZE1,
-        }) as u8
-    }
 }
 
 #[aoc(day20, part1)]
@@ -139,109 +121,81 @@ pub fn part2(s: &str) -> u64 {
     }
 }
 
-#[derive(Debug)]
-struct Line {
-    start_ns: u16,
-    line_start: u8,
-    lien_offset: u8,
-}
-
-const QUAD_SIZE: usize = 8;
-const QUADS_SIZE: usize = SIZE.div_ceil(QUAD_SIZE);
-const QUADS_NEEDED: usize = 20usize.div_ceil(QUAD_SIZE);
-
 // #[target_feature(enable = "avx2,bmi1,bmi2,cmpxchg16b,lzcnt,movbe,popcnt")]
 fn inner_part2(s: &[u8]) -> u64 {
     let start = memchr::memchr(b'S', s).unwrap();
 
-    let mut lines = [const { heapless::Vec::<Line, 1024>::new() }; 4];
-    let mut quads =
-        [const { [const { heapless::Vec::<usize, 8>::new() }; QUADS_SIZE * QUADS_SIZE] }; 4];
+    let mut ns_map = [0u16; SIZE1 * SIZE];
 
     let mut ns = 1;
 
-    let mut i = start;
-    let mut d = if s[i - 1] == b'.' {
+    let mut d = if s[start - 1] == b'.' {
         Dir::W
-    } else if s[i + 1] == b'.' {
+    } else if s[start + 1] == b'.' {
         Dir::E
-    } else if s[i - SIZE1] == b'.' {
+    } else if s[start - SIZE1] == b'.' {
         Dir::N
     } else {
         Dir::S
     };
 
-    lines[d as usize]
-        .push(Line {
-            start_ns: 0,
-            line_start: d.select_crosline(i),
-            lien_offset: d.select_inline(i),
-        })
-        .unwrap();
+    let mut cy = start as i32 / SIZE1 as i32;
+    let mut cx = start as i32 % SIZE1 as i32;
+
+    let idx = |x, y| (y * SIZE1 as i32 + x) as usize;
 
     let mut sum = 0;
+    while s[idx(cx, cy)] != b'E' {
+        ns_map[idx(cx, cy)] = ns;
 
-    let mut prev_qx = usize::MAX;
-    let mut prev_qy = usize::MAX;
-    while s[i] != b'E' {
-        let qx = (i % SIZE1) / QUAD_SIZE;
-        let qy = (i / SIZE1) / QUAD_SIZE;
-
-        for qx in
-            qx.saturating_sub(QUADS_NEEDED)..qx.saturating_add(QUADS_NEEDED + 1).min(QUADS_SIZE)
-        {
-            for qy in
-                qy.saturating_sub(QUADS_NEEDED)..qy.saturating_add(QUADS_NEEDED + 1).min(QUADS_SIZE)
-            {
-                for line_i in &quads[0][qy * QUADS_SIZE + qx] {
-                    sum += 1;
-                }
-                for line_i in &quads[1][qy * QUADS_SIZE + qx] {
-                    sum += 1;
-                }
-                for line_i in &quads[2][qy * QUADS_SIZE + qx] {
-                    sum += 1;
-                }
-                for line_i in &quads[3][qy * QUADS_SIZE + qx] {
-                    sum += 1;
-                }
-            }
-        }
-
-        if prev_qy != qy || prev_qx != qx {
-            quads[d as usize][qy * QUADS_SIZE + qx]
-                .push(lines[d as usize].len() - 1)
-                .unwrap();
-        }
-        prev_qy = qy;
-        prev_qx = qx;
-
-        let next = d.step(i);
+        let next = d.step(idx(cx, cy));
         if s[next] == b'#' {
             for side in d.sides() {
-                let side_i = side.step(i);
+                let side_i = side.step(idx(cx, cy));
                 if s[side_i] != b'#' {
                     d = side;
                 }
             }
-
-            lines[d as usize]
-                .push(Line {
-                    start_ns: ns,
-                    line_start: d.select_crosline(i),
-                    lien_offset: d.select_inline(i),
-                })
-                .unwrap();
-            quads[d as usize][qy * QUADS_SIZE + qx]
-                .push(lines[d as usize].len() - 1)
-                .unwrap();
-
-            i = d.step(i);
-        } else {
-            i = next;
+        }
+        match d {
+            Dir::N => cy -= 1,
+            Dir::E => cx += 1,
+            Dir::S => cy += 1,
+            Dir::W => cx -= 1,
         }
         ns += 1;
+
+        for y in (cy - 20).max(1)..(cy + 21).min(SIZE as i32 - 1) {
+            for x in
+                (-20 + (y - cy).abs() + cx).max(1)..(21 - (y - cy).abs() + cx).min(SIZE as i32 - 1)
+            {
+                let dist = (y - cy).abs() + (x - cx).abs();
+                if dist <= 1 {
+                    continue;
+                }
+
+                let side_i = idx(x, y);
+                if ns_map[side_i] != 0 {
+                    let diff = ns - ns_map[side_i];
+                    if diff >= MIN_CHEAT + dist as u16 {
+                        sum += 1;
+                    }
+                }
+            }
+        }
     }
+
+    // for y in 0..SIZE {
+    //     for x in 0..SIZE.min(40) {
+    //         if ns_map[y * SIZE1 + x] != 0 {
+    //             print!("{:^4} ", ns_map[y * SIZE1 + x]);
+    //         } else {
+    //             print!("  .  ");
+    //         }
+    //     }
+    //     println!("");
+    // }
+    // println!("");
 
     sum
 }
