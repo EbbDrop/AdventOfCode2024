@@ -276,17 +276,24 @@ unsafe fn inner(s: &str, lut: &[u64; 1000]) -> u64 {
         0, 0, 100, 1,
     );
     let v = _mm256_madd_epi16(v, mul);
-    let com_l = _mm256_i32gather_epi32::<8>(lut.as_ptr().cast(), v);
-    let com_h = _mm256_i32gather_epi32::<8>(lut.as_ptr().cast::<i32>().offset(1), v);
+    lut[_mm256_extract_epi32::<0>(v) as u32 as usize]
+        + lut[_mm256_extract_epi32::<1>(v) as u32 as usize]
+        + lut[_mm256_extract_epi32::<4>(v) as u32 as usize]
+        + lut[_mm256_extract_epi32::<5>(v) as u32 as usize]
+        + lut[_mm256_extract_epi32::<7>(v) as u32 as usize]
+    // let com_l = _mm256_i32gather_epi32::<8>(lut.as_ptr().cast(), v);
+    // let com_h = _mm256_i32gather_epi32::<8>(lut.as_ptr().cast::<i32>().offset(1), v);
 
-    let h1 = _mm256_unpacklo_epi32(com_l, com_h);
-    let h2 = _mm256_unpackhi_epi32(com_l, com_h);
-    let v = _mm256_add_epi64(h1, h2);
-    let vs = _mm256_shuffle_epi32::<{ (1 << 6) | (0 << 4) | (3 << 2) | 2 }>(v);
-    let v = _mm256_add_epi64(v, vs);
+    // let h1 = _mm256_unpacklo_epi32(com_l, com_h);
+    // let h2 = _mm256_unpackhi_epi32(com_l, com_h);
 
-    _mm256_extract_epi64::<0>(v) as u64 + _mm256_extract_epi64::<2>(v) as u64
-    // let mut p = [0u64; 256 / 64];
+    // let sum = 0;
+    // let v = _mm256_add_epi64(h1, h2);
+    // let vs = _mm256_shuffle_epi32::<{ (1 << 6) | (0 << 4) | (3 << 2) | 2 }>(v);
+    // let v = _mm256_add_epi64(v, vs);
+
+    // _mm256_extract_epi64::<0>(v) as u64 + _mm256_extract_epi64::<2>(v) as u64
+    // let mut p = [0u32; 256 / 32];
     // p.as_mut_ptr().cast::<__m256i>().write(v);
     // println!("{:?}", &p);
 
