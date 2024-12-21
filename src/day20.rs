@@ -272,32 +272,15 @@ unsafe fn inner_part2(s: &[u8]) -> u32 {
                 qy.saturating_sub(QUADS_NEEDED)..qy.wrapping_add(QUADS_NEEDED + 1).min(QUADS_SIZE)
             {
                 if qx != qxo && qy != qyo {
-                    if qx < qxo {
-                        let right = (qx * QUAD_SIZE + QUAD_SIZE - 1) as i16;
-                        if qy < qyo {
-                            let bottom = (qy * QUAD_SIZE + QUAD_SIZE - 1) as i16;
-                            if x.abs_diff(right) + y.abs_diff(bottom) > 20 {
-                                continue;
-                            }
-                        } else {
-                            let top = (qy * QUAD_SIZE) as i16;
-                            if x.abs_diff(right) + y.abs_diff(top) > 20 {
-                                continue;
-                            }
-                        }
-                    } else {
-                        let left = (qx * QUAD_SIZE) as i16;
-                        if qy < qyo {
-                            let bottom = (qy * QUAD_SIZE + QUAD_SIZE - 1) as i16;
-                            if x.abs_diff(left) + y.abs_diff(bottom) > 20 {
-                                continue;
-                            }
-                        } else {
-                            let top = (qy * QUAD_SIZE) as i16;
-                            if x.abs_diff(left) + y.abs_diff(top) > 20 {
-                                continue;
-                            }
-                        }
+                    let left = (qx * QUAD_SIZE) as i16;
+                    let right = (qx * QUAD_SIZE + QUAD_SIZE - 1) as i16;
+                    let top = (qy * QUAD_SIZE) as i16;
+                    let bottom = (qy * QUAD_SIZE + QUAD_SIZE - 1) as i16;
+                    if ![(left, top), (left, bottom), (right, top), (right, bottom)]
+                        .iter()
+                        .any(|(px, py)| x.abs_diff(*px) + y.abs_diff(*py) <= 20)
+                    {
+                        continue;
                     }
                 }
 
