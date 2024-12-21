@@ -48,21 +48,21 @@ impl Dir {
         }
     }
 
-    fn select_crosline(&self, i: usize) -> u8 {
+    fn select_crosline(&self, x: u8, y: u8) -> u8 {
         (match self {
-            Dir::N => i / SIZE1,
-            Dir::E => i % SIZE1,
-            Dir::S => i / SIZE1,
-            Dir::W => i % SIZE1,
+            Dir::N => y,
+            Dir::E => x,
+            Dir::S => y,
+            Dir::W => x,
         }) as u8
     }
 
-    fn select_inline(&self, i: usize) -> u8 {
+    fn select_inline(&self, x: u8, y: u8) -> u8 {
         (match self {
-            Dir::N => i % SIZE1,
-            Dir::E => i / SIZE1,
-            Dir::S => i % SIZE1,
-            Dir::W => i / SIZE1,
+            Dir::N => x,
+            Dir::E => y,
+            Dir::S => x,
+            Dir::W => y,
         }) as u8
     }
 }
@@ -151,110 +151,121 @@ const QUAD_SIZE: usize = 20;
 const QUADS_SIZE: usize = SIZE.div_ceil(QUAD_SIZE);
 const QUADS_NEEDED: usize = 20usize.div_ceil(QUAD_SIZE);
 
-// #[target_feature(enable = "avx2,bmi1,bmi2,cmpxchg16b,lzcnt,movbe,popcnt")]
-fn inner_part2(s: &[u8]) -> u32 {
+#[target_feature(enable = "avx2,bmi1,bmi2,cmpxchg16b,lzcnt,movbe,popcnt")]
+unsafe fn inner_part2(s: &[u8]) -> u32 {
+    let to_idx = |x, y| y as usize * SIZE1 + x as usize;
+
     let start = memchr::memchr(b'S', s).unwrap();
 
     let mut lines = [const { heapless::Vec::<Line, 1024>::new() }; 4];
     let mut quads =
         [const { [const { heapless::Vec::<usize, 32>::new() }; QUADS_SIZE * QUADS_SIZE] }; 4];
 
-    let mut i = start;
-    let mut d = if s[i - 1] == b'.' {
+    let mut d = if *s.get_unchecked(start - 1) == b'.' {
         Dir::W
-    } else if s[i + 1] == b'.' {
+    } else if *s.get_unchecked(start + 1) == b'.' {
         Dir::E
-    } else if s[i - SIZE1] == b'.' {
+    } else if *s.get_unchecked(start - SIZE1) == b'.' {
         Dir::N
     } else {
         Dir::S
     };
+    let mut x = (start % SIZE1) as u8;
+    let mut y = (start / SIZE1) as u8;
 
     let mut ns = 0;
     let mut cur_line = Line {
         start_ns: ns,
-        line_start: d.select_crosline(i),
-        line_offset: d.select_inline(i),
+        line_start: d.select_crosline(x, y),
+        line_offset: d.select_inline(x, y),
         line_end: 0,
     };
 
     let mut sum = 0;
 
-    let qx = (i % SIZE1) / QUAD_SIZE;
-    let qy = (i / SIZE1) / QUAD_SIZE;
-
+    let qx = (x / QUAD_SIZE as u8) as usize;
+    let qy = (y / QUAD_SIZE as u8) as usize;
     quads[d as usize][qy * QUADS_SIZE + qx]
         .push(lines[d as usize].len())
         .unwrap();
+
     let mut prev_qx = qx;
     let mut prev_qy = qy;
-    while s[i] != b'E' {
-        let next = d.step(i);
+    while *s.get_unchecked(to_idx(x, y)) != b'E' {
+        let next = d.step(to_idx(x, y));
+
         if s[next] == b'#' {
-            cur_line.line_end = d.select_crosline(i);
+            cur_line.line_end = d.select_crosline(x, y);
             lines[d as usize].push(cur_line).unwrap();
 
             for side in d.sides() {
-                let side_i = side.step(i);
+                let side_i = side.step(to_idx(x, y));
                 if s[side_i] != b'#' {
                     d = side;
+                    match d {
+                        Dir::N => y -= 1,
+                        Dir::E => x += 1,
+                        Dir::S => y += 1,
+                        Dir::W => x -= 1,
+                    }
+                    break;
                 }
             }
-            i = d.step(i);
             ns += 1;
 
             cur_line = Line {
                 start_ns: ns,
-                line_start: d.select_crosline(i),
-                line_offset: d.select_inline(i),
+                line_start: d.select_crosline(x, y),
+                line_offset: d.select_inline(x, y),
                 line_end: 0,
             };
-            let qx = (i % SIZE1) / QUAD_SIZE;
-            let qy = (i / SIZE1) / QUAD_SIZE;
+            let qx = x as usize / QUAD_SIZE;
+            let qy = y as usize / QUAD_SIZE;
             quads[d as usize][qy * QUADS_SIZE + qx]
                 .push(lines[d as usize].len())
                 .unwrap();
             prev_qy = qy;
             prev_qx = qx;
         } else {
-            let qx = (next % SIZE1) / QUAD_SIZE;
-            let qy = (next / SIZE1) / QUAD_SIZE;
+            let pos_line_end = d.select_crosline(x, y);
+
+            match d {
+                Dir::N => y -= 1,
+                Dir::E => x += 1,
+                Dir::S => y += 1,
+                Dir::W => x -= 1,
+            }
+            ns += 1;
+
+            let qx = x as usize / QUAD_SIZE;
+            let qy = y as usize / QUAD_SIZE;
 
             if prev_qy != qy || prev_qx != qx {
-                cur_line.line_end = d.select_crosline(i);
+                cur_line.line_end = pos_line_end;
                 lines[d as usize].push(cur_line).unwrap();
 
                 cur_line = Line {
-                    start_ns: ns + 1,
-                    line_start: d.select_crosline(next),
-                    line_offset: d.select_inline(next),
+                    start_ns: ns,
+                    line_start: d.select_crosline(x, y),
+                    line_offset: d.select_inline(x, y),
                     line_end: 0,
                 };
-                let qx = (next % SIZE1) / QUAD_SIZE;
-                let qy = (next / SIZE1) / QUAD_SIZE;
                 quads[d as usize][qy * QUADS_SIZE + qx]
                     .push(lines[d as usize].len())
                     .unwrap();
             }
 
-            i = next;
-            ns += 1;
-
             prev_qy = qy;
             prev_qx = qx;
         }
 
-        let x = i % SIZE1;
-        let y = i / SIZE1;
+        let qx = x as usize / QUAD_SIZE;
+        let qy = y as usize / QUAD_SIZE;
 
-        let qx = x / QUAD_SIZE;
-        let qy = y / QUAD_SIZE;
-
-        for qx in
-            qx.saturating_sub(QUADS_NEEDED)..qx.saturating_add(QUADS_NEEDED + 1).min(QUADS_SIZE)
+        for qx in qx.saturating_sub(QUADS_NEEDED)..qx.wrapping_add(QUADS_NEEDED + 1).min(QUADS_SIZE)
         {
             for qy in
-                qy.saturating_sub(QUADS_NEEDED)..qy.saturating_add(QUADS_NEEDED + 1).min(QUADS_SIZE)
+                qy.saturating_sub(QUADS_NEEDED)..qy.wrapping_add(QUADS_NEEDED + 1).min(QUADS_SIZE)
             {
                 let x = x as i16;
                 let y = y as i16;
