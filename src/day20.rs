@@ -261,6 +261,8 @@ unsafe fn inner_part2(s: &[u8]) -> u32 {
 
         let qx = x as usize / QUAD_SIZE;
         let qy = y as usize / QUAD_SIZE;
+        let qxo = qx;
+        let qyo = qy;
 
         let x = x as i16;
         let y = y as i16;
@@ -269,6 +271,19 @@ unsafe fn inner_part2(s: &[u8]) -> u32 {
             for qy in
                 qy.saturating_sub(QUADS_NEEDED)..qy.wrapping_add(QUADS_NEEDED + 1).min(QUADS_SIZE)
             {
+                if qx != qxo && qy != qyo {
+                    let left = (qx * QUAD_SIZE) as i16;
+                    let right = (qx * QUAD_SIZE + QUAD_SIZE - 1) as i16;
+                    let top = (qy * QUAD_SIZE) as i16;
+                    let bottom = (qy * QUAD_SIZE + QUAD_SIZE - 1) as i16;
+                    if ![(left, top), (left, bottom), (right, top), (right, bottom)]
+                        .iter()
+                        .any(|(px, py)| x.abs_diff(*px) + y.abs_diff(*py) <= 20)
+                    {
+                        continue;
+                    }
+                }
+
                 for line_i in quads
                     .get_unchecked(Dir::N as usize)
                     .get_unchecked(qy * QUADS_SIZE + qx)
