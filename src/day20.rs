@@ -47,6 +47,24 @@ impl Dir {
             Dir::W => i.wrapping_sub(2),
         }
     }
+
+    fn select_crosline(&self, i: usize) -> u8 {
+        (match self {
+            Dir::N => i / SIZE1,
+            Dir::E => i % SIZE1,
+            Dir::S => i / SIZE1,
+            Dir::W => i % SIZE1,
+        }) as u8
+    }
+
+    fn select_inline(&self, i: usize) -> u8 {
+        (match self {
+            Dir::N => i % SIZE1,
+            Dir::E => i / SIZE1,
+            Dir::S => i % SIZE1,
+            Dir::W => i / SIZE1,
+        }) as u8
+    }
 }
 
 #[aoc(day20, part1)]
@@ -114,88 +132,254 @@ fn inner_part1(s: &[u8]) -> u64 {
 }
 
 #[aoc(day20, part2)]
-pub fn part2(s: &str) -> u64 {
+pub fn part2(s: &str) -> u32 {
     #[expect(unused_unsafe)]
     unsafe {
         inner_part2(s.as_bytes())
     }
 }
 
+#[derive(Debug)]
+struct Line {
+    start_ns: u16,
+    line_start: u8,
+    line_end: u8,
+    line_offset: u8,
+}
+
+const QUAD_SIZE: usize = 8;
+const QUADS_SIZE: usize = SIZE.div_ceil(QUAD_SIZE);
+const QUADS_NEEDED: usize = 20usize.div_ceil(QUAD_SIZE);
+
 // #[target_feature(enable = "avx2,bmi1,bmi2,cmpxchg16b,lzcnt,movbe,popcnt")]
-fn inner_part2(s: &[u8]) -> u64 {
+fn inner_part2(s: &[u8]) -> u32 {
     let start = memchr::memchr(b'S', s).unwrap();
 
-    let mut ns_map = [0u16; SIZE1 * SIZE];
+    let mut lines = [const { heapless::Vec::<Line, 2048>::new() }; 4];
+    let mut quads =
+        [const { [const { heapless::Vec::<usize, 8>::new() }; QUADS_SIZE * QUADS_SIZE] }; 4];
 
-    let mut ns = 1;
-
-    let mut d = if s[start - 1] == b'.' {
+    let mut i = start;
+    let mut d = if s[i - 1] == b'.' {
         Dir::W
-    } else if s[start + 1] == b'.' {
+    } else if s[i + 1] == b'.' {
         Dir::E
-    } else if s[start - SIZE1] == b'.' {
+    } else if s[i - SIZE1] == b'.' {
         Dir::N
     } else {
         Dir::S
     };
 
-    let mut cy = start as i32 / SIZE1 as i32;
-    let mut cx = start as i32 % SIZE1 as i32;
-
-    let idx = |x, y| (y * SIZE1 as i32 + x) as usize;
+    let mut ns = 0;
+    let mut cur_line = Line {
+        start_ns: ns,
+        line_start: d.select_crosline(i),
+        line_offset: d.select_inline(i),
+        line_end: 0,
+    };
 
     let mut sum = 0;
-    while s[idx(cx, cy)] != b'E' {
-        ns_map[idx(cx, cy)] = ns;
 
-        let next = d.step(idx(cx, cy));
+    let qx = (i % SIZE1) / QUAD_SIZE;
+    let qy = (i / SIZE1) / QUAD_SIZE;
+
+    quads[d as usize][qy * QUADS_SIZE + qx]
+        .push(lines[d as usize].len())
+        .unwrap();
+    let mut prev_qx = qx;
+    let mut prev_qy = qy;
+    while s[i] != b'E' {
+        let next = d.step(i);
         if s[next] == b'#' {
+            cur_line.line_end = d.select_crosline(i);
+            lines[d as usize].push(cur_line).unwrap();
+
             for side in d.sides() {
-                let side_i = side.step(idx(cx, cy));
+                let side_i = side.step(i);
                 if s[side_i] != b'#' {
                     d = side;
                 }
             }
-        }
-        match d {
-            Dir::N => cy -= 1,
-            Dir::E => cx += 1,
-            Dir::S => cy += 1,
-            Dir::W => cx -= 1,
-        }
-        ns += 1;
+            i = d.step(i);
+            ns += 1;
 
-        for y in (cy - 20).max(1)..(cy + 21).min(SIZE as i32 - 1) {
-            for x in
-                (-20 + (y - cy).abs() + cx).max(1)..(21 - (y - cy).abs() + cx).min(SIZE as i32 - 1)
+            cur_line = Line {
+                start_ns: ns,
+                line_start: d.select_crosline(i),
+                line_offset: d.select_inline(i),
+                line_end: 0,
+            };
+            let qx = (i % SIZE1) / QUAD_SIZE;
+            let qy = (i / SIZE1) / QUAD_SIZE;
+            quads[d as usize][qy * QUADS_SIZE + qx]
+                .push(lines[d as usize].len())
+                .unwrap();
+            prev_qy = qy;
+            prev_qx = qx;
+        } else {
+            let qx = (next % SIZE1) / QUAD_SIZE;
+            let qy = (next / SIZE1) / QUAD_SIZE;
+
+            if prev_qy != qy || prev_qx != qx {
+                cur_line.line_end = d.select_crosline(i);
+                lines[d as usize].push(cur_line).unwrap();
+
+                cur_line = Line {
+                    start_ns: ns + 1,
+                    line_start: d.select_crosline(next),
+                    line_offset: d.select_inline(next),
+                    line_end: 0,
+                };
+                let qx = (next % SIZE1) / QUAD_SIZE;
+                let qy = (next / SIZE1) / QUAD_SIZE;
+                quads[d as usize][qy * QUADS_SIZE + qx]
+                    .push(lines[d as usize].len())
+                    .unwrap();
+            }
+
+            i = next;
+            ns += 1;
+
+            prev_qy = qy;
+            prev_qx = qx;
+        }
+
+        let x = i % SIZE1;
+        let y = i / SIZE1;
+
+        let qx = x / QUAD_SIZE;
+        let qy = y / QUAD_SIZE;
+
+        for qx in
+            qx.saturating_sub(QUADS_NEEDED)..qx.saturating_add(QUADS_NEEDED + 1).min(QUADS_SIZE)
+        {
+            for qy in
+                qy.saturating_sub(QUADS_NEEDED)..qy.saturating_add(QUADS_NEEDED + 1).min(QUADS_SIZE)
             {
-                let dist = (y - cy).abs() + (x - cx).abs();
-                if dist <= 1 {
-                    continue;
-                }
+                let x = x as u8;
+                let y = y as u8;
 
-                let side_i = idx(x, y);
-                if ns_map[side_i] != 0 {
-                    let diff = ns - ns_map[side_i];
-                    if diff >= MIN_CHEAT + dist as u16 {
-                        sum += 1;
+                for line_i in &quads[Dir::N as usize][qy * QUADS_SIZE + qx] {
+                    let Some(line) = lines[Dir::N as usize].get(*line_i) else {
+                        continue;
+                    };
+                    let line_x = line.line_offset;
+
+                    let mut line_ns = line.start_ns;
+                    for line_y in (line.line_end..line.line_start + 1).rev() {
+                        let dist = x.abs_diff(line_x) + y.abs_diff(line_y);
+                        if dist > 20 {
+                            line_ns += 1;
+                            continue;
+                        }
+                        let diff = ns - line_ns;
+                        if diff >= MIN_CHEAT + dist as u16 {
+                            sum += 1;
+                        }
+                        line_ns += 1;
+                    }
+
+                    // let line_len = line.line_start - line.line_end;
+
+                    // let offset_x = line.line_offset.abs_diff(x);
+                    // if offset_x > 20 {
+                    //     continue;
+                    // }
+
+                    // if line.line_start <= y {
+                    //     let offset_y = y - line.line_start;
+                    //     let offset = offset_x + offset_y;
+                    //     if offset > 20 {
+                    //         continue;
+                    //     }
+
+                    //     let diff = ns - line.start_ns;
+                    //     if diff >= MIN_CHEAT + offset as u16 {
+                    //         let diff_left = diff - (MIN_CHEAT + offset as u16);
+                    //         sum += (offset as u32 - 20)
+                    //             .min(line_len as u32)
+                    //             .min((diff_left / 2 + 1) as u32);
+                    //     }
+                    // } else if line.line_end >= y {
+                    //     let offset_y = line.line_end - y;
+                    //     let offset = offset_x + offset_y;
+                    //     if offset > 20 {
+                    //         continue;
+                    //     }
+
+                    //     let diff = ns - (line.start_ns + line_len as u16);
+
+                    //     if diff >= MIN_CHEAT + offset as u16 {
+                    //         sum += (offset as u32 - 20).min(line_len as u32);
+                    //     }
+                    // } else {
+                    // }
+                }
+                for line_i in &quads[Dir::E as usize][qy * QUADS_SIZE + qx] {
+                    let Some(line) = lines[Dir::E as usize].get(*line_i) else {
+                        continue;
+                    };
+                    let line_y = line.line_offset;
+
+                    let mut line_ns = line.start_ns;
+                    for line_x in line.line_start..line.line_end + 1 {
+                        let dist = x.abs_diff(line_x) + y.abs_diff(line_y);
+                        if dist > 20 {
+                            line_ns += 1;
+                            continue;
+                        }
+                        let diff = ns - line_ns;
+                        if diff >= MIN_CHEAT + dist as u16 {
+                            sum += 1;
+                        }
+                        line_ns += 1;
+                    }
+                }
+                for line_i in &quads[Dir::S as usize][qy * QUADS_SIZE + qx] {
+                    let Some(line) = lines[Dir::S as usize].get(*line_i) else {
+                        continue;
+                    };
+                    let line_x = line.line_offset;
+
+                    let mut line_ns = line.start_ns;
+                    for line_y in line.line_start..line.line_end + 1 {
+                        let dist = x.abs_diff(line_x) + y.abs_diff(line_y);
+                        if dist > 20 {
+                            line_ns += 1;
+                            continue;
+                        }
+                        let diff = ns - line_ns;
+                        if diff >= MIN_CHEAT + dist as u16 {
+                            sum += 1;
+                        }
+                        line_ns += 1;
+                    }
+                }
+                for line_i in &quads[Dir::W as usize][qy * QUADS_SIZE + qx] {
+                    let Some(line) = lines[Dir::W as usize].get(*line_i) else {
+                        continue;
+                    };
+                    let line_y = line.line_offset;
+
+                    let mut line_ns = line.start_ns;
+                    for line_x in (line.line_end..line.line_start + 1).rev() {
+                        let dist = x.abs_diff(line_x) + y.abs_diff(line_y);
+                        if dist > 20 {
+                            line_ns += 1;
+                            continue;
+                        }
+                        let diff = ns - line_ns;
+                        if diff >= MIN_CHEAT + dist as u16 {
+                            sum += 1;
+                        }
+                        line_ns += 1;
                     }
                 }
             }
         }
     }
-
-    // for y in 0..SIZE {
-    //     for x in 0..SIZE.min(40) {
-    //         if ns_map[y * SIZE1 + x] != 0 {
-    //             print!("{:^4} ", ns_map[y * SIZE1 + x]);
-    //         } else {
-    //             print!("  .  ");
-    //         }
-    //     }
-    //     println!("");
-    // }
-    // println!("");
+    // dbg!(&quads);
+    // dbg!(&lines);
 
     sum
 }
