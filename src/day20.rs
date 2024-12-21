@@ -280,6 +280,12 @@ unsafe fn inner_part2(s: &[u8]) -> u32 {
                     if dist > 20 {
                         continue;
                     }
+                    let cheat_start = (y + (20 - dist)).min(line.line_start as i16);
+                    let cheat_end = (y - (20 - dist)).max(line.line_end as i16);
+                    if cheat_start < cheat_end {
+                        continue;
+                    }
+
                     let dist_from_start = line.line_start as i16 - y;
 
                     let ns_at_intersection = line.start_ns as i16 + dist_from_start;
@@ -288,11 +294,7 @@ unsafe fn inner_part2(s: &[u8]) -> u32 {
                         continue;
                     }
                     let cheat_left = (diff_at_intersection - dist) - MIN_CHEAT as i16;
-
-                    let cheat_start = (y + (20 - dist)).min(line.line_start as i16);
-                    let cheat_end = (y - (20 - dist))
-                        .max(y - cheat_left / 2)
-                        .max(line.line_end as i16);
+                    let cheat_end = cheat_end.max(y - cheat_left / 2);
 
                     if cheat_start >= cheat_end {
                         sum += (cheat_start - cheat_end) as u32 + 1;
@@ -309,6 +311,12 @@ unsafe fn inner_part2(s: &[u8]) -> u32 {
                     if dist > 20 {
                         continue;
                     }
+                    let cheat_start = (x - (20 - dist)).max(line.line_start as i16);
+                    let cheat_end = (x + (20 - dist)).min(line.line_end as i16);
+                    if cheat_end < cheat_start {
+                        continue;
+                    }
+
                     let dist_from_start = x - line.line_start as i16;
 
                     let ns_at_intersection = line.start_ns as i16 + dist_from_start;
@@ -318,10 +326,7 @@ unsafe fn inner_part2(s: &[u8]) -> u32 {
                     }
                     let cheat_left = (diff_at_intersection - dist) - MIN_CHEAT as i16;
 
-                    let cheat_start = (x - (20 - dist)).max(line.line_start as i16);
-                    let cheat_end = (x + (20 - dist))
-                        .min(x + cheat_left / 2)
-                        .min(line.line_end as i16);
+                    let cheat_end = cheat_end.min(x + cheat_left / 2);
 
                     if cheat_end >= cheat_start {
                         sum += (cheat_end - cheat_start) as u32 + 1;
@@ -338,6 +343,12 @@ unsafe fn inner_part2(s: &[u8]) -> u32 {
                     if dist > 20 {
                         continue;
                     }
+                    let cheat_start = (y - (20 - dist)).max(line.line_start as i16);
+                    let cheat_end = (y + (20 - dist)).min(line.line_end as i16);
+                    if cheat_end < cheat_start {
+                        continue;
+                    }
+
                     let dist_from_start = y - line.line_start as i16;
 
                     let ns_at_intersection = line.start_ns as i16 + dist_from_start;
@@ -347,10 +358,7 @@ unsafe fn inner_part2(s: &[u8]) -> u32 {
                     }
                     let cheat_left = (diff_at_intersection - dist) - MIN_CHEAT as i16;
 
-                    let cheat_start = (y - (20 - dist)).max(line.line_start as i16);
-                    let cheat_end = (y + (20 - dist))
-                        .min(y + cheat_left / 2)
-                        .min(line.line_end as i16);
+                    let cheat_end = cheat_end.min(y + cheat_left / 2);
 
                     if cheat_end >= cheat_start {
                         sum += (cheat_end - cheat_start) as u32 + 1;
@@ -367,6 +375,12 @@ unsafe fn inner_part2(s: &[u8]) -> u32 {
                     if dist > 20 {
                         continue;
                     }
+                    let cheat_start = (x + (20 - dist)).min(line.line_start as i16);
+                    let cheat_end = (x - (20 - dist)).max(line.line_end as i16);
+                    if cheat_start < cheat_end {
+                        continue;
+                    }
+
                     let dist_from_start = line.line_start as i16 - x;
 
                     let ns_at_intersection = line.start_ns as i16 + dist_from_start;
@@ -376,10 +390,7 @@ unsafe fn inner_part2(s: &[u8]) -> u32 {
                     }
                     let cheat_left = (diff_at_intersection - dist) - MIN_CHEAT as i16;
 
-                    let cheat_start = (x + (20 - dist)).min(line.line_start as i16);
-                    let cheat_end = (x - (20 - dist))
-                        .max(x - cheat_left / 2)
-                        .max(line.line_end as i16);
+                    let cheat_end = cheat_end.max(x - cheat_left / 2);
 
                     if cheat_start >= cheat_end {
                         sum += (cheat_start - cheat_end) as u32 + 1;
