@@ -256,12 +256,10 @@ fn inner_part2(s: &[u8]) -> u32 {
             for qy in
                 qy.saturating_sub(QUADS_NEEDED)..qy.saturating_add(QUADS_NEEDED + 1).min(QUADS_SIZE)
             {
-                let x = x as u8;
-                let y = y as u8;
+                let x = x as i16;
+                let y = y as i16;
 
                 for line_i in &quads[Dir::N as usize][qy * QUADS_SIZE + qx] {
-                    let x = x as i16;
-                    let y = y as i16;
                     let Some(line) = lines[Dir::N as usize].get(*line_i) else {
                         continue;
                     };
@@ -291,28 +289,29 @@ fn inner_part2(s: &[u8]) -> u32 {
                     let Some(line) = lines[Dir::E as usize].get(*line_i) else {
                         continue;
                     };
-                    let dist = y.abs_diff(line.line_offset);
+                    let dist = y.abs_diff(line.line_offset as i16) as i16;
                     if dist > 20 {
                         continue;
                     }
+                    let dist_from_start = x - line.line_start as i16;
 
-                    let mut line_ns = line.start_ns;
-                    for line_x in line.line_start..line.line_end + 1 {
-                        let dist = x.abs_diff(line_x) + dist;
-                        if dist > 20 {
-                            line_ns += 1;
-                            continue;
-                        }
-                        let diff = ns - line_ns;
-                        if diff >= MIN_CHEAT + dist as u16 {
-                            sum += 1;
-                        }
-                        line_ns += 1;
+                    let ns_at_intersection = line.start_ns as i16 + dist_from_start;
+                    let diff_at_intersection = ns as i16 - ns_at_intersection;
+                    if diff_at_intersection - dist < MIN_CHEAT as i16 {
+                        continue;
+                    }
+                    let cheat_left = (diff_at_intersection - dist) - MIN_CHEAT as i16;
+
+                    let cheat_start = (x - (20 - dist)).max(line.line_start as i16);
+                    let cheat_end = (x + (20 - dist))
+                        .min(x + cheat_left / 2)
+                        .min(line.line_end as i16);
+
+                    if cheat_end >= cheat_start {
+                        sum += (cheat_end - cheat_start) as u32 + 1;
                     }
                 }
                 for line_i in &quads[Dir::S as usize][qy * QUADS_SIZE + qx] {
-                    let x = x as i16;
-                    let y = y as i16;
                     let Some(line) = lines[Dir::S as usize].get(*line_i) else {
                         continue;
                     };
@@ -337,50 +336,31 @@ fn inner_part2(s: &[u8]) -> u32 {
                     if cheat_end >= cheat_start {
                         sum += (cheat_end - cheat_start) as u32 + 1;
                     }
-
-                    // let Some(line) = lines[Dir::S as usize].get(*line_i) else {
-                    //     continue;
-                    // };
-                    // let dist = (x as u8).abs_diff(line.line_offset);
-                    // if dist > 20 {
-                    //     continue;
-                    // }
-
-                    // let mut line_ns = line.start_ns;
-                    // for line_y in line.line_start..line.line_end + 1 {
-                    //     let dist = dist + (y as u8).abs_diff(line_y);
-                    //     if dist > 20 {
-                    //         line_ns += 1;
-                    //         continue;
-                    //     }
-                    //     let diff = ns - line_ns;
-                    //     if diff >= MIN_CHEAT + dist as u16 {
-                    //         sum += 1;
-                    //     }
-                    //     line_ns += 1;
-                    // }
                 }
                 for line_i in &quads[Dir::W as usize][qy * QUADS_SIZE + qx] {
                     let Some(line) = lines[Dir::W as usize].get(*line_i) else {
                         continue;
                     };
-                    let dist = y.abs_diff(line.line_offset);
+                    let dist = y.abs_diff(line.line_offset as i16) as i16;
                     if dist > 20 {
                         continue;
                     }
+                    let dist_from_start = line.line_start as i16 - x;
 
-                    let mut line_ns = line.start_ns;
-                    for line_x in (line.line_end..line.line_start + 1).rev() {
-                        let dist = x.abs_diff(line_x) + dist;
-                        if dist > 20 {
-                            line_ns += 1;
-                            continue;
-                        }
-                        let diff = ns - line_ns;
-                        if diff >= MIN_CHEAT + dist as u16 {
-                            sum += 1;
-                        }
-                        line_ns += 1;
+                    let ns_at_intersection = line.start_ns as i16 + dist_from_start;
+                    let diff_at_intersection = ns as i16 - ns_at_intersection;
+                    if diff_at_intersection - dist < MIN_CHEAT as i16 {
+                        continue;
+                    }
+                    let cheat_left = (diff_at_intersection - dist) - MIN_CHEAT as i16;
+
+                    let cheat_start = (x + (20 - dist)).min(line.line_start as i16);
+                    let cheat_end = (x - (20 - dist))
+                        .max(x - cheat_left / 2)
+                        .max(line.line_end as i16);
+
+                    if cheat_start >= cheat_end {
+                        sum += (cheat_start - cheat_end) as u32 + 1;
                     }
                 }
             }
