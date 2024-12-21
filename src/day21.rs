@@ -276,11 +276,11 @@ unsafe fn inner(s: &str, lut: &[u64; 1000]) -> u64 {
         0, 0, 100, 1,
     );
     let v = _mm256_madd_epi16(v, mul);
-    lut[_mm256_extract_epi32::<0>(v) as u32 as usize]
-        + lut[_mm256_extract_epi32::<1>(v) as u32 as usize]
-        + lut[_mm256_extract_epi32::<4>(v) as u32 as usize]
-        + lut[_mm256_extract_epi32::<5>(v) as u32 as usize]
-        + lut[_mm256_extract_epi32::<7>(v) as u32 as usize]
+    *lut.get_unchecked(_mm256_extract_epi32::<0>(v) as u32 as usize)
+        + *lut.get_unchecked(_mm256_extract_epi32::<1>(v) as u32 as usize)
+        + *lut.get_unchecked(_mm256_extract_epi32::<4>(v) as u32 as usize)
+        + *lut.get_unchecked(_mm256_extract_epi32::<5>(v) as u32 as usize)
+        + *lut.get_unchecked(_mm256_extract_epi32::<7>(v) as u32 as usize)
     // let com_l = _mm256_i32gather_epi32::<8>(lut.as_ptr().cast(), v);
     // let com_h = _mm256_i32gather_epi32::<8>(lut.as_ptr().cast::<i32>().offset(1), v);
 
