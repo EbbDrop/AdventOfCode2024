@@ -147,7 +147,7 @@ struct Line {
     line_offset: u8,
 }
 
-const QUAD_SIZE: usize = 8;
+const QUAD_SIZE: usize = 16;
 const QUADS_SIZE: usize = SIZE.div_ceil(QUAD_SIZE);
 const QUADS_NEEDED: usize = 20usize.div_ceil(QUAD_SIZE);
 
@@ -156,8 +156,9 @@ fn inner_part2(s: &[u8]) -> u32 {
     let start = memchr::memchr(b'S', s).unwrap();
 
     let mut lines = [const { heapless::Vec::<Line, 2048>::new() }; 4];
-    let mut quads =
-        [const { [const { heapless::Vec::<usize, 8>::new() }; QUADS_SIZE * QUADS_SIZE] }; 4];
+    let mut quads = [const {
+        [const { heapless::Vec::<usize, { QUAD_SIZE * 2 }>::new() }; QUADS_SIZE * QUADS_SIZE]
+    }; 4];
 
     let mut i = start;
     let mut d = if s[i - 1] == b'.' {
