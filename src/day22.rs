@@ -59,8 +59,6 @@ pub fn part2(s: &str) -> i16 {
     let mut sequences = [0; SEQUENCES];
     let mut done = [0u16; SEQUENCES];
 
-    let mut current_best = 0;
-
     let mut i = 0;
     let mut monky = 1;
     unsafe {
@@ -110,9 +108,6 @@ pub fn part2(s: &str) -> i16 {
 
                 if done[diffs as usize] != monky {
                     sequences[diffs as usize] += price as i16;
-                    if current_best < sequences[diffs as usize] {
-                        current_best = sequences[diffs as usize];
-                    }
 
                     done[diffs as usize] = monky;
                 }
@@ -121,9 +116,9 @@ pub fn part2(s: &str) -> i16 {
             }
             monky += 1;
         }
-    }
 
-    current_best
+        sequences.into_iter().max().unwrap_unchecked()
+    }
 }
 
 #[cfg(test)]
