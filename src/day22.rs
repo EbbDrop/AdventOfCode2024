@@ -44,9 +44,6 @@ pub fn part1(s: &str) -> u64 {
     sum
 }
 
-static JMP_TBL: [u32; MAX as usize] =
-    unsafe { transmute(*include_bytes!(concat!(env!("OUT_DIR"), "/day22_jmp.bin"))) };
-
 const SEQUENCES: usize = 18 * 18 * 18 * 18;
 
 #[aoc(day22, part2)]
@@ -86,7 +83,9 @@ pub fn part2(s: &str) -> i16 {
             let mut prev = sn % 10;
 
             for _ in 0..3 {
-                sn = JMP_TBL[sn as usize];
+                sn = ((sn as u64 * 64) % MAX as u64) as u32 ^ sn;
+                sn = (sn / 32) ^ sn;
+                sn = ((sn as u64 * 2048) % MAX as u64) as u32 ^ sn;
                 let price = sn % 10;
                 let diff = price + 9 - prev;
                 diffs = diffs * 18 + diff;
@@ -95,7 +94,9 @@ pub fn part2(s: &str) -> i16 {
             }
 
             for _ in 4..2000 {
-                sn = JMP_TBL[sn as usize];
+                sn = ((sn as u64 * 64) % MAX as u64) as u32 ^ sn;
+                sn = (sn / 32) ^ sn;
+                sn = ((sn as u64 * 2048) % MAX as u64) as u32 ^ sn;
                 let price = sn % 10;
                 let diff = price + 9 - prev;
                 diffs = (diffs * 18 + diff) % SEQUENCES as u32;
