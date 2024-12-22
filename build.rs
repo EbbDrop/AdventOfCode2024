@@ -225,38 +225,36 @@ fn write_day21() {
     file.write_all(&lut).unwrap();
 }
 
-// #[allow(unused)]
-// fn write_day22() {
-//     const MAX: u32 = 16777216;
+#[allow(unused)]
+fn write_day22() {
+    const MAX: u32 = 16777216;
 
-//     let mut lut = Vec::with_capacity(MAX as usize);
+    let mut lut = Vec::with_capacity(MAX as usize);
 
-//     for i in 0..MAX {
-//         let mut sn = i;
-//         for _ in 0..2000 {
-//             sn = ((sn as u64 * 64) % MAX as u64) as u32 ^ sn;
-//             sn = (sn / 32) ^ sn;
-//             sn = ((sn as u64 * 2048) % MAX as u64) as u32 ^ sn;
-//         }
+    for i in 0..MAX {
+        let mut sn = i;
+        sn = ((sn as u64 * 64) % MAX as u64) as u32 ^ sn;
+        sn = (sn / 32) ^ sn;
+        sn = ((sn as u64 * 2048) % MAX as u64) as u32 ^ sn;
 
-//         lut.push(sn);
-//     }
+        lut.push(sn);
+    }
 
-//     let lut: Box<[u32; MAX as usize]> = lut.into_boxed_slice().try_into().unwrap();
-//     let mut lut = std::mem::ManuallyDrop::new(lut);
-//     let lut: Box<[u8; 4 * MAX as usize]> = unsafe { Box::from_raw(lut.as_mut_ptr().cast()) };
+    let lut: Box<[u32; MAX as usize]> = lut.into_boxed_slice().try_into().unwrap();
+    let mut lut = std::mem::ManuallyDrop::new(lut);
+    let lut: Box<[u8; 4 * MAX as usize]> = unsafe { Box::from_raw(lut.as_mut_ptr().cast()) };
 
-//     let mut path = PathBuf::from(std::env::var("OUT_DIR").unwrap());
-//     path.push("day22.bin");
-//     let mut file = File::create(&path).unwrap();
+    let mut path = PathBuf::from(std::env::var("OUT_DIR").unwrap());
+    path.push("day22_jmp.bin");
+    let mut file = File::create(&path).unwrap();
 
-//     file.write_all(lut.as_slice()).unwrap();
-//     println!("{}", path.display());
-// }
+    file.write_all(lut.as_slice()).unwrap();
+    println!("{}", path.display());
+}
 
 fn main() {
     println!("cargo::rerun-if-changed=build.rs");
 
     write_day21();
-    // write_day22();
+    write_day22();
 }
