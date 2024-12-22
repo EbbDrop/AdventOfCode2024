@@ -1,7 +1,6 @@
 use core::str;
 
 use aoc_runner_derive::aoc;
-use bitvec::array::BitArray;
 
 const MAX: u32 = 16777216;
 
@@ -51,18 +50,19 @@ pub fn part1(s: &str) -> u64 {
     sum
 }
 
-const SEQUENCES: usize = 18 << 15 | 18 << 10 | 18 << 5 | 18;
+const SEQUENCES: usize = 18 * 18 * 18 * 18;
 
 #[aoc(day22, part2)]
 pub fn part2(s: &str) -> i16 {
     let s = s.as_bytes();
 
     let mut sequences = [0; SEQUENCES];
-    let mut done = BitArray::<[usize; SEQUENCES.div_ceil(usize::BITS as usize)]>::default();
+    let mut done = [0u16; SEQUENCES];
 
     let mut current_best = 0;
 
     let mut i = 0;
+    let mut monky = 1;
     unsafe {
         while i < s.len() {
             #[cfg(not(test))]
@@ -95,7 +95,7 @@ pub fn part2(s: &str) -> i16 {
                 sn = ((sn as u64 * 2048) % MAX as u64) as u32 ^ sn;
                 let price = sn % 10;
                 let diff = price + 9 - prev;
-                diffs = (diffs << 5) | diff;
+                diffs = diffs * 18 + diff;
 
                 prev = price;
             }
@@ -106,19 +106,20 @@ pub fn part2(s: &str) -> i16 {
                 sn = ((sn as u64 * 2048) % MAX as u64) as u32 ^ sn;
                 let price = sn % 10;
                 let diff = price + 9 - prev;
-                diffs = ((diffs << 5) | diff) & 0xFFFFF;
+                diffs = (diffs * 18 + diff) % SEQUENCES as u32;
 
-                if !done[diffs as usize] {
+                if done[diffs as usize] != monky {
                     sequences[diffs as usize] += price as i16;
                     if current_best < sequences[diffs as usize] {
                         current_best = sequences[diffs as usize];
                     }
-                    done.set(diffs as usize, true);
+
+                    done[diffs as usize] = monky;
                 }
 
                 prev = price;
             }
-            done.fill(false);
+            monky += 1;
         }
     }
 
