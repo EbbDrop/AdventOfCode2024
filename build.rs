@@ -194,6 +194,7 @@ fn press_number2(from_pos: Pos, to_pos: Pos, cache: &mut HashMap<(Pos, Pos, u32)
     }
 }
 
+#[allow(unused)]
 fn part2_inner(a: usize, b: usize, c: usize, cache: &mut HashMap<(Pos, Pos, u32), u64>) -> u64 {
     press_number2(keypad_pos(10), keypad_pos(a), cache)
         + press_number2(keypad_pos(a), keypad_pos(b), cache)
@@ -201,9 +202,8 @@ fn part2_inner(a: usize, b: usize, c: usize, cache: &mut HashMap<(Pos, Pos, u32)
         + press_number2(keypad_pos(c), keypad_pos(10), cache)
 }
 
-fn main() {
-    println!("cargo::rerun-if-changed=build.rs");
-
+#[allow(unused)]
+fn write_day21() {
     let mut lut = [0u64; 10usize.pow(3)];
 
     let mut cache = HashMap::new();
@@ -223,4 +223,36 @@ fn main() {
     let lut: [u8; 8 * 10usize.pow(3)] = unsafe { transmute(lut) };
 
     file.write_all(&lut).unwrap();
+}
+
+// fn write_day22() {
+//     const MAX: u32 = 16777216;
+
+//     let mut lut = Vec::with_capacity(MAX as usize);
+
+//     for i in 0..MAX {
+//         let mut sn = i as u32;
+//         for _ in 0..2000 {
+//             sn = ((i * 64) % MAX) ^ i;
+//             sn = (sn / 32) ^ sn;
+//             sn = ((sn * 2048) % MAX) ^ sn;
+//         }
+
+//         lut[i as usize] = sn;
+//     }
+
+//     let mut path = PathBuf::from(std::env::var("OUT_DIR").unwrap());
+//     path.push("day22.bin");
+//     let mut file = File::create(path).unwrap();
+
+//     let lut: [u8; 4 * MAX as usize] = unsafe { transmute(lut) };
+
+//     file.write_all(&lut).unwrap();
+// }
+
+fn main() {
+    println!("cargo::rerun-if-changed=build.rs");
+
+    // write_day21();
+    // write_day22();
 }
