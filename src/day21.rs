@@ -231,8 +231,40 @@ static LUT_P1: [u64; 10usize.pow(3)] = const {
     lut
 };
 
+static LUT_P1_BIG: [u64; 10usize.pow(6)] = const {
+    let mut lut = [0u64; 10usize.pow(6)];
+
+    let mut a = 0;
+    while a < 1000 {
+        let mut b = 0;
+        while b < 1000 {
+            lut[a * 1000 + b] = LUT_P1[a] + LUT_P1[b];
+            b += 1;
+        }
+        a += 1;
+    }
+
+    lut
+};
+
 static LUT_P2: [u64; 10usize.pow(3)] =
     unsafe { transmute(*include_bytes!(concat!(env!("OUT_DIR"), "/day21.bin"))) };
+
+static LUT_P2_BIG: [u64; 10usize.pow(6)] = const {
+    let mut lut = [0u64; 10usize.pow(6)];
+
+    let mut a = 0;
+    while a < 1000 {
+        let mut b = 0;
+        while b < 1000 {
+            lut[a * 1000 + b] = LUT_P2[a] + LUT_P2[b];
+            b += 1;
+        }
+        a += 1;
+    }
+
+    lut
+};
 
 #[aoc(day21, part1)]
 pub fn part1(s: &str) -> u64 {
@@ -249,6 +281,7 @@ pub fn part1(s: &str) -> u64 {
         1, 10, 1,
     ];
     static LCPI0_3: [u16; 16] = [100, 1, 100, 1, 0, 0, 0, 0, 100, 1, 100, 1, 0, 0, 100, 1];
+    static LCPI0_4: [u16; 16] = [1000, 1, 0, 0, 0, 0, 0, 0, 1000, 1, 0, 1, 0, 0, 0, 0];
 
     let r: u64;
     unsafe {
@@ -258,30 +291,30 @@ pub fn part1(s: &str) -> u64 {
             "vpsubusb        {ymm:y}, {ymm:y}, ymmword ptr [rip + {LCPI0_1}]",
             "vpmaddubsw      {ymm:y}, {ymm:y}, ymmword ptr [rip + {LCPI0_2}]",
             "vpmaddwd        {ymm:y}, {ymm:y}, ymmword ptr [rip + {LCPI0_3}]",
+            "vpackusdw       {ymm:y}, {ymm:y}, {ymm:y}",
+            "vpmaddwd        {ymm:y}, {ymm:y}, ymmword ptr [rip + {LCPI0_4}]",
             "vmovd           {c:e}, {ymm:x}",
-            "vpextrd         {a:e}, {ymm:x}, 1",
+            "vextracti128    {ymm:x}, {ymm:y}, 1",
+            "vmovd           {a:e}, {ymm:x}",
             "mov             {a:r}, qword ptr [{lut} + 8*{a:r}]",
             "add             {a:r}, qword ptr [{lut} + 8*{c:r}]",
-            "vextracti128    {ymm:x}, {ymm:y}, 1",
-            "vmovd           {c:e}, {ymm:x}",
-            "add             {a:r}, qword ptr [{lut} + 8*{c:r}]",
             "vpextrd         {c:e}, {ymm:x}, 1",
-            "add             {a:r}, qword ptr [{lut} + 8*{c:r}]",
-            "vpextrd         {c:e}, {ymm:x}, 3",
             "add             {a:r}, qword ptr [{lut} + 8*{c:r}]",
 
             LCPI0_0 = sym LCPI0_0,
             LCPI0_1 = sym LCPI0_1,
             LCPI0_2 = sym LCPI0_2,
             LCPI0_3 = sym LCPI0_3,
+            LCPI0_4 = sym LCPI0_4,
             s = in(reg) s.as_ptr(),
-            lut = in(reg) LUT_P1.as_ptr(),
+            lut = in(reg) LUT_P1_BIG.as_ptr(),
             ymm = out(ymm_reg) _,
             c = out(reg) _,
             a = out(reg) r,
             options(nostack)
         );
     }
+
     r
 }
 
@@ -301,38 +334,40 @@ pub fn part2(s: &str) -> u64 {
     ];
     static LCPI0_3: [u16; 16] = [100, 1, 100, 1, 0, 0, 0, 0, 100, 1, 100, 1, 0, 0, 100, 1];
 
+    static LCPI0_4: [u16; 16] = [1000, 1, 0, 0, 0, 0, 0, 0, 1000, 1, 0, 1, 0, 0, 0, 0];
+
     let r: u64;
     unsafe {
         std::arch::asm!(
-            "vpermq          {ymm}, ymmword ptr [{s}], 99",
-            "vpshufb         {ymm}, {ymm}, ymmword ptr [rip + {LCPI0_0}]",
-            "vpsubusb        {ymm}, {ymm}, ymmword ptr [rip + {LCPI0_1}]",
-            "vpmaddubsw      {ymm}, {ymm}, ymmword ptr [rip + {LCPI0_2}]",
-            "vpmaddwd        {ymm}, {ymm}, ymmword ptr [rip + {LCPI0_3}]",
-            "vmovd           {t:e}, {ymm:x}",
-            "vpextrd         {r:e}, {ymm:x}, 1",
-            "mov             {r:r}, qword ptr [{lut} + 8*{r:r}]",
-            "add             {r:r}, qword ptr [{lut} + 8*{t:r}]",
-            "vextracti128    {ymm:x}, {ymm}, 1",
-            "vmovd           {t:e}, {ymm:x}",
-            "add             {r:r}, qword ptr [{lut} + 8*{t:r}]",
-            "vpextrd         {t:e}, {ymm:x}, 1",
-            "add             {r:r}, qword ptr [{lut} + 8*{t:r}]",
-            "vpextrd         {t:e}, {ymm:x}, 3",
-            "add             {r:r}, qword ptr [{lut} + 8*{t:r}]",
+            "vpermq          {ymm:y}, ymmword ptr [{s}], 99",
+            "vpshufb         {ymm:y}, {ymm:y}, ymmword ptr [rip + {LCPI0_0}]",
+            "vpsubusb        {ymm:y}, {ymm:y}, ymmword ptr [rip + {LCPI0_1}]",
+            "vpmaddubsw      {ymm:y}, {ymm:y}, ymmword ptr [rip + {LCPI0_2}]",
+            "vpmaddwd        {ymm:y}, {ymm:y}, ymmword ptr [rip + {LCPI0_3}]",
+            "vpackusdw       {ymm:y}, {ymm:y}, {ymm:y}",
+            "vpmaddwd        {ymm:y}, {ymm:y}, ymmword ptr [rip + {LCPI0_4}]",
+            "vmovd           {c:e}, {ymm:x}",
+            "vextracti128    {ymm:x}, {ymm:y}, 1",
+            "vmovd           {a:e}, {ymm:x}",
+            "mov             {a:r}, qword ptr [{lut} + 8*{a:r}]",
+            "add             {a:r}, qword ptr [{lut} + 8*{c:r}]",
+            "vpextrd         {c:e}, {ymm:x}, 1",
+            "add             {a:r}, qword ptr [{lut} + 8*{c:r}]",
 
             LCPI0_0 = sym LCPI0_0,
             LCPI0_1 = sym LCPI0_1,
             LCPI0_2 = sym LCPI0_2,
             LCPI0_3 = sym LCPI0_3,
+            LCPI0_4 = sym LCPI0_4,
             s = in(reg) s.as_ptr(),
-            lut = in(reg) LUT_P2.as_ptr(),
-            r = out(reg) r,
+            lut = in(reg) LUT_P2_BIG.as_ptr(),
             ymm = out(ymm_reg) _,
-            t = out(reg) _,
+            c = out(reg) _,
+            a = out(reg) r,
             options(nostack)
         );
     }
+
     r
 }
 
