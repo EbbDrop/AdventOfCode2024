@@ -1,11 +1,11 @@
 use core::str;
+use std::mem::transmute;
 
 use aoc_runner_derive::aoc;
 
 const MAX: u32 = 16777216;
 
-// static LUT_P1: [u32; MAX as usize] =
-//     unsafe { transmute(*include_bytes!(concat!(env!("OUT_DIR"), "/day22.bin"))) };
+static LUT_P1: [u32; MAX as usize] = unsafe { transmute(*include_bytes!("../day22_lut.bin")) };
 
 #[aoc(day22, part1)]
 pub fn part1(s: &str) -> u64 {
@@ -37,13 +37,7 @@ pub fn part1(s: &str) -> u64 {
             }
             i += 1;
 
-            for _ in 0..2000 {
-                sn = ((sn as u64 * 64) % MAX as u64) as u32 ^ sn;
-                sn = (sn / 32) ^ sn;
-                sn = ((sn as u64 * 2048) % MAX as u64) as u32 ^ sn;
-            }
-
-            sum += sn as u64;
+            sum += LUT_P1[sn as usize] as u64;
         }
     }
 
@@ -87,6 +81,7 @@ pub fn part2(s: &str) -> i16 {
 
             let mut diffs = 0;
             let mut prev = sn % 10;
+
             for _ in 0..3 {
                 sn = ((sn as u64 * 64) % MAX as u64) as u32 ^ sn;
                 sn = (sn / 32) ^ sn;
