@@ -120,19 +120,6 @@ pub fn part2(s: &str) -> i16 {
             }
             done.fill(false);
         }
-        // println!(
-        //     "{},{},{},{}",
-        //     (((current_best_i >> 15) & 0x1F) as i16) - 9,
-        //     (((current_best_i >> 10) & 0x1F) as i16) - 9,
-        //     (((current_best_i >> 05) & 0x1F) as i16) - 9,
-        //     (((current_best_i >> 00) & 0x1F) as i16) - 9,
-        // );
-        // println!("{}\n", sequences[current_best_i as usize]);
-
-        // println!(
-        //     "{}",
-        //     sequences[((-2 + 9) << 15 | (1 + 9) << 10 | (-1 + 9) << 05 | (3 + 9) << 00) as usize]
-        // );
     }
 
     current_best

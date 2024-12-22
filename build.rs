@@ -225,34 +225,8 @@ fn write_day21() {
     file.write_all(&lut).unwrap();
 }
 
-// fn write_day22() {
-//     const MAX: u32 = 16777216;
-
-//     let mut lut = Vec::with_capacity(MAX as usize);
-
-//     for i in 0..MAX {
-//         let mut sn = i as u32;
-//         for _ in 0..2000 {
-//             sn = ((i * 64) % MAX) ^ i;
-//             sn = (sn / 32) ^ sn;
-//             sn = ((sn * 2048) % MAX) ^ sn;
-//         }
-
-//         lut[i as usize] = sn;
-//     }
-
-//     let mut path = PathBuf::from(std::env::var("OUT_DIR").unwrap());
-//     path.push("day22.bin");
-//     let mut file = File::create(path).unwrap();
-
-//     let lut: [u8; 4 * MAX as usize] = unsafe { transmute(lut) };
-
-//     file.write_all(&lut).unwrap();
-// }
-
 fn main() {
     println!("cargo::rerun-if-changed=build.rs");
 
-    // write_day21();
-    // write_day22();
+    write_day21();
 }
