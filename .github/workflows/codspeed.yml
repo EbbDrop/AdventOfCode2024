@@ -13,6 +13,8 @@ jobs:
   benchmarks:
     name: Run benchmarks
     runs-on: ubuntu-latest
+    env:
+      RUSTFLAGS: '-Ctarget-cpu=x86-64-v3'
     steps:
       - uses: actions/checkout@v4
 
