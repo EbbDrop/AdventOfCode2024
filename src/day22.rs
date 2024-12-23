@@ -48,16 +48,15 @@ const SEQUENCES: usize = 18 * 18 * 18 * 18;
 
 #[inline(always)]
 unsafe fn vmod10(a: __m256i) -> __m256i {
-    // Algo from LLVM
-    let prod02 = _mm256_mul_epu32(a, _mm256_set1_epi32(3435973837u32 as i32));
-    let prod13 = _mm256_mul_epu32(
-        _mm256_shuffle_epi32::<0xf5>(a),
+    let ab_hm = _mm256_mul_epu32(
+        _mm256_srli_epi64::<32>(a),
         _mm256_set1_epi32(3435973837u32 as i32),
     );
-    let d = _mm256_unpackhi_epi64(
-        _mm256_unpacklo_epi32(prod02, prod13),
-        _mm256_unpackhi_epi32(prod02, prod13),
-    );
+    let ab_hm = _mm256_and_si256(ab_hm, _mm256_set1_epi64x(0xFFFFFFFF00000000u64 as i64));
+    let ab_lm =
+        _mm256_srli_epi64::<32>(_mm256_mul_epu32(a, _mm256_set1_epi32(3435973837u32 as i32)));
+
+    let d = _mm256_or_si256(ab_lm, ab_hm);
 
     let d = _mm256_srli_epi32::<3>(d);
     let c = _mm256_mullo_epi32(d, _mm256_set1_epi32(10));
@@ -67,15 +66,14 @@ unsafe fn vmod10(a: __m256i) -> __m256i {
 #[inline(always)]
 unsafe fn vmod104976(a: __m256i) -> __m256i {
     // Algo from LLVM
-    let prod02 = _mm256_mul_epu32(a, _mm256_set1_epi32(2681326939u32 as i32));
-    let prod13 = _mm256_mul_epu32(
-        _mm256_shuffle_epi32::<0xf5>(a),
+    let ab_hm = _mm256_mul_epu32(
+        _mm256_srli_epi64::<32>(a),
         _mm256_set1_epi32(2681326939u32 as i32),
     );
-    let d = _mm256_unpackhi_epi64(
-        _mm256_unpacklo_epi32(prod02, prod13),
-        _mm256_unpackhi_epi32(prod02, prod13),
-    );
+    let ab_hm = _mm256_and_si256(ab_hm, _mm256_set1_epi64x(0xFFFFFFFF00000000u64 as i64));
+    let ab_lm =
+        _mm256_srli_epi64::<32>(_mm256_mul_epu32(a, _mm256_set1_epi32(2681326939u32 as i32)));
+    let d = _mm256_or_si256(ab_lm, ab_hm);
 
     let d = _mm256_srli_epi32::<16>(d);
     let c = _mm256_mullo_epi32(d, _mm256_set1_epi32(104976));
