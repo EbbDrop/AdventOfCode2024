@@ -89,15 +89,14 @@ pub fn part2(s: &str) -> i32 {
     let s = s.as_bytes();
 
     let mut sequences = [0; SEQUENCES];
-    let done = unsafe { &mut DONE };
-
-    for j in 0..8 {
-        done[j].fill(0);
-    }
 
     let mut i = 0;
     let mut monky = 1;
     unsafe {
+        for j in 0..8 {
+            DONE[j].fill(0);
+        }
+
         while i < s.len() {
             let mut sns: __m256i = _mm256_setzero_si256();
             let mut sns_len = 0;
@@ -166,67 +165,67 @@ pub fn part2(s: &str) -> i32 {
 
                 let diff_i = _mm256_extract_epi32::<0>(diffs) as usize;
                 std::hint::assert_unchecked(diff_i < SEQUENCES);
-                if done[0][diff_i] != monky + 0 {
+                if DONE[0][diff_i] != monky + 0 {
                     let price = _mm256_extract_epi32::<0>(price);
                     sequences[diff_i] += price;
 
-                    done[0][diff_i] = monky + 0;
+                    DONE[0][diff_i] = monky + 0;
                 }
                 let diff_i = _mm256_extract_epi32::<1>(diffs) as usize;
                 std::hint::assert_unchecked(diff_i < SEQUENCES);
-                if done[1][diff_i] != monky + 1 {
+                if DONE[1][diff_i] != monky + 1 {
                     let price = _mm256_extract_epi32::<1>(price);
                     sequences[diff_i] += price;
 
-                    done[1][diff_i] = monky + 1;
+                    DONE[1][diff_i] = monky + 1;
                 }
                 let diff_i = _mm256_extract_epi32::<2>(diffs) as usize;
                 std::hint::assert_unchecked(diff_i < SEQUENCES);
-                if done[2][diff_i] != monky + 2 {
+                if DONE[2][diff_i] != monky + 2 {
                     let price = _mm256_extract_epi32::<2>(price);
                     sequences[diff_i] += price;
 
-                    done[2][diff_i] = monky + 2;
+                    DONE[2][diff_i] = monky + 2;
                 }
                 let diff_i = _mm256_extract_epi32::<3>(diffs) as usize;
                 std::hint::assert_unchecked(diff_i < SEQUENCES);
-                if done[3][diff_i] != monky + 3 {
+                if DONE[3][diff_i] != monky + 3 {
                     let price = _mm256_extract_epi32::<3>(price);
                     sequences[diff_i] += price;
 
-                    done[3][diff_i] = monky + 3;
+                    DONE[3][diff_i] = monky + 3;
                 }
                 let diff_i = _mm256_extract_epi32::<4>(diffs) as usize;
                 std::hint::assert_unchecked(diff_i < SEQUENCES);
-                if done[4][diff_i] != monky + 4 {
+                if DONE[4][diff_i] != monky + 4 {
                     let price = _mm256_extract_epi32::<4>(price);
                     sequences[diff_i] += price;
 
-                    done[4][diff_i] = monky + 4;
+                    DONE[4][diff_i] = monky + 4;
                 }
                 let diff_i = _mm256_extract_epi32::<5>(diffs) as usize;
                 std::hint::assert_unchecked(diff_i < SEQUENCES);
-                if done[5][diff_i] != monky + 5 {
+                if DONE[5][diff_i] != monky + 5 {
                     let price = _mm256_extract_epi32::<5>(price);
                     sequences[diff_i] += price;
 
-                    done[5][diff_i] = monky + 5;
+                    DONE[5][diff_i] = monky + 5;
                 }
                 let diff_i = _mm256_extract_epi32::<6>(diffs) as usize;
                 std::hint::assert_unchecked(diff_i < SEQUENCES);
-                if done[6][diff_i] != monky + 6 {
+                if DONE[6][diff_i] != monky + 6 {
                     let price = _mm256_extract_epi32::<6>(price);
                     sequences[diff_i] += price;
 
-                    done[6][diff_i] = monky + 6;
+                    DONE[6][diff_i] = monky + 6;
                 }
                 let diff_i = _mm256_extract_epi32::<7>(diffs) as usize;
                 std::hint::assert_unchecked(diff_i < SEQUENCES);
-                if done[7][diff_i] != monky + 7 {
+                if DONE[7][diff_i] != monky + 7 {
                     let price = _mm256_extract_epi32::<7>(price);
                     sequences[diff_i] += price;
 
-                    done[7][diff_i] = monky + 7;
+                    DONE[7][diff_i] = monky + 7;
                 }
 
                 prev = price;
