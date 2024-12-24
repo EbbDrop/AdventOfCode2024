@@ -123,6 +123,10 @@ pub fn part2(s: &str) -> &'static str {
 
     let mut q = heapless::Vec::<u16, MAX_C>::new();
     let mut q_max = heapless::Vec::<u16, MAX_C>::new();
+    #[cfg(not(test))]
+    {
+        q_max.resize(12, 0).unwrap();
+    }
 
     expand(vertecies, &g, &mut q, &mut q_max, &mut cs);
 
