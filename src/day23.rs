@@ -13,7 +13,7 @@ const T_START_REM: u16 = (-(T_START as i16)).rem_euclid(MAX as i16) as u16;
 pub fn part1(s: &str) -> u64 {
     let s = s.as_bytes();
 
-    let mut connections = [const { heapless::Vec::<u16, 16>::new() }; MAX];
+    let mut connections = [const { heapless::Vec::<u16, 13>::new() }; MAX];
     unsafe {
         let mut i = 0;
         while i < s.len() {
