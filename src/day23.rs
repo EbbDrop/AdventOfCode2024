@@ -85,6 +85,7 @@ pub fn part2(s: &str) -> &'static str {
         }
         vs
     };
+    let mut connections = [const { heapless::Vec::<u16, MAX_C>::new() }; MAX];
 
     unsafe {
         let mut i = 0;
@@ -94,6 +95,12 @@ pub fn part2(s: &str) -> &'static str {
             let cp2 = (s.get_unchecked(i + 3) - b'a') as u16 * 26
                 + (s.get_unchecked(i + 4) - b'a') as u16;
 
+            connections
+                .get_unchecked_mut(cp1 as usize)
+                .push_unchecked(cp2);
+            connections
+                .get_unchecked_mut(cp2 as usize)
+                .push_unchecked(cp1);
             g.set(cp2 as usize * MAX + cp1 as usize, true);
             g.set(cp1 as usize * MAX + cp2 as usize, true);
             vertecies.get_unchecked_mut(cp1 as usize).1 += 1;
@@ -123,12 +130,8 @@ pub fn part2(s: &str) -> &'static str {
 
     let mut q = heapless::Vec::<u16, MAX_C>::new();
     let mut q_max = heapless::Vec::<u16, MAX_C>::new();
-    #[cfg(not(test))]
-    {
-        q_max.resize(12, 0).unwrap();
-    }
 
-    expand(vertecies, &g, &mut q, &mut q_max, &mut cs);
+    expand_first(vertecies, &g, &connections, &mut q, &mut q_max, &mut cs);
 
     q_max.sort_unstable();
 
@@ -142,6 +145,43 @@ pub fn part2(s: &str) -> &'static str {
         }
 
         str::from_utf8_unchecked(&SCRATCH[..i - 1])
+    }
+}
+
+// Using a modified version of this algorithm: https://web.archive.org/web/20160911054636/http://www.dcs.gla.ac.uk/~pat/jchoco/clique/indSetMachrahanish/papers/tomita2003.pdf
+fn expand_first(
+    mut r: &mut [(u16, u16)],
+    g: &BitArray<[u64; BAL]>,
+    cons: &[heapless::Vec<u16, MAX_C>; MAX],
+    q: &mut heapless::Vec<u16, MAX_C>,
+    q_max: &mut heapless::Vec<u16, MAX_C>,
+    cs: &mut [heapless::Vec<u16, MAX_C>; MAX_C],
+) {
+    let mut r_map = [true; MAX];
+    while let Some(((p, color), rest)) = r.split_last_mut() {
+        let p = *p as usize;
+        if q.len() + *color as usize + 1 > q_max.len() {
+            q.push(p as u16).unwrap();
+
+            let mut new_r = heapless::Vec::<(u16, u16), MAX_C>::new();
+            for i in cons[p].iter() {
+                if unsafe { *r_map.get_unchecked(*i as usize) } {
+                    new_r.push((*i, 0)).unwrap();
+                }
+            }
+
+            if !new_r.is_empty() {
+                unsafe { number_sort(new_r.as_mut_slice(), g, cs) };
+                expand(&mut new_r, g, q, q_max, cs);
+            } else if q.len() > q_max.len() {
+                q_max.clone_from(q);
+            }
+            q.pop();
+        } else {
+            return;
+        }
+        *unsafe { r_map.get_unchecked_mut(p) } = false;
+        r = rest;
     }
 }
 
