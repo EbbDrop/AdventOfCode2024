@@ -21,6 +21,8 @@ pub fn part1(s: &str) -> u64 {
                 (s.get_unchecked(i) - b'a') as u16 * 26 + (s.get_unchecked(i + 1) - b'a') as u16;
             let cp2 = (s.get_unchecked(i + 3) - b'a') as u16 * 26
                 + (s.get_unchecked(i + 4) - b'a') as u16;
+            let cp1 = (cp1 + T_START_REM) % MAX as u16;
+            let cp2 = (cp2 + T_START_REM) % MAX as u16;
 
             connections
                 .get_unchecked_mut(cp1 as usize)
@@ -31,35 +33,35 @@ pub fn part1(s: &str) -> u64 {
 
             i += 6;
         }
-    }
 
-    // println!(
-    //     "{}{}:",
-    //     ((c / 26) as u8 + b'a') as char,
-    //     ((c % 26) as u8 + b'a') as char,
-    // );
+        // println!(
+        //     "{}{}:",
+        //     ((c / 26) as u8 + b'a') as char,
+        //     ((c % 26) as u8 + b'a') as char,
+        // );
 
-    let mut sum = 0;
-    for c in T_START..T_END {
-        for con in &connections[c as usize] {
-            if ((*con + T_START_REM) % MAX as u16) < (c + T_START_REM) % MAX as u16 {
-                continue;
-            }
-            for concon in &connections[*con as usize] {
-                if ((*concon + T_START_REM) % MAX as u16) < (*con + T_START_REM) % MAX as u16 {
+        let mut sum = 0;
+        for c in 0..26 {
+            for con in &connections[c as usize] {
+                if *con < c {
                     continue;
                 }
-                for conconcon in &connections[*concon as usize] {
-                    if *conconcon == c {
-                        sum += 1;
-                        break;
+                for concon in &connections[*con as usize] {
+                    if *concon < *con {
+                        continue;
+                    }
+                    for conconcon in &connections[*concon as usize] {
+                        if *conconcon == c {
+                            sum += 1;
+                            break;
+                        }
                     }
                 }
             }
         }
-    }
 
-    sum
+        sum
+    }
 }
 
 static mut SCRATCH: [u8; 16 * 3] = [0; 16 * 3];
