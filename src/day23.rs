@@ -46,16 +46,6 @@ pub fn part1(s: &str) -> u64 {
                 if *g.get_unchecked(a as usize * MAX + i as usize)
                     && *g.get_unchecked(b as usize * MAX + i as usize)
                 {
-                    println!(
-                        "{}{},{}{},{}{}",
-                        ((a / 26) as u8 + b'a') as char,
-                        ((a % 26) as u8 + b'a') as char,
-                        ((b / 26) as u8 + b'a') as char,
-                        ((b % 26) as u8 + b'a') as char,
-                        ((i / 26) as u8 + b'a') as char,
-                        ((i % 26) as u8 + b'a') as char,
-                    );
-
                     sum += 1;
                 }
             }
