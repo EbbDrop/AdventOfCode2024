@@ -5,15 +5,16 @@ use aoc_runner_derive::aoc;
 const MAX: usize = 26 * 26;
 
 const T_START: u16 = (b't' - b'a') as u16 * 26;
-const T_END: u16 = T_START + 26;
 
 const T_START_REM: u16 = (-(T_START as i16)).rem_euclid(MAX as i16) as u16;
+
+const MAX_C: usize = 13;
 
 #[aoc(day23, part1)]
 pub fn part1(s: &str) -> u64 {
     let s = s.as_bytes();
 
-    let mut connections = [const { heapless::Vec::<u16, 13>::new() }; MAX];
+    let mut connections = [const { heapless::Vec::<u16, MAX_C>::new() }; MAX];
     unsafe {
         let mut i = 0;
         while i < s.len() {
@@ -64,7 +65,7 @@ pub fn part1(s: &str) -> u64 {
     }
 }
 
-static mut SCRATCH: [u8; 16 * 3] = [0; 16 * 3];
+static mut SCRATCH: [u8; MAX_C * 3] = [0; MAX_C * 3];
 
 #[aoc(day23, part2)]
 pub fn part2(s: &str) -> &'static str {
@@ -117,10 +118,10 @@ pub fn part2(s: &str) -> &'static str {
         vertecies[i].1 = max_degree as u16;
     }
 
-    let mut cs = [const { heapless::Vec::<u16, 16>::new() }; 16];
+    let mut cs = [const { heapless::Vec::<u16, MAX_C>::new() }; MAX_C];
 
-    let mut q = heapless::Vec::<u16, 16>::new();
-    let mut q_max = heapless::Vec::<u16, 16>::new();
+    let mut q = heapless::Vec::<u16, MAX_C>::new();
+    let mut q_max = heapless::Vec::<u16, MAX_C>::new();
 
     expand(vertecies, &g, &mut q, &mut q_max, &mut cs);
 
@@ -143,16 +144,16 @@ pub fn part2(s: &str) -> &'static str {
 fn expand(
     mut r: &mut [(u16, u16)],
     g: &[[bool; MAX]; MAX],
-    q: &mut heapless::Vec<u16, 16>,
-    q_max: &mut heapless::Vec<u16, 16>,
-    cs: &mut [heapless::Vec<u16, 16>; 16],
+    q: &mut heapless::Vec<u16, MAX_C>,
+    q_max: &mut heapless::Vec<u16, MAX_C>,
+    cs: &mut [heapless::Vec<u16, MAX_C>; MAX_C],
 ) {
     while let Some(((p, color), rest)) = r.split_last_mut() {
         let p = *p as usize;
         if q.len() + *color as usize + 1 > q_max.len() {
             q.push(p as u16).unwrap();
 
-            let mut new_r = heapless::Vec::<(u16, u16), 16>::new();
+            let mut new_r = heapless::Vec::<(u16, u16), MAX_C>::new();
             for (i, _) in rest.iter() {
                 if g[p][*i as usize] {
                     new_r.push((*i, 0)).unwrap();
@@ -176,7 +177,7 @@ fn expand(
 fn number_sort(
     r: &mut [(u16, u16)],
     g: &[[bool; MAX]; MAX],
-    cs: &mut [heapless::Vec<u16, 16>; 16],
+    cs: &mut [heapless::Vec<u16, MAX_C>; MAX_C],
 ) {
     let mut maxno = 0;
     cs[0].clear();
