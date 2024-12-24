@@ -156,13 +156,13 @@ fn expand(
 
             let mut new_r = heapless::Vec::<(u16, u16), MAX_C>::new();
             for (i, _) in rest.iter() {
-                if g[*i as usize * MAX + p] {
+                if unsafe { *g.get_unchecked(*i as usize * MAX + p) } {
                     new_r.push((*i, 0)).unwrap();
                 }
             }
 
             if !new_r.is_empty() {
-                number_sort(new_r.as_mut_slice(), g, cs);
+                unsafe { number_sort(new_r.as_mut_slice(), g, cs) };
                 expand(&mut new_r, g, q, q_max, cs);
             } else if q.len() > q_max.len() {
                 q_max.clone_from(q);
@@ -175,7 +175,8 @@ fn expand(
     }
 }
 
-fn number_sort(
+#[inline(always)]
+unsafe fn number_sort(
     r: &mut [(u16, u16)],
     g: &BitArray<[u64; BAL]>,
     cs: &mut [heapless::Vec<u16, MAX_C>; MAX_C],
@@ -191,8 +192,8 @@ fn number_sort(
             let mut k = 0;
 
             'outer: loop {
-                for i in &cs[k] {
-                    if g[*i as usize * MAX + p] {
+                for i in cs.get_unchecked(k) {
+                    if *g.get_unchecked(*i as usize * MAX + p) {
                         k += 1;
                         continue 'outer;
                     }
@@ -201,9 +202,9 @@ fn number_sort(
             }
             if k > maxno {
                 maxno = k;
-                cs[maxno + 1].clear();
+                cs.get_unchecked_mut(maxno + 1).clear();
             }
-            cs[k].push(p as u16).unwrap();
+            cs.get_unchecked_mut(k).push(p as u16).unwrap();
 
             r = rest;
         }
@@ -211,8 +212,8 @@ fn number_sort(
 
     let mut i = 0;
     for k in 0..=maxno {
-        for j in &cs[k] {
-            r[i] = (*j, k as u16);
+        for j in cs.get_unchecked(k) {
+            *r.get_unchecked_mut(i) = (*j, k as u16);
             i += 1;
         }
     }
