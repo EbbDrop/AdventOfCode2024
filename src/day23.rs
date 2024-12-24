@@ -108,48 +108,48 @@ pub fn part2(s: &str) -> &'static str {
 
             i += 6;
         }
-    }
 
-    vertecies.sort_unstable_by(|a, b| b.1.cmp(&a.1));
-    let mut i = vertecies.len() - 1;
-    while vertecies[i].1 == 0 {
-        i -= 1;
-    }
-    let vertecies = &mut vertecies[..i + 1];
+        vertecies.sort_unstable_by(|a, b| b.1.cmp(&a.1));
+        let mut i = vertecies.len() - 1;
+        while vertecies.get_unchecked(i).1 == 0 {
+            i -= 1;
+        }
+        let vertecies = vertecies.get_unchecked_mut(..i + 1);
 
-    let max_degree = vertecies[0].1 as usize;
+        let max_degree = vertecies.get_unchecked(0).1 as usize;
 
-    for i in 0..max_degree {
-        vertecies[i].1 = i as u16;
-    }
-    for i in max_degree..vertecies.len() {
-        vertecies[i].1 = max_degree as u16;
-    }
+        for i in 0..max_degree {
+            vertecies.get_unchecked_mut(i).1 = i as u16;
+        }
+        for i in max_degree..vertecies.len() {
+            vertecies.get_unchecked_mut(i).1 = max_degree as u16;
+        }
 
-    let mut cs = [const { heapless::Vec::<u16, MAX_C>::new() }; MAX_C];
+        let mut cs = [const { heapless::Vec::<u16, MAX_C>::new() }; MAX_C];
 
-    let mut q = heapless::Vec::<u16, MAX_C>::new();
-    let mut q_max = heapless::Vec::<u16, MAX_C>::new();
+        let mut q = heapless::Vec::<u16, MAX_C>::new();
+        let mut q_max = heapless::Vec::<u16, MAX_C>::new();
 
-    expand_first(vertecies, &g, &connections, &mut q, &mut q_max, &mut cs);
+        expand_first(vertecies, &g, &connections, &mut q, &mut q_max, &mut cs);
 
-    q_max.sort_unstable();
+        q_max.sort_unstable();
 
-    unsafe {
         let mut i = 0;
         for p in q_max {
+            std::hint::assert_unchecked(i + 2 < 13 * 3);
             SCRATCH[i + 0] = (p / 26) as u8 + b'a';
             SCRATCH[i + 1] = (p % 26) as u8 + b'a';
             SCRATCH[i + 2] = b',';
             i += 3;
         }
 
+        std::hint::assert_unchecked(i - 1 < 13 * 3);
         str::from_utf8_unchecked(&SCRATCH[..i - 1])
     }
 }
 
 // Using a modified version of this algorithm: https://web.archive.org/web/20160911054636/http://www.dcs.gla.ac.uk/~pat/jchoco/clique/indSetMachrahanish/papers/tomita2003.pdf
-fn expand_first(
+unsafe fn expand_first(
     mut r: &mut [(u16, u16)],
     g: &BitArray<[u64; BAL]>,
     cons: &[heapless::Vec<u16, MAX_C>; MAX],
@@ -161,12 +161,12 @@ fn expand_first(
     while let Some(((p, color), rest)) = r.split_last_mut() {
         let p = *p as usize;
         if q.len() + *color as usize + 1 > q_max.len() {
-            q.push(p as u16).unwrap();
+            q.push_unchecked(p as u16);
 
             let mut new_r = heapless::Vec::<(u16, u16), MAX_C>::new();
             for i in cons[p].iter() {
                 if unsafe { *r_map.get_unchecked(*i as usize) } {
-                    new_r.push((*i, 0)).unwrap();
+                    new_r.push_unchecked((*i, 0));
                 }
             }
 
@@ -186,7 +186,7 @@ fn expand_first(
 }
 
 // Using this algorithm: https://web.archive.org/web/20160911054636/http://www.dcs.gla.ac.uk/~pat/jchoco/clique/indSetMachrahanish/papers/tomita2003.pdf
-fn expand(
+unsafe fn expand(
     mut r: &mut [(u16, u16)],
     g: &BitArray<[u64; BAL]>,
     q: &mut heapless::Vec<u16, MAX_C>,
@@ -196,12 +196,12 @@ fn expand(
     while let Some(((p, color), rest)) = r.split_last_mut() {
         let p = *p as usize;
         if q.len() + *color as usize + 1 > q_max.len() {
-            q.push(p as u16).unwrap();
+            q.push_unchecked(p as u16);
 
             let mut new_r = heapless::Vec::<(u16, u16), MAX_C>::new();
             for (i, _) in rest.iter() {
                 if unsafe { *g.get_unchecked(*i as usize * MAX + p) } {
-                    new_r.push((*i, 0)).unwrap();
+                    new_r.push_unchecked((*i, 0));
                 }
             }
 
@@ -248,7 +248,7 @@ unsafe fn number_sort(
                 maxno = k;
                 cs.get_unchecked_mut(maxno + 1).clear();
             }
-            cs.get_unchecked_mut(k).push(p as u16).unwrap();
+            cs.get_unchecked_mut(k).push_unchecked(p as u16);
 
             r = rest;
         }
