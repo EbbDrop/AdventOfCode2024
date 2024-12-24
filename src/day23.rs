@@ -5,6 +5,7 @@ use aoc_runner_derive::aoc;
 const MAX: usize = 26 * 26;
 
 const T_START: u16 = (b't' - b'a') as u16 * 26;
+const T_END: u16 = T_START + 26;
 
 const T_START_REM: u16 = (-(T_START as i16)).rem_euclid(MAX as i16) as u16;
 
@@ -33,9 +34,6 @@ pub fn part1(s: &str) -> u64 {
             i += 6;
         }
 
-        for c in connections.iter_mut() {
-            c.sort_unstable_by(|a, b| b.cmp(a));
-        }
         // println!(
         //     "{}{}:",
         //     ((c / 26) as u8 + b'a') as char,
@@ -46,11 +44,11 @@ pub fn part1(s: &str) -> u64 {
         for c in 0..26 {
             for con in &connections[c as usize] {
                 if *con < c {
-                    break;
+                    continue;
                 }
                 for concon in &connections[*con as usize] {
                     if *concon < *con {
-                        break;
+                        continue;
                     }
                     for conconcon in &connections[*concon as usize] {
                         if *conconcon == c {
