@@ -1,4 +1,3 @@
-use core::str;
 use std::{arch::x86_64::*, mem::transmute};
 
 use aoc_runner_derive::aoc;

@@ -48,4 +48,4 @@ macro_rules! benches {
     };
 }
 
-benches!(22);
+benches!(23);
