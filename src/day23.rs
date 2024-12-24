@@ -15,7 +15,10 @@ const MAX_C: usize = 13;
 pub fn part1(s: &str) -> u64 {
     let s = s.as_bytes();
 
-    let mut connections = [const { heapless::Vec::<u16, 16>::new() }; MAX];
+    let mut g = BitArray::<[u64; BAL]>::default();
+
+    let mut connections = heapless::Vec::<(u16, u16), 3380>::new();
+
     unsafe {
         let mut i = 0;
         while i < s.len() {
@@ -23,45 +26,34 @@ pub fn part1(s: &str) -> u64 {
                 (s.get_unchecked(i) - b'a') as u16 * 26 + (s.get_unchecked(i + 1) - b'a') as u16;
             let cp2 = (s.get_unchecked(i + 3) - b'a') as u16 * 26
                 + (s.get_unchecked(i + 4) - b'a') as u16;
-            let cp1 = (cp1 + T_START_REM) % MAX as u16;
-            let cp2 = (cp2 + T_START_REM) % MAX as u16;
 
-            connections
-                .get_unchecked_mut(cp1 as usize)
-                .push_unchecked(cp2);
-            connections
-                .get_unchecked_mut(cp2 as usize)
-                .push_unchecked(cp1);
+            connections.push_unchecked((cp1, cp2));
+            g.set(cp2 as usize * MAX + cp1 as usize, true);
+            g.set(cp1 as usize * MAX + cp2 as usize, true);
 
             i += 6;
         }
 
-        // println!(
-        //     "{}{}:",
-        //     ((c / 26) as u8 + b'a') as char,
-        //     ((c % 26) as u8 + b'a') as char,
-        // );
-
         let mut sum = 0;
-        for c in 0..26 {
-            for con in connections.get_unchecked(c as usize) {
-                if *con < c {
-                    continue;
-                }
-                for concon in connections.get_unchecked(*con as usize) {
-                    if *concon < *con {
-                        continue;
-                    }
-                    for conconcon in connections.get_unchecked(*concon as usize) {
-                        if *conconcon == c {
-                            sum += 1;
-                            break;
-                        }
-                    }
+        for (a, b) in connections {
+            for i in T_START..T_START + 26 {
+                if *g.get_unchecked(a as usize * MAX + i as usize)
+                    && *g.get_unchecked(b as usize * MAX + i as usize)
+                {
+                    println!(
+                        "{}{},{}{},{}{}",
+                        ((a / 26) as u8 + b'a') as char,
+                        ((a % 26) as u8 + b'a') as char,
+                        ((b / 26) as u8 + b'a') as char,
+                        ((b % 26) as u8 + b'a') as char,
+                        ((i / 26) as u8 + b'a') as char,
+                        ((i % 26) as u8 + b'a') as char,
+                    );
+
+                    sum += 1;
                 }
             }
         }
-
         sum
     }
 }
