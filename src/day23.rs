@@ -44,15 +44,15 @@ pub fn part1(s: &str) -> u64 {
 
         let mut sum = 0;
         for c in 0..26 {
-            for con in &connections[c as usize] {
+            for con in connections.get_unchecked(c as usize) {
                 if *con < c {
                     continue;
                 }
-                for concon in &connections[*con as usize] {
+                for concon in connections.get_unchecked(*con as usize) {
                     if *concon < *con {
                         continue;
                     }
-                    for conconcon in &connections[*concon as usize] {
+                    for conconcon in connections.get_unchecked(*concon as usize) {
                         if *conconcon == c {
                             sum += 1;
                             break;
