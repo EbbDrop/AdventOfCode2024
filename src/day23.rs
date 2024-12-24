@@ -74,6 +74,8 @@ const BAL: usize = (MAX * MAX).div_ceil(64);
 pub fn part2(s: &str) -> &'static str {
     let s = s.as_bytes();
 
+    let mut g = BitArray::<[u64; BAL]>::default();
+
     let mut vertecies = const {
         let mut vs = [(0u16, 0); MAX];
         let mut i = 0;
@@ -99,6 +101,8 @@ pub fn part2(s: &str) -> &'static str {
             connections
                 .get_unchecked_mut(cp2 as usize)
                 .push_unchecked(cp1);
+            g.set(cp2 as usize * MAX + cp1 as usize, true);
+            g.set(cp1 as usize * MAX + cp2 as usize, true);
             vertecies.get_unchecked_mut(cp1 as usize).1 += 1;
             vertecies.get_unchecked_mut(cp2 as usize).1 += 1;
 
@@ -127,7 +131,7 @@ pub fn part2(s: &str) -> &'static str {
     let mut q = heapless::Vec::<u16, MAX_C>::new();
     let mut q_max = heapless::Vec::<u16, MAX_C>::new();
 
-    expand_first(vertecies, &connections, &mut q, &mut q_max, &mut cs);
+    expand_first(vertecies, &g, &connections, &mut q, &mut q_max, &mut cs);
 
     q_max.sort_unstable();
 
@@ -147,15 +151,13 @@ pub fn part2(s: &str) -> &'static str {
 // Using a modified version of this algorithm: https://web.archive.org/web/20160911054636/http://www.dcs.gla.ac.uk/~pat/jchoco/clique/indSetMachrahanish/papers/tomita2003.pdf
 fn expand_first(
     mut r: &mut [(u16, u16)],
+    g: &BitArray<[u64; BAL]>,
     cons: &[heapless::Vec<u16, MAX_C>; MAX],
     q: &mut heapless::Vec<u16, MAX_C>,
     q_max: &mut heapless::Vec<u16, MAX_C>,
     cs: &mut [heapless::Vec<u16, MAX_C>; MAX_C],
 ) {
-    let mut r_map = [false; MAX];
-    for (p, _) in r.iter() {
-        *unsafe { r_map.get_unchecked_mut(*p as usize) } = true;
-    }
+    let mut r_map = [true; MAX];
     while let Some(((p, color), rest)) = r.split_last_mut() {
         let p = *p as usize;
         if q.len() + *color as usize + 1 > q_max.len() {
@@ -169,8 +171,8 @@ fn expand_first(
             }
 
             if !new_r.is_empty() {
-                unsafe { number_sort(new_r.as_mut_slice(), cons, cs) };
-                expand_first(&mut new_r, cons, q, q_max, cs);
+                unsafe { number_sort(new_r.as_mut_slice(), g, cs) };
+                expand(&mut new_r, g, q, q_max, cs);
             } else if q.len() > q_max.len() {
                 q_max.clone_from(q);
             }
@@ -183,44 +185,44 @@ fn expand_first(
     }
 }
 
-// // Using this algorithm: https://web.archive.org/web/20160911054636/http://www.dcs.gla.ac.uk/~pat/jchoco/clique/indSetMachrahanish/papers/tomita2003.pdf
-// fn expand(
-//     mut r: &mut [(u16, u16)],
-//     g: &BitArray<[u64; BAL]>,
-//     q: &mut heapless::Vec<u16, MAX_C>,
-//     q_max: &mut heapless::Vec<u16, MAX_C>,
-//     cs: &mut [heapless::Vec<u16, MAX_C>; MAX_C],
-// ) {
-//     while let Some(((p, color), rest)) = r.split_last_mut() {
-//         let p = *p as usize;
-//         if q.len() + *color as usize + 1 > q_max.len() {
-//             q.push(p as u16).unwrap();
+// Using this algorithm: https://web.archive.org/web/20160911054636/http://www.dcs.gla.ac.uk/~pat/jchoco/clique/indSetMachrahanish/papers/tomita2003.pdf
+fn expand(
+    mut r: &mut [(u16, u16)],
+    g: &BitArray<[u64; BAL]>,
+    q: &mut heapless::Vec<u16, MAX_C>,
+    q_max: &mut heapless::Vec<u16, MAX_C>,
+    cs: &mut [heapless::Vec<u16, MAX_C>; MAX_C],
+) {
+    while let Some(((p, color), rest)) = r.split_last_mut() {
+        let p = *p as usize;
+        if q.len() + *color as usize + 1 > q_max.len() {
+            q.push(p as u16).unwrap();
 
-//             let mut new_r = heapless::Vec::<(u16, u16), MAX_C>::new();
-//             for (i, _) in rest.iter() {
-//                 if unsafe { *g.get_unchecked(*i as usize * MAX + p) } {
-//                     new_r.push((*i, 0)).unwrap();
-//                 }
-//             }
+            let mut new_r = heapless::Vec::<(u16, u16), MAX_C>::new();
+            for (i, _) in rest.iter() {
+                if unsafe { *g.get_unchecked(*i as usize * MAX + p) } {
+                    new_r.push((*i, 0)).unwrap();
+                }
+            }
 
-//             if !new_r.is_empty() {
-//                 unsafe { number_sort(new_r.as_mut_slice(), g, cs) };
-//                 expand(&mut new_r, g, q, q_max, cs);
-//             } else if q.len() > q_max.len() {
-//                 q_max.clone_from(q);
-//             }
-//             q.pop();
-//         } else {
-//             return;
-//         }
-//         r = rest;
-//     }
-// }
+            if !new_r.is_empty() {
+                unsafe { number_sort(new_r.as_mut_slice(), g, cs) };
+                expand(&mut new_r, g, q, q_max, cs);
+            } else if q.len() > q_max.len() {
+                q_max.clone_from(q);
+            }
+            q.pop();
+        } else {
+            return;
+        }
+        r = rest;
+    }
+}
 
 #[inline(always)]
 unsafe fn number_sort(
     r: &mut [(u16, u16)],
-    cons: &[heapless::Vec<u16, MAX_C>; MAX],
+    g: &BitArray<[u64; BAL]>,
     cs: &mut [heapless::Vec<u16, MAX_C>; MAX_C],
 ) {
     let mut maxno = 0;
@@ -235,7 +237,7 @@ unsafe fn number_sort(
 
             'outer: loop {
                 for i in cs.get_unchecked(k) {
-                    if cons.get_unchecked(*i as usize).contains(&(p as u16)) {
+                    if *g.get_unchecked(*i as usize * MAX + p) {
                         k += 1;
                         continue 'outer;
                     }
