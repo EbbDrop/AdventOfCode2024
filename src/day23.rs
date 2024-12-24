@@ -1,6 +1,7 @@
 use core::str;
 
 use aoc_runner_derive::aoc;
+use bitvec::array::BitArray;
 
 const MAX: usize = 26 * 26;
 
@@ -67,11 +68,13 @@ pub fn part1(s: &str) -> u64 {
 
 static mut SCRATCH: [u8; MAX_C * 3] = [0; MAX_C * 3];
 
+const BAL: usize = (MAX * MAX).div_ceil(64);
+
 #[aoc(day23, part2)]
 pub fn part2(s: &str) -> &'static str {
     let s = s.as_bytes();
 
-    let mut g = [[false; MAX]; MAX];
+    let mut g = BitArray::<[u64; BAL]>::default();
 
     let mut vertecies = const {
         let mut vs = [(0u16, 0); MAX];
@@ -91,10 +94,8 @@ pub fn part2(s: &str) -> &'static str {
             let cp2 = (s.get_unchecked(i + 3) - b'a') as u16 * 26
                 + (s.get_unchecked(i + 4) - b'a') as u16;
 
-            *g.get_unchecked_mut(cp2 as usize)
-                .get_unchecked_mut(cp1 as usize) = true;
-            *g.get_unchecked_mut(cp1 as usize)
-                .get_unchecked_mut(cp2 as usize) = true;
+            g.set(cp2 as usize * MAX + cp1 as usize, true);
+            g.set(cp1 as usize * MAX + cp2 as usize, true);
             vertecies.get_unchecked_mut(cp1 as usize).1 += 1;
             vertecies.get_unchecked_mut(cp2 as usize).1 += 1;
 
@@ -143,7 +144,7 @@ pub fn part2(s: &str) -> &'static str {
 // Using this algorithm: https://web.archive.org/web/20160911054636/http://www.dcs.gla.ac.uk/~pat/jchoco/clique/indSetMachrahanish/papers/tomita2003.pdf
 fn expand(
     mut r: &mut [(u16, u16)],
-    g: &[[bool; MAX]; MAX],
+    g: &BitArray<[u64; BAL]>,
     q: &mut heapless::Vec<u16, MAX_C>,
     q_max: &mut heapless::Vec<u16, MAX_C>,
     cs: &mut [heapless::Vec<u16, MAX_C>; MAX_C],
@@ -155,7 +156,7 @@ fn expand(
 
             let mut new_r = heapless::Vec::<(u16, u16), MAX_C>::new();
             for (i, _) in rest.iter() {
-                if g[p][*i as usize] {
+                if g[*i as usize * MAX + p] {
                     new_r.push((*i, 0)).unwrap();
                 }
             }
@@ -176,7 +177,7 @@ fn expand(
 
 fn number_sort(
     r: &mut [(u16, u16)],
-    g: &[[bool; MAX]; MAX],
+    g: &BitArray<[u64; BAL]>,
     cs: &mut [heapless::Vec<u16, MAX_C>; MAX_C],
 ) {
     let mut maxno = 0;
@@ -191,7 +192,7 @@ fn number_sort(
 
             'outer: loop {
                 for i in &cs[k] {
-                    if g[p][*i as usize] {
+                    if g[*i as usize * MAX + p] {
                         k += 1;
                         continue 'outer;
                     }
