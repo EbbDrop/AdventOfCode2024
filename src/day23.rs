@@ -15,7 +15,7 @@ const MAX_C: usize = 13;
 pub fn part1(s: &str) -> u64 {
     let s = s.as_bytes();
 
-    let mut connections = [const { heapless::Vec::<u16, MAX_C>::new() }; MAX];
+    let mut connections = [const { heapless::Vec::<u16, 16>::new() }; MAX];
     unsafe {
         let mut i = 0;
         while i < s.len() {
@@ -185,7 +185,6 @@ unsafe fn expand_first(
     }
 }
 
-// Using this algorithm: https://web.archive.org/web/20160911054636/http://www.dcs.gla.ac.uk/~pat/jchoco/clique/indSetMachrahanish/papers/tomita2003.pdf
 unsafe fn expand(
     mut r: &mut [(u16, u16)],
     g: &BitArray<[u64; BAL]>,
