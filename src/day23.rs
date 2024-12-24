@@ -1,4 +1,5 @@
 use core::str;
+use std::cmp::Ordering;
 
 use aoc_runner_derive::aoc;
 use bitvec::array::BitArray;
@@ -103,7 +104,17 @@ pub fn part2(s: &str) -> &'static str {
         }
     }
 
-    vertecies.sort_unstable_by(|a, b| b.1.cmp(&a.1));
+    vertecies.sort_unstable_by(|a, b| {
+        if (a.0 / 26) as u8 + b'a' == b't' && (b.0 / 26) as u8 + b'a' == b't' {
+            b.1.cmp(&a.1)
+        } else if (a.0 / 26) as u8 + b'a' == b't' {
+            Ordering::Less
+        } else if (b.0 / 26) as u8 + b'a' == b't' {
+            Ordering::Greater
+        } else {
+            b.1.cmp(&a.1)
+        }
+    });
     let mut i = vertecies.len() - 1;
     while vertecies[i].1 == 0 {
         i -= 1;
@@ -141,7 +152,6 @@ pub fn part2(s: &str) -> &'static str {
     }
 }
 
-// Using this algorithm: https://web.archive.org/web/20160911054636/http://www.dcs.gla.ac.uk/~pat/jchoco/clique/indSetMachrahanish/papers/tomita2003.pdf
 fn expand(
     mut r: &mut [(u16, u16)],
     g: &BitArray<[u64; BAL]>,
