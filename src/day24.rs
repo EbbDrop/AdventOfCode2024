@@ -5,9 +5,6 @@ use aoc_runner_derive::aoc;
 #[aoc(day24, part1)]
 pub fn part1(s: &str) -> u64 {
     let s = s.as_bytes();
-    part1_inner(s);
-    part1_inner(s);
-    part1_inner(s);
     part1_inner(s)
 
     // println!("digraph G {{");
@@ -97,26 +94,24 @@ impl Gate {
         if self.out_1 == 0 {
             self.out_1 = out;
         } else {
-            // debug_assert!(self.out_2 == 0);
+            debug_assert!(self.out_2 == 0);
             self.out_2 = out;
         }
     }
 }
 
-#[inline(always)]
-fn part1_inner(s: &[u8]) -> u64 {
-    static mut GATES: [Gate; 26 * 26 * 26 + 46] = [Gate {
-        inp_1: false,
-        out_1: 0,
-        out_2: 0,
-        state: State::Empty,
-    }; 26 * 26 * 26 + 46];
+pub fn part1_inner(s: &[u8]) -> u64 {
+    let mut gates_map = [0u16; 26 * 26 * 26];
 
-    let gates = unsafe { &mut *(&raw mut GATES) };
-    for g in gates.iter_mut() {
-        g.out_1 = 0;
-        g.state = State::Empty;
-    }
+    let mut gates = heapless::Vec::<Gate, 512>::from_slice(
+        &[Gate {
+            inp_1: false,
+            out_1: 0,
+            out_2: 0,
+            state: State::Empty,
+        }; 46],
+    )
+    .unwrap();
 
     let mut stack = heapless::Vec::<(u16, bool), 2048>::new();
 
@@ -133,11 +128,25 @@ fn part1_inner(s: &[u8]) -> u64 {
             let this = if *s.get_unchecked(i + len + 12) == b'z' {
                 (s.get_unchecked(i + len + 13) - b'0') as u16 * 10
                     + (s.get_unchecked(i + len + 14) - b'0') as u16
-                    + 26 * 26 * 26
             } else {
-                (s.get_unchecked(i + len + 12) - b'a') as u16 * 26 * 26
+                let this = (s.get_unchecked(i + len + 12) - b'a') as u16 * 26 * 26
                     + (s.get_unchecked(i + len + 13) - b'a') as u16 * 26
-                    + (s.get_unchecked(i + len + 14) - b'a') as u16
+                    + (s.get_unchecked(i + len + 14) - b'a') as u16;
+
+                let real_this = *gates_map.get_unchecked(this as usize);
+                if real_this == 0 {
+                    let i = gates.len() as u16;
+                    gates.push_unchecked(Gate {
+                        inp_1: false,
+                        out_1: 0,
+                        out_2: 0,
+                        state: State::Empty,
+                    });
+                    *gates_map.get_unchecked_mut(this as usize) = i;
+                    i
+                } else {
+                    real_this
+                }
             };
 
             if *s.get_unchecked(i) == b'x' {
@@ -172,6 +181,34 @@ fn part1_inner(s: &[u8]) -> u64 {
                 let from2 = (s.get_unchecked(i + len + 5) - b'a') as u16 * 26 * 26
                     + (s.get_unchecked(i + len + 6) - b'a') as u16 * 26
                     + (s.get_unchecked(i + len + 7) - b'a') as u16;
+                let real_from1 = *gates_map.get_unchecked(from1 as usize);
+                let from1 = if real_from1 == 0 {
+                    let i = gates.len() as u16;
+                    gates.push_unchecked(Gate {
+                        inp_1: false,
+                        out_1: 0,
+                        out_2: 0,
+                        state: State::Empty,
+                    });
+                    *gates_map.get_unchecked_mut(from1 as usize) = i;
+                    i
+                } else {
+                    real_from1
+                };
+                let real_from2 = *gates_map.get_unchecked(from2 as usize);
+                let from2 = if real_from2 == 0 {
+                    let i = gates.len() as u16;
+                    gates.push_unchecked(Gate {
+                        inp_1: false,
+                        out_1: 0,
+                        out_2: 0,
+                        state: State::Empty,
+                    });
+                    *gates_map.get_unchecked_mut(from2 as usize) = i;
+                    i
+                } else {
+                    real_from2
+                };
 
                 gates.get_unchecked_mut(from1 as usize).add_out(this);
                 gates.get_unchecked_mut(from2 as usize).add_out(this);
@@ -191,8 +228,7 @@ fn part1_inner(s: &[u8]) -> u64 {
                 _ => unreachable_unchecked(),
             };
 
-            if g > 26 * 26 * 26 {
-                let g = g - 26 * 26 * 26;
+            if g < 46 {
                 zs |= (out as u64) << g;
             } else {
                 let out_1 = gate.out_1;
@@ -237,8 +273,7 @@ pub fn part2(s: &str) -> &'static str {
 
 const ZSTART: u16 = 26 * 26 * 26;
 
-#[inline(always)]
-fn part2_inner(s: &[u8]) -> &'static str {
+pub fn part2_inner(s: &[u8]) -> &'static str {
     #[derive(Debug, Clone, Copy, PartialEq, Eq)]
     enum State {
         Or,
