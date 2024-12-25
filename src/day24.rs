@@ -445,15 +445,12 @@ pub fn part2_inner(s: &[u8]) -> &'static str {
         };
 
         let (and1, xor1) = inputs[0];
-        let mut carry = if xor1 != ZSTART + 0 {
+        if xor1 != ZSTART + 0 {
             // Asuming its a swap is with the carry
             debug_assert_eq!(and1, ZSTART);
             // println!("Swaping start: {} - {}", tos(and1), tos(ZSTART));
             add_to_to_swap(xor1, &mut to_swap);
             add_to_to_swap(and1, &mut to_swap);
-            xor1
-        } else {
-            and1
         };
 
         'outer: for i in 1..45 {
@@ -474,7 +471,7 @@ pub fn part2_inner(s: &[u8]) -> &'static str {
             let next1 = gates.get_unchecked(xor1 as usize).out_1;
             let next2 = gates.get_unchecked(xor1 as usize).out_2;
 
-            let or = if and1 == ZSTART + i {
+            if and1 == ZSTART + i {
                 add_to_to_swap(ZSTART + i, &mut to_swap);
 
                 if gates.get_unchecked(next1 as usize).state == State::Xor {
@@ -487,29 +484,22 @@ pub fn part2_inner(s: &[u8]) -> &'static str {
                 if to_swap.len() == 8 {
                     break 'outer;
                 }
-
-                // TODO: is it correct to asume this?
-                let or = gates.get_unchecked(next1 as usize).out_1;
-                or
             } else {
                 debug_assert_eq!(gates[and1 as usize].out_2, 0);
                 let or_from_and1 = gates.get_unchecked(and1 as usize).out_1;
 
                 if or_from_and1 == ZSTART + i {
                     add_to_to_swap(ZSTART + i, &mut to_swap);
-                    let or = if gates[next1 as usize].state == State::Xor {
+                    if gates[next1 as usize].state == State::Xor {
                         add_to_to_swap(next1, &mut to_swap);
-                        next1
                     } else if gates[next2 as usize].state == State::Xor {
                         add_to_to_swap(next2, &mut to_swap);
-                        next2
                     } else {
                         unreachable_unchecked()
                     };
                     if to_swap.len() == 8 {
                         break 'outer;
                     }
-                    or
                 } else {
                     if gates.get_unchecked((ZSTART + i) as usize).state != State::Xor {
                         add_to_to_swap(next1, &mut to_swap);
@@ -518,15 +508,9 @@ pub fn part2_inner(s: &[u8]) -> &'static str {
                     if to_swap.len() == 8 {
                         break 'outer;
                     }
-
-                    or_from_and1
                 }
             };
-
-            carry = or;
         }
-
-        // debug_assert_eq!(carry, ZSTART + 45);
 
         to_swap.sort_unstable();
         debug_assert_eq!(to_swap.len(), 8);
