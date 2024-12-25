@@ -372,8 +372,8 @@ pub fn part2_inner(s: &[u8]) -> &'static str {
             // Asuming its a swap is with the carry
             debug_assert_eq!(and1, ZSTART);
             // println!("Swaping start: {} - {}", tos(and1), tos(ZSTART));
-            to_swap.push(xor1).unwrap();
-            to_swap.push(and1).unwrap();
+            to_swap.push_unchecked(xor1);
+            to_swap.push_unchecked(and1);
             xor1
         } else {
             and1
@@ -382,62 +382,51 @@ pub fn part2_inner(s: &[u8]) -> &'static str {
         for i in 1..45 {
             let (and1, xor1) = inputs[i as usize];
             debug_assert_ne!(gates[xor1 as usize].out_1, 0);
-            let (and1, xor1) = if gates[xor1 as usize].out_2 == 0 {
-                to_swap.push(and1).unwrap();
-                to_swap.push(xor1).unwrap();
+            let (and1, xor1) = if gates.get_unchecked(xor1 as usize).out_2 == 0 {
+                to_swap.push_unchecked(and1);
+                to_swap.push_unchecked(xor1);
 
                 (xor1, and1)
             } else {
                 (and1, xor1)
             };
 
-            let xor1_next1 = gates[xor1 as usize].out_1;
-            let xor1_next2 = gates[xor1 as usize].out_2;
-
-            let carry_next1 = gates[carry as usize].out_1;
-            let carry_next2 = gates[carry as usize].out_2;
-
-            let (next1, next2) = if xor1_next1 == carry_next1 && xor1_next2 == carry_next2 {
-                (xor1_next1, xor1_next2)
-            } else if xor1_next1 == carry_next2 && xor1_next2 == carry_next1 {
-                (xor1_next1, xor1_next2)
-            } else {
-                unreachable!();
-            };
+            let next1 = gates.get_unchecked(xor1 as usize).out_1;
+            let next2 = gates.get_unchecked(xor1 as usize).out_2;
 
             let or = if and1 == ZSTART + i {
-                to_swap.push(ZSTART + i).unwrap();
+                to_swap.push_unchecked(ZSTART + i);
 
-                if gates[next1 as usize].state == State::Xor {
-                    to_swap.push(next1).unwrap();
-                } else if gates[next2 as usize].state == State::Xor {
-                    to_swap.push(next2).unwrap();
+                if gates.get_unchecked(next1 as usize).state == State::Xor {
+                    to_swap.push_unchecked(next1);
+                } else if gates.get_unchecked(next2 as usize).state == State::Xor {
+                    to_swap.push_unchecked(next2);
                 } else {
-                    unreachable!()
+                    unreachable_unchecked()
                 }
 
                 // TODO: is it correct to asume this?
-                let or = gates[next1 as usize].out_1;
+                let or = gates.get_unchecked(next1 as usize).out_1;
                 or
             } else {
                 debug_assert_eq!(gates[and1 as usize].out_2, 0);
-                let or_from_and1 = gates[and1 as usize].out_1;
+                let or_from_and1 = gates.get_unchecked(and1 as usize).out_1;
 
                 if or_from_and1 == ZSTART + i {
                     to_swap.push(ZSTART + i).unwrap();
                     if gates[next1 as usize].state == State::Xor {
-                        to_swap.push(next1).unwrap();
+                        to_swap.push_unchecked(next1);
                         next1
                     } else if gates[next2 as usize].state == State::Xor {
-                        to_swap.push(next2).unwrap();
+                        to_swap.push_unchecked(next2);
                         next2
                     } else {
-                        unreachable!()
+                        unreachable_unchecked()
                     }
                 } else {
-                    if gates[(ZSTART + i) as usize].state != State::Xor {
-                        to_swap.push(next1).unwrap();
-                        to_swap.push(next2).unwrap();
+                    if gates.get_unchecked((ZSTART + i) as usize).state != State::Xor {
+                        to_swap.push_unchecked(next1);
+                        to_swap.push_unchecked(next2);
                     }
 
                     or_from_and1
@@ -453,19 +442,20 @@ pub fn part2_inner(s: &[u8]) -> &'static str {
         debug_assert_eq!(to_swap.len(), 8);
 
         static mut OUTPUT: [u8; 8 * 4 - 1] = [b','; 8 * 4 - 1];
-        let mut i = 0;
-        for w in to_swap {
+        let mut j = 0;
+        while j < 8 {
+            let w = *to_swap.get_unchecked(j);
             if w >= ZSTART {
                 let w = w - ZSTART;
-                OUTPUT[i] = b'z';
-                OUTPUT[i + 1] = (w / 10) as u8 + b'0';
-                OUTPUT[i + 2] = (w % 10) as u8 + b'0';
+                OUTPUT[j * 4] = b'z';
+                OUTPUT[j * 4 + 1] = (w / 10) as u8 + b'0';
+                OUTPUT[j * 4 + 2] = (w % 10) as u8 + b'0';
             } else {
-                OUTPUT[i + 0] = (w / 26 / 26) as u8 + b'a';
-                OUTPUT[i + 1] = (w / 26 % 26) as u8 + b'a';
-                OUTPUT[i + 2] = (w % 26) as u8 + b'a';
+                OUTPUT[j * 4 + 0] = (w / 26 / 26) as u8 + b'a';
+                OUTPUT[j * 4 + 1] = (w / 26 % 26) as u8 + b'a';
+                OUTPUT[j * 4 + 2] = (w % 26) as u8 + b'a';
             }
-            i += 4;
+            j += 1;
         }
 
         std::str::from_utf8_unchecked(&*(&raw const OUTPUT))
