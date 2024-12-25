@@ -100,6 +100,7 @@ impl Gate {
     }
 }
 
+#[inline(always)]
 pub fn part1_inner(s: &[u8]) -> u64 {
     let mut gates_map = [0u16; 26 * 26 * 26];
 
@@ -113,7 +114,7 @@ pub fn part1_inner(s: &[u8]) -> u64 {
     )
     .unwrap();
 
-    let mut stack = heapless::Vec::<(u16, bool), 2048>::new();
+    let mut stack = heapless::Vec::<(u16, bool), 128>::new();
 
     let mut i = CSTART;
     unsafe {
@@ -273,6 +274,7 @@ pub fn part2(s: &str) -> &'static str {
 
 const ZSTART: u16 = 26 * 26 * 26;
 
+#[inline(always)]
 pub fn part2_inner(s: &[u8]) -> &'static str {
     #[derive(Debug, Clone, Copy, PartialEq, Eq)]
     enum State {
