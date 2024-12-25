@@ -272,7 +272,7 @@ pub fn part2(s: &str) -> &'static str {
     part2_inner(s)
 }
 
-const ZSTART: u16 = 26 * 26 * 26;
+const ZSTART: u16 = 0;
 
 #[inline(always)]
 pub fn part2_inner(s: &[u8]) -> &'static str {
@@ -287,6 +287,7 @@ pub fn part2_inner(s: &[u8]) -> &'static str {
     struct Gate {
         out_1: u16,
         out_2: u16,
+        id: u16,
         state: State,
     }
 
@@ -301,13 +302,19 @@ pub fn part2_inner(s: &[u8]) -> &'static str {
         }
     }
 
-    let mut gates = [Gate {
-        out_1: 0,
-        out_2: 0,
-        state: State::Or,
-    }; 26 * 26 * 26 + 46];
-
     let mut inputs = [(0u16, 0u16); 45];
+
+    let mut gates_map = heapless::FnvIndexMap::<u16, u16, 512>::new();
+
+    let mut gates = heapless::Vec::<Gate, 512>::from_slice(
+        &[Gate {
+            out_1: 0,
+            out_2: 0,
+            id: 0,
+            state: State::Or,
+        }; 46],
+    )
+    .unwrap();
 
     let mut i = CSTART;
     unsafe {
@@ -322,11 +329,25 @@ pub fn part2_inner(s: &[u8]) -> &'static str {
             let this = if *s.get_unchecked(i + len + 12) == b'z' {
                 (s.get_unchecked(i + len + 13) - b'0') as u16 * 10
                     + (s.get_unchecked(i + len + 14) - b'0') as u16
-                    + 26 * 26 * 26
             } else {
-                (s.get_unchecked(i + len + 12) - b'a') as u16 * 26 * 26
+                let this = (s.get_unchecked(i + len + 12) - b'a') as u16 * 26 * 26
                     + (s.get_unchecked(i + len + 13) - b'a') as u16 * 26
-                    + (s.get_unchecked(i + len + 14) - b'a') as u16
+                    + (s.get_unchecked(i + len + 14) - b'a') as u16;
+
+                match gates_map.entry(this) {
+                    heapless::Entry::Occupied(occupied_entry) => *occupied_entry.get(),
+                    heapless::Entry::Vacant(vacant_entry) => {
+                        let i = gates.len() as u16;
+                        gates.push_unchecked(Gate {
+                            out_1: 0,
+                            out_2: 0,
+                            id: *vacant_entry.key(),
+                            state: State::Or,
+                        });
+                        vacant_entry.insert(i).unwrap_unchecked();
+                        i
+                    }
+                }
             };
 
             if *s.get_unchecked(i) == b'x' || *s.get_unchecked(i) == b'y' {
@@ -355,6 +376,34 @@ pub fn part2_inner(s: &[u8]) -> &'static str {
                 let from2 = (s.get_unchecked(i + len + 5) - b'a') as u16 * 26 * 26
                     + (s.get_unchecked(i + len + 6) - b'a') as u16 * 26
                     + (s.get_unchecked(i + len + 7) - b'a') as u16;
+                let from1 = match gates_map.entry(from1) {
+                    heapless::Entry::Occupied(occupied_entry) => *occupied_entry.get(),
+                    heapless::Entry::Vacant(vacant_entry) => {
+                        let i = gates.len() as u16;
+                        gates.push_unchecked(Gate {
+                            out_1: 0,
+                            out_2: 0,
+                            id: *vacant_entry.key(),
+                            state: State::Or,
+                        });
+                        vacant_entry.insert(i).unwrap_unchecked();
+                        i
+                    }
+                };
+                let from2 = match gates_map.entry(from2) {
+                    heapless::Entry::Occupied(occupied_entry) => *occupied_entry.get(),
+                    heapless::Entry::Vacant(vacant_entry) => {
+                        let i = gates.len() as u16;
+                        gates.push_unchecked(Gate {
+                            out_1: 0,
+                            out_2: 0,
+                            id: *vacant_entry.key(),
+                            state: State::Or,
+                        });
+                        vacant_entry.insert(i).unwrap_unchecked();
+                        i
+                    }
+                };
 
                 gates.get_unchecked_mut(from1 as usize).add_out(this);
                 gates.get_unchecked_mut(from2 as usize).add_out(this);
@@ -438,6 +487,13 @@ pub fn part2_inner(s: &[u8]) -> &'static str {
 
         debug_assert_eq!(carry, ZSTART + 45);
 
+        for i in to_swap.iter_mut() {
+            if *i < 46 {
+                *i = 26 * 26 * 26 + *i;
+            } else {
+                *i = gates.get_unchecked(*i as usize).id;
+            }
+        }
         to_swap.sort_unstable();
         debug_assert_eq!(to_swap.len(), 8);
 
@@ -445,8 +501,8 @@ pub fn part2_inner(s: &[u8]) -> &'static str {
         let mut j = 0;
         while j < 8 {
             let w = *to_swap.get_unchecked(j);
-            if w >= ZSTART {
-                let w = w - ZSTART;
+            if w >= (26 * 26 * 26) {
+                let w = w - (26 * 26 * 26);
                 OUTPUT[j * 4] = b'z';
                 OUTPUT[j * 4 + 1] = (w / 10) as u8 + b'0';
                 OUTPUT[j * 4 + 2] = (w % 10) as u8 + b'0';
