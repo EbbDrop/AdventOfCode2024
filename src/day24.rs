@@ -435,14 +435,22 @@ pub fn part2_inner(s: &[u8]) -> &'static str {
         }
 
         let mut to_swap = heapless::Vec::<u16, 8>::new();
+        let mut add_to_to_swap = |i| {
+            let i = if i < 46 {
+                26 * 26 * 26 + i
+            } else {
+                gates.get_unchecked(i as usize).id
+            };
+            to_swap.push_unchecked(i);
+        };
 
         let (and1, xor1) = inputs[0];
         let mut carry = if xor1 != ZSTART + 0 {
             // Asuming its a swap is with the carry
             debug_assert_eq!(and1, ZSTART);
             // println!("Swaping start: {} - {}", tos(and1), tos(ZSTART));
-            to_swap.push_unchecked(xor1);
-            to_swap.push_unchecked(and1);
+            add_to_to_swap(xor1);
+            add_to_to_swap(and1);
             xor1
         } else {
             and1
@@ -452,8 +460,8 @@ pub fn part2_inner(s: &[u8]) -> &'static str {
             let (and1, xor1) = inputs[i as usize];
             debug_assert_ne!(gates[xor1 as usize].out_1, 0);
             let (and1, xor1) = if gates.get_unchecked(xor1 as usize).out_2 == 0 {
-                to_swap.push_unchecked(and1);
-                to_swap.push_unchecked(xor1);
+                add_to_to_swap(and1);
+                add_to_to_swap(xor1);
 
                 (xor1, and1)
             } else {
@@ -464,12 +472,12 @@ pub fn part2_inner(s: &[u8]) -> &'static str {
             let next2 = gates.get_unchecked(xor1 as usize).out_2;
 
             let or = if and1 == ZSTART + i {
-                to_swap.push_unchecked(ZSTART + i);
+                add_to_to_swap(ZSTART + i);
 
                 if gates.get_unchecked(next1 as usize).state == State::Xor {
-                    to_swap.push_unchecked(next1);
+                    add_to_to_swap(next1);
                 } else if gates.get_unchecked(next2 as usize).state == State::Xor {
-                    to_swap.push_unchecked(next2);
+                    add_to_to_swap(next2);
                 } else {
                     unreachable_unchecked()
                 }
@@ -482,20 +490,20 @@ pub fn part2_inner(s: &[u8]) -> &'static str {
                 let or_from_and1 = gates.get_unchecked(and1 as usize).out_1;
 
                 if or_from_and1 == ZSTART + i {
-                    to_swap.push(ZSTART + i).unwrap();
+                    add_to_to_swap(ZSTART + i);
                     if gates[next1 as usize].state == State::Xor {
-                        to_swap.push_unchecked(next1);
+                        add_to_to_swap(next1);
                         next1
                     } else if gates[next2 as usize].state == State::Xor {
-                        to_swap.push_unchecked(next2);
+                        add_to_to_swap(next2);
                         next2
                     } else {
                         unreachable_unchecked()
                     }
                 } else {
                     if gates.get_unchecked((ZSTART + i) as usize).state != State::Xor {
-                        to_swap.push_unchecked(next1);
-                        to_swap.push_unchecked(next2);
+                        add_to_to_swap(next1);
+                        add_to_to_swap(next2);
                     }
 
                     or_from_and1
@@ -507,13 +515,6 @@ pub fn part2_inner(s: &[u8]) -> &'static str {
 
         debug_assert_eq!(carry, ZSTART + 45);
 
-        for i in to_swap.iter_mut() {
-            if *i < 46 {
-                *i = 26 * 26 * 26 + *i;
-            } else {
-                *i = gates.get_unchecked(*i as usize).id;
-            }
-        }
         to_swap.sort_unstable();
         debug_assert_eq!(to_swap.len(), 8);
 
