@@ -102,7 +102,7 @@ impl Gate {
 
 #[inline(always)]
 pub fn part1_inner(s: &[u8]) -> u64 {
-    let mut gates_map = [0u16; 26 * 26 * 26];
+    let mut gates_map = heapless::FnvIndexMap::<u16, u16, 512>::new();
 
     let mut gates = heapless::Vec::<Gate, 512>::from_slice(
         &[Gate {
@@ -134,19 +134,19 @@ pub fn part1_inner(s: &[u8]) -> u64 {
                     + (s.get_unchecked(i + len + 13) - b'a') as u16 * 26
                     + (s.get_unchecked(i + len + 14) - b'a') as u16;
 
-                let real_this = *gates_map.get_unchecked(this as usize);
-                if real_this == 0 {
-                    let i = gates.len() as u16;
-                    gates.push_unchecked(Gate {
-                        inp_1: false,
-                        out_1: 0,
-                        out_2: 0,
-                        state: State::Empty,
-                    });
-                    *gates_map.get_unchecked_mut(this as usize) = i;
-                    i
-                } else {
-                    real_this
+                match gates_map.entry(this) {
+                    heapless::Entry::Occupied(occupied_entry) => *occupied_entry.get(),
+                    heapless::Entry::Vacant(vacant_entry) => {
+                        let i = gates.len() as u16;
+                        gates.push_unchecked(Gate {
+                            inp_1: false,
+                            out_1: 0,
+                            out_2: 0,
+                            state: State::Empty,
+                        });
+                        vacant_entry.insert(i).unwrap_unchecked();
+                        i
+                    }
                 }
             };
 
@@ -182,33 +182,33 @@ pub fn part1_inner(s: &[u8]) -> u64 {
                 let from2 = (s.get_unchecked(i + len + 5) - b'a') as u16 * 26 * 26
                     + (s.get_unchecked(i + len + 6) - b'a') as u16 * 26
                     + (s.get_unchecked(i + len + 7) - b'a') as u16;
-                let real_from1 = *gates_map.get_unchecked(from1 as usize);
-                let from1 = if real_from1 == 0 {
-                    let i = gates.len() as u16;
-                    gates.push_unchecked(Gate {
-                        inp_1: false,
-                        out_1: 0,
-                        out_2: 0,
-                        state: State::Empty,
-                    });
-                    *gates_map.get_unchecked_mut(from1 as usize) = i;
-                    i
-                } else {
-                    real_from1
+                let from1 = match gates_map.entry(from1) {
+                    heapless::Entry::Occupied(occupied_entry) => *occupied_entry.get(),
+                    heapless::Entry::Vacant(vacant_entry) => {
+                        let i = gates.len() as u16;
+                        gates.push_unchecked(Gate {
+                            inp_1: false,
+                            out_1: 0,
+                            out_2: 0,
+                            state: State::Empty,
+                        });
+                        vacant_entry.insert(i).unwrap_unchecked();
+                        i
+                    }
                 };
-                let real_from2 = *gates_map.get_unchecked(from2 as usize);
-                let from2 = if real_from2 == 0 {
-                    let i = gates.len() as u16;
-                    gates.push_unchecked(Gate {
-                        inp_1: false,
-                        out_1: 0,
-                        out_2: 0,
-                        state: State::Empty,
-                    });
-                    *gates_map.get_unchecked_mut(from2 as usize) = i;
-                    i
-                } else {
-                    real_from2
+                let from2 = match gates_map.entry(from2) {
+                    heapless::Entry::Occupied(occupied_entry) => *occupied_entry.get(),
+                    heapless::Entry::Vacant(vacant_entry) => {
+                        let i = gates.len() as u16;
+                        gates.push_unchecked(Gate {
+                            inp_1: false,
+                            out_1: 0,
+                            out_2: 0,
+                            state: State::Empty,
+                        });
+                        vacant_entry.insert(i).unwrap_unchecked();
+                        i
+                    }
                 };
 
                 gates.get_unchecked_mut(from1 as usize).add_out(this);
