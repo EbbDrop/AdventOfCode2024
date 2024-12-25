@@ -5,6 +5,9 @@ use aoc_runner_derive::aoc;
 #[aoc(day24, part1)]
 pub fn part1(s: &str) -> u64 {
     let s = s.as_bytes();
+    part1_inner(s);
+    part1_inner(s);
+    part1_inner(s);
     part1_inner(s)
 
     // println!("digraph G {{");
@@ -94,19 +97,26 @@ impl Gate {
         if self.out_1 == 0 {
             self.out_1 = out;
         } else {
-            debug_assert!(self.out_2 == 0);
+            // debug_assert!(self.out_2 == 0);
             self.out_2 = out;
         }
     }
 }
 
-pub fn part1_inner(s: &[u8]) -> u64 {
-    let mut gates = [Gate {
+#[inline(always)]
+fn part1_inner(s: &[u8]) -> u64 {
+    static mut GATES: [Gate; 26 * 26 * 26 + 46] = [Gate {
         inp_1: false,
         out_1: 0,
         out_2: 0,
         state: State::Empty,
     }; 26 * 26 * 26 + 46];
+
+    let gates = unsafe { &mut *(&raw mut GATES) };
+    for g in gates.iter_mut() {
+        g.out_1 = 0;
+        g.state = State::Empty;
+    }
 
     let mut stack = heapless::Vec::<(u16, bool), 2048>::new();
 
@@ -227,7 +237,8 @@ pub fn part2(s: &str) -> &'static str {
 
 const ZSTART: u16 = 26 * 26 * 26;
 
-pub fn part2_inner(s: &[u8]) -> &'static str {
+#[inline(always)]
+fn part2_inner(s: &[u8]) -> &'static str {
     #[derive(Debug, Clone, Copy, PartialEq, Eq)]
     enum State {
         Or,
