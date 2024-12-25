@@ -1,6 +1,26 @@
-use std::hint::unreachable_unchecked;
+use std::{
+    hash::{BuildHasherDefault, Hasher},
+    hint::unreachable_unchecked,
+};
 
 use aoc_runner_derive::aoc;
+
+#[derive(Default)]
+struct NoHash(u64);
+
+impl Hasher for NoHash {
+    fn finish(&self) -> u64 {
+        self.0
+    }
+
+    fn write(&mut self, bytes: &[u8]) {
+        self.0 += bytes[0] as u64;
+    }
+
+    fn write_u16(&mut self, i: u16) {
+        self.0 = i as u64;
+    }
+}
 
 #[aoc(day24, part1)]
 pub fn part1(s: &str) -> u64 {
@@ -102,7 +122,7 @@ impl Gate {
 
 #[inline(always)]
 pub fn part1_inner(s: &[u8]) -> u64 {
-    let mut gates_map = heapless::FnvIndexMap::<u16, u16, 512>::new();
+    let mut gates_map = heapless::IndexMap::<u16, u16, BuildHasherDefault<NoHash>, 512>::default();
 
     let mut gates = heapless::Vec::<Gate, 512>::from_slice(
         &[Gate {
@@ -304,7 +324,7 @@ pub fn part2_inner(s: &[u8]) -> &'static str {
 
     let mut inputs = [(0u16, 0u16); 45];
 
-    let mut gates_map = heapless::FnvIndexMap::<u16, u16, 512>::new();
+    let mut gates_map = heapless::IndexMap::<u16, u16, BuildHasherDefault<NoHash>, 512>::default();
 
     let mut gates = heapless::Vec::<Gate, 512>::from_slice(
         &[Gate {
