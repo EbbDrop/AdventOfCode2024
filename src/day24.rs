@@ -435,7 +435,7 @@ pub fn part2_inner(s: &[u8]) -> &'static str {
         }
 
         let mut to_swap = heapless::Vec::<u16, 8>::new();
-        let mut add_to_to_swap = |i| {
+        let add_to_to_swap = |i, to_swap: &mut heapless::Vec<u16, 8>| {
             let i = if i < 46 {
                 26 * 26 * 26 + i
             } else {
@@ -449,19 +449,22 @@ pub fn part2_inner(s: &[u8]) -> &'static str {
             // Asuming its a swap is with the carry
             debug_assert_eq!(and1, ZSTART);
             // println!("Swaping start: {} - {}", tos(and1), tos(ZSTART));
-            add_to_to_swap(xor1);
-            add_to_to_swap(and1);
+            add_to_to_swap(xor1, &mut to_swap);
+            add_to_to_swap(and1, &mut to_swap);
             xor1
         } else {
             and1
         };
 
-        for i in 1..45 {
+        'outer: for i in 1..45 {
             let (and1, xor1) = inputs[i as usize];
             debug_assert_ne!(gates[xor1 as usize].out_1, 0);
             let (and1, xor1) = if gates.get_unchecked(xor1 as usize).out_2 == 0 {
-                add_to_to_swap(and1);
-                add_to_to_swap(xor1);
+                add_to_to_swap(and1, &mut to_swap);
+                add_to_to_swap(xor1, &mut to_swap);
+                if to_swap.len() == 8 {
+                    break 'outer;
+                }
 
                 (xor1, and1)
             } else {
@@ -472,14 +475,17 @@ pub fn part2_inner(s: &[u8]) -> &'static str {
             let next2 = gates.get_unchecked(xor1 as usize).out_2;
 
             let or = if and1 == ZSTART + i {
-                add_to_to_swap(ZSTART + i);
+                add_to_to_swap(ZSTART + i, &mut to_swap);
 
                 if gates.get_unchecked(next1 as usize).state == State::Xor {
-                    add_to_to_swap(next1);
+                    add_to_to_swap(next1, &mut to_swap);
                 } else if gates.get_unchecked(next2 as usize).state == State::Xor {
-                    add_to_to_swap(next2);
+                    add_to_to_swap(next2, &mut to_swap);
                 } else {
                     unreachable_unchecked()
+                }
+                if to_swap.len() == 8 {
+                    break 'outer;
                 }
 
                 // TODO: is it correct to asume this?
@@ -490,20 +496,27 @@ pub fn part2_inner(s: &[u8]) -> &'static str {
                 let or_from_and1 = gates.get_unchecked(and1 as usize).out_1;
 
                 if or_from_and1 == ZSTART + i {
-                    add_to_to_swap(ZSTART + i);
-                    if gates[next1 as usize].state == State::Xor {
-                        add_to_to_swap(next1);
+                    add_to_to_swap(ZSTART + i, &mut to_swap);
+                    let or = if gates[next1 as usize].state == State::Xor {
+                        add_to_to_swap(next1, &mut to_swap);
                         next1
                     } else if gates[next2 as usize].state == State::Xor {
-                        add_to_to_swap(next2);
+                        add_to_to_swap(next2, &mut to_swap);
                         next2
                     } else {
                         unreachable_unchecked()
+                    };
+                    if to_swap.len() == 8 {
+                        break 'outer;
                     }
+                    or
                 } else {
                     if gates.get_unchecked((ZSTART + i) as usize).state != State::Xor {
-                        add_to_to_swap(next1);
-                        add_to_to_swap(next2);
+                        add_to_to_swap(next1, &mut to_swap);
+                        add_to_to_swap(next2, &mut to_swap);
+                    }
+                    if to_swap.len() == 8 {
+                        break 'outer;
                     }
 
                     or_from_and1
@@ -513,7 +526,7 @@ pub fn part2_inner(s: &[u8]) -> &'static str {
             carry = or;
         }
 
-        debug_assert_eq!(carry, ZSTART + 45);
+        // debug_assert_eq!(carry, ZSTART + 45);
 
         to_swap.sort_unstable();
         debug_assert_eq!(to_swap.len(), 8);
