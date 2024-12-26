@@ -42,27 +42,41 @@ unsafe fn part1_inner(s: &[u8]) -> u64 {
             ),
         );
 
-        let other = if is_key { &holes } else { &keys };
-        for o in other {
-            let collisions = _mm256_cmpeq_epi8(d, *o);
-            let collisions = _mm256_movemask_epi8(collisions);
-            sum += (collisions == 0) as u64;
-        }
-        let d = _mm256_and_si256(d, _mm256_set1_epi8(KEPT_BITS));
-        let d = _mm256_or_si256(
-            d,
-            _mm256_setr_epi8(
-                0, 0, 0, 0, 0, -1, //
-                0, 0, 0, 0, 0, -1, //
-                0, 0, 0, 0, 0, -1, //
-                0, 0, 0, 0, 0, -1, //
-                0, 0, 0, 0, 0, -1, -1, -1,
-            ),
-        );
-
         if is_key {
+            for o in &holes {
+                let collisions = _mm256_cmpeq_epi8(d, *o);
+                let collisions = _mm256_movemask_epi8(collisions);
+                sum += (collisions == 0) as u64;
+            }
+            let d = _mm256_and_si256(d, _mm256_set1_epi8(KEPT_BITS));
+            let d = _mm256_or_si256(
+                d,
+                _mm256_setr_epi8(
+                    0, 0, 0, 0, 0, -1, //
+                    0, 0, 0, 0, 0, -1, //
+                    0, 0, 0, 0, 0, -1, //
+                    0, 0, 0, 0, 0, -1, //
+                    0, 0, 0, 0, 0, -1, -1, -1,
+                ),
+            );
             keys.push_unchecked(d);
         } else {
+            for o in &keys {
+                let collisions = _mm256_cmpeq_epi8(d, *o);
+                let collisions = _mm256_movemask_epi8(collisions);
+                sum += (collisions == 0) as u64;
+            }
+            let d = _mm256_and_si256(d, _mm256_set1_epi8(KEPT_BITS));
+            let d = _mm256_or_si256(
+                d,
+                _mm256_setr_epi8(
+                    0, 0, 0, 0, 0, -1, //
+                    0, 0, 0, 0, 0, -1, //
+                    0, 0, 0, 0, 0, -1, //
+                    0, 0, 0, 0, 0, -1, //
+                    0, 0, 0, 0, 0, -1, -1, -1,
+                ),
+            );
             holes.push_unchecked(d);
         }
 
