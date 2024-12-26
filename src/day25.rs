@@ -22,8 +22,10 @@ unsafe fn part1_inner(s: &[u8]) -> u64 {
     let mut keys = heapless::Vec::<__m256i, 512>::new();
     let mut holes = heapless::Vec::<__m256i, 512>::new();
 
-    for i in 0..SIZE {
-        let i = i * DS;
+    let mut i = 0;
+
+    std::hint::assert_unchecked(s.len() > 0);
+    while i < s.len() {
         let is_key = *s.get_unchecked(i) == b'.';
 
         let d = s
@@ -57,6 +59,8 @@ unsafe fn part1_inner(s: &[u8]) -> u64 {
         } else {
             holes.push_unchecked(d);
         }
+
+        i += DS;
     }
 
     sum
