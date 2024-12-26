@@ -1,4 +1,4 @@
-use std::arch::x86_64::*;
+use std::{arch::x86_64::*, mem::MaybeUninit};
 
 use aoc_runner_derive::aoc;
 
@@ -17,8 +17,10 @@ const KEPT_BITS: i8 = 0b011;
 unsafe fn part1_inner(s: &[u8]) -> u64 {
     let mut sum = 0;
 
-    let mut keys = heapless::Vec::<__m256i, 512>::new();
-    let mut holes = heapless::Vec::<__m256i, 512>::new();
+    let mut keys = [MaybeUninit::<__m256i>::uninit(); 512];
+    let mut keys_i = 0;
+    let mut holes = [MaybeUninit::<__m256i>::uninit(); 512];
+    let mut holes_i = 0;
 
     let mut i = 0;
 
@@ -43,8 +45,9 @@ unsafe fn part1_inner(s: &[u8]) -> u64 {
         );
 
         if is_key {
-            for o in &holes {
-                let collisions = _mm256_cmpeq_epi8(d, *o);
+            for i in 0..holes_i {
+                let o = holes.get_unchecked(i).assume_init_read();
+                let collisions = _mm256_cmpeq_epi8(d, o);
                 let collisions = _mm256_movemask_epi8(collisions);
                 sum += (collisions == 0) as u64;
             }
@@ -59,10 +62,12 @@ unsafe fn part1_inner(s: &[u8]) -> u64 {
                     0, 0, 0, 0, 0, -1, -1, -1,
                 ),
             );
-            keys.push_unchecked(d);
+            keys.get_unchecked_mut(keys_i).write(d);
+            keys_i += 1;
         } else {
-            for o in &keys {
-                let collisions = _mm256_cmpeq_epi8(d, *o);
+            for i in 0..keys_i {
+                let o = keys.get_unchecked(i).assume_init_read();
+                let collisions = _mm256_cmpeq_epi8(d, o);
                 let collisions = _mm256_movemask_epi8(collisions);
                 sum += (collisions == 0) as u64;
             }
@@ -77,7 +82,8 @@ unsafe fn part1_inner(s: &[u8]) -> u64 {
                     0, 0, 0, 0, 0, -1, -1, -1,
                 ),
             );
-            holes.push_unchecked(d);
+            holes.get_unchecked_mut(holes_i).write(d);
+            holes_i += 1;
         }
 
         i += DS;
