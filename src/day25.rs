@@ -19,8 +19,8 @@ const DS: usize = 7 * 6 + 1;
 unsafe fn part1_inner(s: &[u8]) -> u64 {
     let mut sum = 0;
 
-    let mut keys = heapless::Vec::<u16, 512>::new();
-    let mut holes = heapless::Vec::<u16, 512>::new();
+    let mut keys = heapless::Vec::<__m256i, 512>::new();
+    let mut holes = heapless::Vec::<__m256i, 512>::new();
 
     for i in 0..SIZE {
         let i = i * DS;
@@ -43,25 +43,9 @@ unsafe fn part1_inner(s: &[u8]) -> u64 {
         );
 
         let other = if is_key { &holes } else { &keys };
-        for other_i in other {
-            let o = s
-                .as_ptr()
-                .offset(*other_i as isize + 6)
-                .cast::<__m256i>()
-                .read_unaligned();
-            let o = _mm256_and_si256(
-                o,
-                _mm256_setr_epi8(
-                    -1, -1, -1, -1, -1, 0, //
-                    -1, -1, -1, -1, -1, 0, //
-                    -1, -1, -1, -1, -1, 0, //
-                    -1, -1, -1, -1, -1, 0, //
-                    -1, -1, -1, -1, -1, 0, 0, 0,
-                ),
-            );
-
+        for o in other {
             let collisions = _mm256_cmpeq_epi8(
-                _mm256_add_epi8(d, o),
+                _mm256_add_epi8(d, *o),
                 _mm256_set1_epi8(b'#'.wrapping_add(b'#') as i8),
             );
             let collisions = _mm256_movemask_epi8(collisions);
@@ -69,9 +53,9 @@ unsafe fn part1_inner(s: &[u8]) -> u64 {
         }
 
         if is_key {
-            keys.push_unchecked(i as u16);
+            keys.push_unchecked(d);
         } else {
-            holes.push_unchecked(i as u16);
+            holes.push_unchecked(d);
         }
     }
 
