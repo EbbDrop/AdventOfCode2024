@@ -8,12 +8,10 @@ pub fn part1(s: &str) -> u64 {
     unsafe { part1_inner(s) }
 }
 
-#[cfg(not(test))]
-const SIZE: usize = 500;
-#[cfg(test)]
-const SIZE: usize = 5;
-
 const DS: usize = 7 * 6 + 1;
+
+const ALL_BITS: i8 = 0b111;
+const KEPT_BITS: i8 = 0b011;
 
 #[inline(always)]
 unsafe fn part1_inner(s: &[u8]) -> u64 {
@@ -36,23 +34,31 @@ unsafe fn part1_inner(s: &[u8]) -> u64 {
         let d = _mm256_and_si256(
             d,
             _mm256_setr_epi8(
-                -1, -1, -1, -1, -1, 0, //
-                -1, -1, -1, -1, -1, 0, //
-                -1, -1, -1, -1, -1, 0, //
-                -1, -1, -1, -1, -1, 0, //
-                -1, -1, -1, -1, -1, 0, 0, 0,
+                ALL_BITS, ALL_BITS, ALL_BITS, ALL_BITS, ALL_BITS, 0, //
+                ALL_BITS, ALL_BITS, ALL_BITS, ALL_BITS, ALL_BITS, 0, //
+                ALL_BITS, ALL_BITS, ALL_BITS, ALL_BITS, ALL_BITS, 0, //
+                ALL_BITS, ALL_BITS, ALL_BITS, ALL_BITS, ALL_BITS, 0, //
+                ALL_BITS, ALL_BITS, ALL_BITS, ALL_BITS, ALL_BITS, 0, 0, 0,
             ),
         );
 
         let other = if is_key { &holes } else { &keys };
         for o in other {
-            let collisions = _mm256_cmpeq_epi8(
-                _mm256_add_epi8(d, *o),
-                _mm256_set1_epi8(b'#'.wrapping_add(b'#') as i8),
-            );
+            let collisions = _mm256_cmpeq_epi8(d, *o);
             let collisions = _mm256_movemask_epi8(collisions);
             sum += (collisions == 0) as u64;
         }
+        let d = _mm256_and_si256(d, _mm256_set1_epi8(KEPT_BITS));
+        let d = _mm256_or_si256(
+            d,
+            _mm256_setr_epi8(
+                0, 0, 0, 0, 0, -1, //
+                0, 0, 0, 0, 0, -1, //
+                0, 0, 0, 0, 0, -1, //
+                0, 0, 0, 0, 0, -1, //
+                0, 0, 0, 0, 0, -1, -1, -1,
+            ),
+        );
 
         if is_key {
             keys.push_unchecked(d);
