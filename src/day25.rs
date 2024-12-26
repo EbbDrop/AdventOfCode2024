@@ -8,14 +8,27 @@ pub fn part1(s: &str) -> u64 {
     unsafe { part1_inner(s) }
 }
 
+pub fn part2(_s: &str) -> u64 {
+    // To be sure you know...
+    42
+}
+
 const DS: usize = 7 * 6 + 1;
+
+static LUT: [u32; 4] = [0, 0xFF, 0xFF_FF, 0xFF_FF_FF];
 
 #[inline(always)]
 unsafe fn part1_inner(s: &[u8]) -> u64 {
     let mut sum = 0;
 
-    let mut keys = heapless::Vec::<u64, 512>::new();
-    let mut holes = heapless::Vec::<u64, 512>::new();
+    static mut KEYS: [u64; 512] = unsafe { std::mem::transmute([0u8; 512 * 8]) };
+    static mut HOLES: [u64; 512] = unsafe { std::mem::transmute([0u8; 512 * 8]) };
+
+    let keys = &mut *(&raw mut KEYS);
+    let holes = &mut *(&raw mut HOLES);
+
+    let mut keys_i = 0;
+    let mut holes_i = 0;
 
     let mut i = 0;
 
@@ -50,38 +63,174 @@ unsafe fn part1_inner(s: &[u8]) -> u64 {
                 .read_unaligned()
                 & 0x0101010101);
 
-        let other = if is_key { &holes } else { &keys };
-        let mut j = other.len();
-        while j >= 4 {
-            j -= 4;
-            let o = other
-                .as_ptr()
-                .offset(j as isize)
-                .cast::<__m256i>()
-                .read_unaligned();
-            let s = _mm256_add_epi64(o, _mm256_set1_epi64x(d as i64));
-            let s = _mm256_and_si256(s, _mm256_set1_epi8(0x80u8 as i8));
-            let s = _mm256_cmpeq_epi64(s, _mm256_set1_epi64x(0));
-            let s = _mm256_movemask_epi8(s) as u32;
-
-            sum += s.count_ones() as u64 / 8;
-        }
-        if j > 0 {
-            let o = other.as_ptr().cast::<__m256i>().read_unaligned();
-            let s = _mm256_add_epi64(o, _mm256_set1_epi64x(d as i64));
-            let s = _mm256_and_si256(s, _mm256_set1_epi8(0x80u8 as i8));
-            let s = _mm256_cmpeq_epi64(s, _mm256_set1_epi64x(0));
-            let s = _mm256_movemask_epi8(s) as u32;
-
-            let s = s & [0, 0xFF, 0xFF_FF, 0xFF_FF_FF].get_unchecked(j);
-            sum += s.count_ones() as u64 / 8;
-        }
-
-        let d = d + 0x7A7A7A7A7A;
         if is_key {
-            keys.push_unchecked(d);
+            std::arch::asm!(
+                "test      {max_i}, {max_i}",
+                "je        2f",               // Jump on empty
+                "mov       {i}, {max_i}",
+                "cmp       {i}, 16",
+                "jb        6f",               // Jump to < 16 case
+
+                "4:",
+                "add       {i},  -16",
+                "vpaddq    {vt}, {d},  ymmword ptr [{os} + 8*{i} + 32*3]",
+                "vpand     {vt}, {vt}, {msb}",
+                "vpcmpeqq  {vt}, {vt}, {zero}",
+                "vpmovmskb {t},  {vt}",
+                "popcnt    {t},  {t}",
+                "shr       {t},  3",
+                "add       {sum},{t}",
+                "vpaddq    {vt}, {d},  ymmword ptr [{os} + 8*{i} + 32*2]",
+                "vpand     {vt}, {vt}, {msb}",
+                "vpcmpeqq  {vt}, {vt}, {zero}",
+                "vpmovmskb {t},  {vt}",
+                "popcnt    {t},  {t}",
+                "shr       {t},  3",
+                "add       {sum},{t}",
+                "vpaddq    {vt}, {d},  ymmword ptr [{os} + 8*{i} + 32*1]",
+                "vpand     {vt}, {vt}, {msb}",
+                "vpcmpeqq  {vt}, {vt}, {zero}",
+                "vpmovmskb {t},  {vt}",
+                "popcnt    {t},  {t}",
+                "shr       {t},  3",
+                "add       {sum},{t}",
+                "vpaddq    {vt}, {d},  ymmword ptr [{os} + 8*{i} + 32*0]",
+                "vpand     {vt}, {vt}, {msb}",
+                "vpcmpeqq  {vt}, {vt}, {zero}",
+                "vpmovmskb {t},  {vt}",
+                "popcnt    {t},  {t}",
+                "shr       {t},  3",
+                "add       {sum},{t}",
+                "cmp       {i}, 16",
+                "jae       4b",               // Loop
+                "6:",
+                "cmp       {i}, 4",
+                "jb        3f",               // Is < 4
+                // Is >= 4 and < 16
+
+                "5:",
+                "add       {i}, -4",
+                "vpaddq    {vt}, {d},  ymmword ptr [{os} + 8*{i}]",
+                "vpand     {vt}, {vt}, {msb}",
+                "vpcmpeqq  {vt}, {vt}, {zero}",
+                "vpmovmskb {t},  {vt}",
+                "popcnt    {t},  {t}",
+                "shr       {t},  3",
+                "add       {sum},{t}",
+                "cmp       {i}, 4",
+                "jae       5b",               // Loop
+                "3:",
+                "test      {i}, {i}",
+                "je        2f",               // Is zero
+
+                // Is > 0 and < 4
+                "vpaddq    {vt}, {d},  ymmword ptr [{os}]",
+                "vpand     {vt}, {vt}, {msb}",
+                "vpcmpeqq  {vt}, {vt}, {zero}",
+                "vpmovmskb {t},  {vt}",
+                "and       {t:e}, dword ptr [{lut} + 4*{i}]",
+                "popcnt    {t},  {t}",
+                "shr       {t},  3",
+                "add       {sum},{t}",
+                "2:",
+                d = in(ymm_reg) _mm256_set1_epi64x(d as i64),
+                msb = in(ymm_reg) _mm256_set1_epi8(0x80u8 as i8),
+                zero = in(ymm_reg) _mm256_set1_epi64x(0),
+                lut = in(reg) LUT.as_ptr(),
+                os = in(reg) holes,
+                max_i = in(reg) holes_i,
+                sum = inout(reg) sum,
+                i = out(reg) _,
+                t = out(reg) _,
+                vt = out(ymm_reg) _,
+                options(nostack),
+            );
+            *keys.get_unchecked_mut(keys_i) = d + 0x7A7A7A7A7A;
+            keys_i += 1;
         } else {
-            holes.push_unchecked(d);
+            std::arch::asm!(
+                "test      {max_i}, {max_i}",
+                "je        2f",               // Jump on empty
+                "mov       {i}, {max_i}",
+                "cmp       {i}, 16",
+                "jb        6f",               // Jump to < 16 case
+
+                "4:",
+                "add       {i},  -16",
+                "vpaddq    {vt}, {d},  ymmword ptr [{os} + 8*{i} + 32*3]",
+                "vpand     {vt}, {vt}, {msb}",
+                "vpcmpeqq  {vt}, {vt}, {zero}",
+                "vpmovmskb {t},  {vt}",
+                "popcnt    {t},  {t}",
+                "shr       {t},  3",
+                "add       {sum},{t}",
+                "vpaddq    {vt}, {d},  ymmword ptr [{os} + 8*{i} + 32*2]",
+                "vpand     {vt}, {vt}, {msb}",
+                "vpcmpeqq  {vt}, {vt}, {zero}",
+                "vpmovmskb {t},  {vt}",
+                "popcnt    {t},  {t}",
+                "shr       {t},  3",
+                "add       {sum},{t}",
+                "vpaddq    {vt}, {d},  ymmword ptr [{os} + 8*{i} + 32*1]",
+                "vpand     {vt}, {vt}, {msb}",
+                "vpcmpeqq  {vt}, {vt}, {zero}",
+                "vpmovmskb {t},  {vt}",
+                "popcnt    {t},  {t}",
+                "shr       {t},  3",
+                "add       {sum},{t}",
+                "vpaddq    {vt}, {d},  ymmword ptr [{os} + 8*{i} + 32*0]",
+                "vpand     {vt}, {vt}, {msb}",
+                "vpcmpeqq  {vt}, {vt}, {zero}",
+                "vpmovmskb {t},  {vt}",
+                "popcnt    {t},  {t}",
+                "shr       {t},  3",
+                "add       {sum},{t}",
+                "cmp       {i}, 16",
+                "jae       4b",               // Loop
+                "6:",
+                "cmp       {i}, 4",
+                "jb        3f",               // Is < 4
+                // Is >= 4 and < 16
+
+                "5:",
+                "add       {i}, -4",
+                "vpaddq    {vt}, {d},  ymmword ptr [{os} + 8*{i}]",
+                "vpand     {vt}, {vt}, {msb}",
+                "vpcmpeqq  {vt}, {vt}, {zero}",
+                "vpmovmskb {t},  {vt}",
+                "popcnt    {t},  {t}",
+                "shr       {t},  3",
+                "add       {sum},{t}",
+                "cmp       {i}, 4",
+                "jae       5b",               // Loop
+                "3:",
+                "test      {i}, {i}",
+                "je        2f",               // Is zero
+
+                // Is > 0 and < 4
+                "vpaddq    {vt}, {d},  ymmword ptr [{os}]",
+                "vpand     {vt}, {vt}, {msb}",
+                "vpcmpeqq  {vt}, {vt}, {zero}",
+                "vpmovmskb {t},  {vt}",
+                "and       {t:e}, dword ptr [{lut} + 4*{i}]",
+                "popcnt    {t},  {t}",
+                "shr       {t},  3",
+                "add       {sum},{t}",
+                "2:",
+                d = in(ymm_reg) _mm256_set1_epi64x(d as i64),
+                msb = in(ymm_reg) _mm256_set1_epi8(0x80u8 as i8),
+                zero = in(ymm_reg) _mm256_set1_epi64x(0),
+                lut = in(reg) LUT.as_ptr(),
+                os = in(reg) keys,
+                max_i = in(reg) keys_i,
+                sum = inout(reg) sum,
+                i = out(reg) _,
+                t = out(reg) _,
+                vt = out(ymm_reg) _,
+                options(nostack),
+            );
+            *holes.get_unchecked_mut(holes_i) = d + 0x7A7A7A7A7A;
+            holes_i += 1;
         }
 
         i += DS;
