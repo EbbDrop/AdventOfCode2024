@@ -8,6 +8,11 @@ pub fn part1(s: &str) -> u64 {
     unsafe { part1_inner(s) }
 }
 
+pub fn part2(_s: &str) -> u64 {
+    // To be sure you know...
+    42
+}
+
 const DS: usize = 7 * 6 + 1;
 
 const ALL_BITS: i8 = 0b111;
