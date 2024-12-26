@@ -1,0 +1,139 @@
+use std::arch::x86_64::*;
+
+use aoc_runner_derive::aoc;
+
+#[aoc(day25, part1)]
+pub fn part1(s: &str) -> u64 {
+    let s = s.as_bytes();
+    unsafe { part1_inner(s) }
+}
+
+const DS: usize = 6 * 7 + 1;
+
+#[inline(always)]
+unsafe fn part1_inner(s: &[u8]) -> u64 {
+    let mut sum = 0;
+
+    let mut keys = heapless::Vec::<u16, 512>::new();
+    let mut holes = heapless::Vec::<u16, 512>::new();
+
+    let mut i = 0;
+    while i < s.len() {
+        let is_key = *s.get_unchecked(i) == b'.';
+
+        let d = s
+            .as_ptr()
+            .offset(i as isize + 6)
+            .cast::<__m256i>()
+            .read_unaligned();
+        let d = _mm256_and_si256(
+            d,
+            _mm256_setr_epi8(
+                -1, -1, -1, -1, -1, 0, //
+                -1, -1, -1, -1, -1, 0, //
+                -1, -1, -1, -1, -1, 0, //
+                -1, -1, -1, -1, -1, 0, //
+                -1, -1, -1, -1, -1, 0, 0, 0,
+            ),
+        );
+
+        let other = if is_key { &holes } else { &keys };
+        for other_i in other {
+            let o = s
+                .as_ptr()
+                .offset(*other_i as isize + 6)
+                .cast::<__m256i>()
+                .read_unaligned();
+            let o = _mm256_and_si256(
+                o,
+                _mm256_setr_epi8(
+                    -1, -1, -1, -1, -1, 0, //
+                    -1, -1, -1, -1, -1, 0, //
+                    -1, -1, -1, -1, -1, 0, //
+                    -1, -1, -1, -1, -1, 0, //
+                    -1, -1, -1, -1, -1, 0, 0, 0,
+                ),
+            );
+
+            let collisions = _mm256_cmpeq_epi8(
+                _mm256_add_epi8(d, o),
+                _mm256_set1_epi8(b'#'.wrapping_add(b'#') as i8),
+            );
+            let collisions = _mm256_movemask_epi8(collisions);
+            sum += (collisions == 0) as u64;
+
+            // let mut fd = [0u8; 256 / 8];
+            // fd.as_mut_ptr().cast::<__m256i>().write_unaligned(d);
+            // println!("{:?}", String::from_utf8_lossy(&fd));
+            // let mut fo = [0u8; 256 / 8];
+            // fo.as_mut_ptr().cast::<__m256i>().write_unaligned(o);
+            // println!("{:?}", String::from_utf8_lossy(&fo));
+            // let mut fsum = [0u8; 256 / 8];
+            // fsum.as_mut_ptr()
+            //     .cast::<__m256i>()
+            //     .write_unaligned(collisions);
+            // println!("{:?}", &fsum);
+        }
+
+        if is_key {
+            keys.push_unchecked(i as u16);
+        } else {
+            holes.push_unchecked(i as u16);
+        }
+
+        i += DS;
+    }
+
+    sum
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    const EXAMPLE: &str = r"#####
+.####
+.####
+.####
+.#.#.
+.#...
+.....
+
+#####
+##.##
+.#.##
+...##
+...#.
+...#.
+.....
+
+.....
+#....
+#....
+#...#
+#.#.#
+#.###
+#####
+
+.....
+.....
+#.#..
+###..
+###.#
+###.#
+#####
+
+.....
+.....
+.....
+#....
+#.#..
+#.#.#
+#####
+";
+
+    #[test]
+    fn example_part1() {
+        assert_eq!(part1(EXAMPLE), 3);
+    }
+}
