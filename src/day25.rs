@@ -50,10 +50,11 @@ unsafe fn part1_inner(s: &[u8]) -> u64 {
 
         if is_key {
             std::arch::asm!(
-                "test      {i}, {i}",
+                "test      {max_i}, {max_i}",
                 "je        2f",               // Jump on empty
-                "cmp       {i}, 1",
+                "cmp       {max_i}, 1",
                 "je        3f",               // Jump to one case
+                "mov       {i}, {max_i}",
                 "shl       {i}, 5",
                 "4:",
                 "add       {i}, -64",
@@ -75,8 +76,9 @@ unsafe fn part1_inner(s: &[u8]) -> u64 {
                 "adc       {sum}, 0",
                 "2:",
                 os = in(reg) holes,
+                max_i = in(reg) holes_i,
                 d = in(ymm_reg) d,
-                i = inout(reg) holes_i => _,
+                i = out(reg) _,
                 sum = inout(reg) sum,
                 t = out(reg) _,
                 vt = out(ymm_reg) _,
@@ -97,10 +99,11 @@ unsafe fn part1_inner(s: &[u8]) -> u64 {
             keys_i += 1;
         } else {
             std::arch::asm!(
-                "test      {i}, {i}",
+                "test      {max_i}, {max_i}",
                 "je        2f",               // Jump on empty
-                "cmp       {i}, 1",
+                "cmp       {max_i}, 1",
                 "je        3f",               // Jump to one case
+                "mov       {i}, {max_i}",
                 "shl       {i}, 5",
                 "4:",
                 "add       {i}, -64",
@@ -122,8 +125,9 @@ unsafe fn part1_inner(s: &[u8]) -> u64 {
                 "adc       {sum}, 0",
                 "2:",
                 os = in(reg) keys,
+                max_i = in(reg) keys_i,
                 d = in(ymm_reg) d,
-                i = inout(reg) keys_i => _,
+                i = out(reg) _,
                 sum = inout(reg) sum,
                 t = out(reg) _,
                 vt = out(ymm_reg) _,
