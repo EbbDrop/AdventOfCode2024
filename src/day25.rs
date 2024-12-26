@@ -56,8 +56,36 @@ unsafe fn part1_inner(s: &[u8]) -> u64 {
                 "je        3f",               // Jump to one case
                 "mov       {i}, {max_i}",
                 "shl       {i}, 5",
+                "jmp       5f",
+
                 "4:",
-                "add       {i}, -64",
+                "add       {i}, -32 * 4",
+                "vpcmpeqb  {vt}, {d}, ymmword ptr [{os} + {i} + 96]",
+                "vpmovmskb {t}, {vt}",
+                "cmp       {t}, 1",
+                "adc       {sum}, 0",
+                "vpcmpeqb  {vt}, {d}, ymmword ptr [{os} + {i} + 64]",
+                "vpmovmskb {t}, {vt}",
+                "cmp       {t}, 1",
+                "adc       {sum}, 0",
+                "vpcmpeqb  {vt}, {d}, ymmword ptr [{os} + {i} + 32]",
+                "vpmovmskb {t}, {vt}",
+                "cmp       {t}, 1",
+                "adc       {sum}, 0",
+                "vpcmpeqb  {vt}, {d}, ymmword ptr [{os} + {i}]",
+                "vpmovmskb {t}, {vt}",
+                "cmp       {t}, 1",
+                "adc       {sum}, 0",
+                "5:",
+                "cmp       {i}, 96",
+                "jg        4b",               // Loop
+                "cmp       {i}, 32",
+                "jl        2f",               // Is zero
+                "je        3f",               // Is one
+                // Is 2 or 3
+
+                "4:",
+                "add       {i}, -32 * 2",
                 "vpcmpeqb  {vt}, {d}, ymmword ptr [{os} + {i} + 32]",
                 "vpmovmskb {t}, {vt}",
                 "cmp       {t}, 1",
@@ -69,6 +97,7 @@ unsafe fn part1_inner(s: &[u8]) -> u64 {
                 "cmp       {i}, 32",
                 "jg        4b",               // Loop
                 "jne       2f",               // Is zero
+
                 "3:",
                 "vpcmpeqb  {vt}, {d}, ymmword ptr [{os}]",
                 "vpmovmskb {t}, {vt}",
@@ -105,8 +134,36 @@ unsafe fn part1_inner(s: &[u8]) -> u64 {
                 "je        3f",               // Jump to one case
                 "mov       {i}, {max_i}",
                 "shl       {i}, 5",
+                "jmp       5f",
+
                 "4:",
-                "add       {i}, -64",
+                "add       {i}, -32 * 4",
+                "vpcmpeqb  {vt}, {d}, ymmword ptr [{os} + {i} + 96]",
+                "vpmovmskb {t}, {vt}",
+                "cmp       {t}, 1",
+                "adc       {sum}, 0",
+                "vpcmpeqb  {vt}, {d}, ymmword ptr [{os} + {i} + 64]",
+                "vpmovmskb {t}, {vt}",
+                "cmp       {t}, 1",
+                "adc       {sum}, 0",
+                "vpcmpeqb  {vt}, {d}, ymmword ptr [{os} + {i} + 32]",
+                "vpmovmskb {t}, {vt}",
+                "cmp       {t}, 1",
+                "adc       {sum}, 0",
+                "vpcmpeqb  {vt}, {d}, ymmword ptr [{os} + {i}]",
+                "vpmovmskb {t}, {vt}",
+                "cmp       {t}, 1",
+                "adc       {sum}, 0",
+                "5:",
+                "cmp       {i}, 96",
+                "jg        4b",               // Loop
+                "cmp       {i}, 32",
+                "jl        2f",               // Is zero
+                "je        3f",               // Is one
+                // Is 2 or 3
+
+                "4:",
+                "add       {i}, -32 * 2",
                 "vpcmpeqb  {vt}, {d}, ymmword ptr [{os} + {i} + 32]",
                 "vpmovmskb {t}, {vt}",
                 "cmp       {t}, 1",
@@ -118,6 +175,7 @@ unsafe fn part1_inner(s: &[u8]) -> u64 {
                 "cmp       {i}, 32",
                 "jg        4b",               // Loop
                 "jne       2f",               // Is zero
+
                 "3:",
                 "vpcmpeqb  {vt}, {d}, ymmword ptr [{os}]",
                 "vpmovmskb {t}, {vt}",
