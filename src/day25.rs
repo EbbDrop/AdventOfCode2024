@@ -78,28 +78,24 @@ unsafe fn part1_inner(s: &[u8]) -> u64 {
                 "vpcmpeqq  {vt}, {vt}, {zero}",
                 "vpmovmskb {t},  {vt}",
                 "popcnt    {t},  {t}",
-                "shr       {t},  3",
                 "add       {sum},{t}",
                 "vpaddq    {vt}, {d},  ymmword ptr [{os} + 8*{i} + 32*2]",
                 "vpand     {vt}, {vt}, {msb}",
                 "vpcmpeqq  {vt}, {vt}, {zero}",
                 "vpmovmskb {t},  {vt}",
                 "popcnt    {t},  {t}",
-                "shr       {t},  3",
                 "add       {sum},{t}",
                 "vpaddq    {vt}, {d},  ymmword ptr [{os} + 8*{i} + 32*1]",
                 "vpand     {vt}, {vt}, {msb}",
                 "vpcmpeqq  {vt}, {vt}, {zero}",
                 "vpmovmskb {t},  {vt}",
                 "popcnt    {t},  {t}",
-                "shr       {t},  3",
                 "add       {sum},{t}",
                 "vpaddq    {vt}, {d},  ymmword ptr [{os} + 8*{i} + 32*0]",
                 "vpand     {vt}, {vt}, {msb}",
                 "vpcmpeqq  {vt}, {vt}, {zero}",
                 "vpmovmskb {t},  {vt}",
                 "popcnt    {t},  {t}",
-                "shr       {t},  3",
                 "add       {sum},{t}",
                 "cmp       {i}, 16",
                 "jae       4b",               // Loop
@@ -115,7 +111,6 @@ unsafe fn part1_inner(s: &[u8]) -> u64 {
                 "vpcmpeqq  {vt}, {vt}, {zero}",
                 "vpmovmskb {t},  {vt}",
                 "popcnt    {t},  {t}",
-                "shr       {t},  3",
                 "add       {sum},{t}",
                 "cmp       {i}, 4",
                 "jae       5b",               // Loop
@@ -130,7 +125,6 @@ unsafe fn part1_inner(s: &[u8]) -> u64 {
                 "vpmovmskb {t},  {vt}",
                 "and       {t:e}, dword ptr [{lut} + 4*{i}]",
                 "popcnt    {t},  {t}",
-                "shr       {t},  3",
                 "add       {sum},{t}",
                 "2:",
                 d = in(ymm_reg) _mm256_set1_epi64x(d as i64),
@@ -162,28 +156,24 @@ unsafe fn part1_inner(s: &[u8]) -> u64 {
                 "vpcmpeqq  {vt}, {vt}, {zero}",
                 "vpmovmskb {t},  {vt}",
                 "popcnt    {t},  {t}",
-                "shr       {t},  3",
                 "add       {sum},{t}",
                 "vpaddq    {vt}, {d},  ymmword ptr [{os} + 8*{i} + 32*2]",
                 "vpand     {vt}, {vt}, {msb}",
                 "vpcmpeqq  {vt}, {vt}, {zero}",
                 "vpmovmskb {t},  {vt}",
                 "popcnt    {t},  {t}",
-                "shr       {t},  3",
                 "add       {sum},{t}",
                 "vpaddq    {vt}, {d},  ymmword ptr [{os} + 8*{i} + 32*1]",
                 "vpand     {vt}, {vt}, {msb}",
                 "vpcmpeqq  {vt}, {vt}, {zero}",
                 "vpmovmskb {t},  {vt}",
                 "popcnt    {t},  {t}",
-                "shr       {t},  3",
                 "add       {sum},{t}",
                 "vpaddq    {vt}, {d},  ymmword ptr [{os} + 8*{i} + 32*0]",
                 "vpand     {vt}, {vt}, {msb}",
                 "vpcmpeqq  {vt}, {vt}, {zero}",
                 "vpmovmskb {t},  {vt}",
                 "popcnt    {t},  {t}",
-                "shr       {t},  3",
                 "add       {sum},{t}",
                 "cmp       {i}, 16",
                 "jae       4b",               // Loop
@@ -199,7 +189,6 @@ unsafe fn part1_inner(s: &[u8]) -> u64 {
                 "vpcmpeqq  {vt}, {vt}, {zero}",
                 "vpmovmskb {t},  {vt}",
                 "popcnt    {t},  {t}",
-                "shr       {t},  3",
                 "add       {sum},{t}",
                 "cmp       {i}, 4",
                 "jae       5b",               // Loop
@@ -214,7 +203,6 @@ unsafe fn part1_inner(s: &[u8]) -> u64 {
                 "vpmovmskb {t},  {vt}",
                 "and       {t:e}, dword ptr [{lut} + 4*{i}]",
                 "popcnt    {t},  {t}",
-                "shr       {t},  3",
                 "add       {sum},{t}",
                 "2:",
                 d = in(ymm_reg) _mm256_set1_epi64x(d as i64),
@@ -236,7 +224,7 @@ unsafe fn part1_inner(s: &[u8]) -> u64 {
         i += DS;
     }
 
-    sum
+    sum / 8
 }
 
 #[cfg(test)]
