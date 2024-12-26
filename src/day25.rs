@@ -66,7 +66,7 @@ unsafe fn part1_inner(s: &[u8]) -> u64 {
                 "je        2f",               // Jump on empty
                 "mov       {i}, {max_i}",
                 "cmp       {i}, 16",
-                "jb        7f",               // Jump to < 16 case
+                "jb        6f",               // Jump to < 16 case
 
                 "4:",
                 "vpaddq    {vt}, {d},  ymmword ptr [{os} + 8*{i} - 32]",
@@ -96,36 +96,12 @@ unsafe fn part1_inner(s: &[u8]) -> u64 {
                 "add       {sum},{t}",
                 "cmp       {i}, 16",
                 "jae       4b",               // Loop
-                "7:",
-                // i < 16
+                "6:",
                 "cmp       {i}, 4",
                 "jb        3f",               // Is < 4
-                "cmp       {i}, 8",
-                "jb        5f",               // Is < 8
-                "cmp       {i}, 12",
-                "jb        6f",               // Is < 8
-
-                // i < 16
-                "vpaddq    {vt}, {d},  ymmword ptr [{os} + 8*{i} - 32]",
-                "add       {i}, -4",
-                "vpand     {vt}, {vt}, {msb}",
-                "vpcmpeqq  {vt}, {vt}, {zero}",
-                "vpmovmskb {t},  {vt}",
-                "popcnt    {t},  {t}",
-                "add       {sum},{t}",
-
-                "6:",
-                // i < 12
-                "vpaddq    {vt}, {d},  ymmword ptr [{os} + 8*{i} - 32]",
-                "add       {i}, -4",
-                "vpand     {vt}, {vt}, {msb}",
-                "vpcmpeqq  {vt}, {vt}, {zero}",
-                "vpmovmskb {t},  {vt}",
-                "popcnt    {t},  {t}",
-                "add       {sum},{t}",
+                // Is >= 4 and < 16
 
                 "5:",
-                // i < 8
                 "vpaddq    {vt}, {d},  ymmword ptr [{os} + 8*{i} - 32]",
                 "add       {i}, -4",
                 "vpand     {vt}, {vt}, {msb}",
@@ -133,10 +109,13 @@ unsafe fn part1_inner(s: &[u8]) -> u64 {
                 "vpmovmskb {t},  {vt}",
                 "popcnt    {t},  {t}",
                 "add       {sum},{t}",
-
+                "cmp       {i}, 4",
+                "jae       5b",               // Loop
                 "3:",
                 "test      {i}, {i}",
                 "je        2f",               // Is zero
+
+                // Is > 0 and < 4
                 "vpaddq    {vt}, {d},  ymmword ptr [{os}]",
                 "vpand     {vt}, {vt}, {msb}",
                 "vpcmpeqq  {vt}, {vt}, {zero}",
@@ -161,11 +140,12 @@ unsafe fn part1_inner(s: &[u8]) -> u64 {
             keys_i += 1;
         } else {
             std::arch::asm!(
+
                 "test      {max_i}, {max_i}",
                 "je        2f",               // Jump on empty
                 "mov       {i}, {max_i}",
                 "cmp       {i}, 16",
-                "jb        7f",               // Jump to < 16 case
+                "jb        6f",               // Jump to < 16 case
 
                 "4:",
                 "vpaddq    {vt}, {d},  ymmword ptr [{os} + 8*{i} - 32]",
@@ -195,36 +175,12 @@ unsafe fn part1_inner(s: &[u8]) -> u64 {
                 "add       {sum},{t}",
                 "cmp       {i}, 16",
                 "jae       4b",               // Loop
-                "7:",
-                // i < 16
+                "6:",
                 "cmp       {i}, 4",
                 "jb        3f",               // Is < 4
-                "cmp       {i}, 8",
-                "jb        5f",               // Is < 8
-                "cmp       {i}, 12",
-                "jb        6f",               // Is < 8
-
-                // i < 16
-                "vpaddq    {vt}, {d},  ymmword ptr [{os} + 8*{i} - 32]",
-                "add       {i}, -4",
-                "vpand     {vt}, {vt}, {msb}",
-                "vpcmpeqq  {vt}, {vt}, {zero}",
-                "vpmovmskb {t},  {vt}",
-                "popcnt    {t},  {t}",
-                "add       {sum},{t}",
-
-                "6:",
-                // i < 12
-                "vpaddq    {vt}, {d},  ymmword ptr [{os} + 8*{i} - 32]",
-                "add       {i}, -4",
-                "vpand     {vt}, {vt}, {msb}",
-                "vpcmpeqq  {vt}, {vt}, {zero}",
-                "vpmovmskb {t},  {vt}",
-                "popcnt    {t},  {t}",
-                "add       {sum},{t}",
+                // Is >= 4 and < 16
 
                 "5:",
-                // i < 8
                 "vpaddq    {vt}, {d},  ymmword ptr [{os} + 8*{i} - 32]",
                 "add       {i}, -4",
                 "vpand     {vt}, {vt}, {msb}",
@@ -232,10 +188,13 @@ unsafe fn part1_inner(s: &[u8]) -> u64 {
                 "vpmovmskb {t},  {vt}",
                 "popcnt    {t},  {t}",
                 "add       {sum},{t}",
-
+                "cmp       {i}, 4",
+                "jae       5b",               // Loop
                 "3:",
                 "test      {i}, {i}",
                 "je        2f",               // Is zero
+
+                // Is > 0 and < 4
                 "vpaddq    {vt}, {d},  ymmword ptr [{os}]",
                 "vpand     {vt}, {vt}, {msb}",
                 "vpcmpeqq  {vt}, {vt}, {zero}",
