@@ -73,7 +73,7 @@ unsafe fn part1_inner(s: &[u8]) -> u64 {
             let s = _mm256_cmpeq_epi64(s, _mm256_set1_epi64x(0));
             let s = _mm256_movemask_epi8(s) as u32;
 
-            let s = s & (0xFF_FF_FF >> ((3 - j) * 8));
+            let s = s & [0, 0xFF, 0xFF_FF, 0xFF_FF_FF].get_unchecked(j);
             sum += s.count_ones() as u64 / 8;
         }
 
