@@ -60,24 +60,21 @@ unsafe fn part1_inner(s: &[u8]) -> u64 {
                 .cast::<__m256i>()
                 .read_unaligned();
             let s = _mm256_add_epi64(o, _mm256_set1_epi64x(d as i64));
-
+            let s = _mm256_and_si256(s, _mm256_set1_epi8(0x80u8 as i8));
+            let s = _mm256_cmpeq_epi64(s, _mm256_set1_epi64x(0));
             let s = _mm256_movemask_epi8(s) as u32;
 
-            sum += ((s & 0xFF_00_00_00) == 0) as u64;
-            sum += ((s & 0x00_FF_00_00) == 0) as u64;
-            sum += ((s & 0x00_00_FF_00) == 0) as u64;
-            sum += ((s & 0x00_00_00_FF) == 0) as u64;
+            sum += s.count_ones() as u64 / 8;
         }
         if j > 0 {
             let o = other.as_ptr().cast::<__m256i>().read_unaligned();
             let s = _mm256_add_epi64(o, _mm256_set1_epi64x(d as i64));
-
+            let s = _mm256_and_si256(s, _mm256_set1_epi8(0x80u8 as i8));
+            let s = _mm256_cmpeq_epi64(s, _mm256_set1_epi64x(0));
             let s = _mm256_movemask_epi8(s) as u32;
 
-            let s = !(!s << (3 - j) * 8);
-            sum += ((s & 0x00_FF_00_00) == 0) as u64;
-            sum += ((s & 0x00_00_FF_00) == 0) as u64;
-            sum += ((s & 0x00_00_00_FF) == 0) as u64;
+            let s = s & (0xFF_FF_FF >> ((3 - j) * 8));
+            sum += s.count_ones() as u64 / 8;
         }
 
         let d = d + 0x7A7A7A7A7A;
