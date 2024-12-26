@@ -24,11 +24,11 @@ macro_rules! benches_day {
                     [<day $day_num>]::part1(black_box(input))
                 }
                 group.bench_with_input(format!("day{}_part1", $day_num), input, |b, i| b.iter(|| routine_part1(i)));
-                #[inline(never)]
-                fn routine_part2(input: &str) -> impl Display + '_ {
-                    [<day $day_num>]::part2(black_box(input))
-                }
-                group.bench_with_input(format!("day{}_part2", $day_num), input, |b, i| b.iter(|| routine_part2(i)));
+                // #[inline(never)]
+                // fn routine_part2(input: &str) -> impl Display + '_ {
+                //     [<day $day_num>]::part2(black_box(input))
+                // }
+                // group.bench_with_input(format!("day{}_part2", $day_num), input, |b, i| b.iter(|| routine_part2(i)));
             }
         }
     };
@@ -48,4 +48,4 @@ macro_rules! benches {
     };
 }
 
-benches!(24);
+benches!(25);
