@@ -21,8 +21,8 @@ static LUT: [u32; 4] = [0, 0xFF, 0xFF_FF, 0xFF_FF_FF];
 unsafe fn part1_inner(s: &[u8]) -> u64 {
     let mut sum = 0;
 
-    static mut KEYS: [u64; 512] = unsafe { std::mem::transmute([0u8; 512 * 8]) };
-    static mut HOLES: [u64; 512] = unsafe { std::mem::transmute([0u8; 512 * 8]) };
+    static mut KEYS: [u64; 256] = unsafe { std::mem::transmute([0u8; 256 * 8]) };
+    static mut HOLES: [u64; 256] = unsafe { std::mem::transmute([0u8; 256 * 8]) };
 
     let keys = &mut *(&raw mut KEYS);
     let holes = &mut *(&raw mut HOLES);
