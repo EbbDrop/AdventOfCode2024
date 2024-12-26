@@ -1,4 +1,4 @@
-use std::arch::x86_64::*;
+use std::{arch::x86_64::*, mem::MaybeUninit};
 
 use aoc_runner_derive::aoc;
 
@@ -21,11 +21,8 @@ static LUT: [u32; 4] = [0, 0xFF, 0xFF_FF, 0xFF_FF_FF];
 unsafe fn part1_inner(s: &[u8]) -> u64 {
     let mut sum = 0;
 
-    static mut KEYS: [u64; 256] = unsafe { std::mem::transmute([0u8; 256 * 8]) };
-    static mut HOLES: [u64; 256] = unsafe { std::mem::transmute([0u8; 256 * 8]) };
-
-    let keys = &mut *(&raw mut KEYS);
-    let holes = &mut *(&raw mut HOLES);
+    let mut keys: [MaybeUninit<u64>; 256] = [MaybeUninit::uninit(); 256];
+    let mut holes: [MaybeUninit<u64>; 256] = [MaybeUninit::uninit(); 256];
 
     let mut keys_i = 0;
     let mut holes_i = 0;
@@ -131,7 +128,7 @@ unsafe fn part1_inner(s: &[u8]) -> u64 {
                 msb = in(ymm_reg) _mm256_set1_epi8(0x80u8 as i8),
                 zero = in(ymm_reg) _mm256_set1_epi64x(0),
                 lut = in(reg) LUT.as_ptr(),
-                os = in(reg) holes,
+                os = in(reg) holes.as_ptr(),
                 max_i = in(reg) holes_i,
                 sum = inout(reg) sum,
                 i = out(reg) _,
@@ -139,7 +136,7 @@ unsafe fn part1_inner(s: &[u8]) -> u64 {
                 vt = out(ymm_reg) _,
                 options(nostack),
             );
-            *keys.get_unchecked_mut(keys_i) = d + 0x7A7A7A7A7A;
+            keys.get_unchecked_mut(keys_i).write(d + 0x7A7A7A7A7A);
             keys_i += 1;
         } else {
             std::arch::asm!(
@@ -210,7 +207,7 @@ unsafe fn part1_inner(s: &[u8]) -> u64 {
                 msb = in(ymm_reg) _mm256_set1_epi8(0x80u8 as i8),
                 zero = in(ymm_reg) _mm256_set1_epi64x(0),
                 lut = in(reg) LUT.as_ptr(),
-                os = in(reg) keys,
+                os = in(reg) keys.as_ptr(),
                 max_i = in(reg) keys_i,
                 sum = inout(reg) sum,
                 i = out(reg) _,
@@ -218,7 +215,7 @@ unsafe fn part1_inner(s: &[u8]) -> u64 {
                 vt = out(ymm_reg) _,
                 options(nostack),
             );
-            *holes.get_unchecked_mut(holes_i) = d + 0x7A7A7A7A7A;
+            holes.get_unchecked_mut(holes_i).write(d + 0x7A7A7A7A7A);
             holes_i += 1;
         }
 
