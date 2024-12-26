@@ -1,4 +1,4 @@
-use std::{arch::x86_64::*, mem::MaybeUninit};
+use std::arch::x86_64::*;
 
 use aoc_runner_derive::aoc;
 
@@ -49,12 +49,39 @@ unsafe fn part1_inner(s: &[u8]) -> u64 {
         );
 
         if is_key {
-            for i in 0..holes_i {
-                let o = *holes.get_unchecked(i);
-                let collisions = _mm256_cmpeq_epi8(d, o);
-                let collisions = _mm256_movemask_epi8(collisions);
-                sum += (collisions == 0) as u64;
-            }
+            std::arch::asm!(
+                "test      {i}, {i}",
+                "je        2f",               // Jump on empty
+                "cmp       {i}, 1",
+                "je        3f",               // Jump to one case
+                "shl       {i}, 5",
+                "4:",
+                "add       {i}, -64",
+                "vpcmpeqb  {vt}, {d}, ymmword ptr [{os} + {i} + 32]",
+                "vpmovmskb {t}, {vt}",
+                "cmp       {t}, 1",
+                "adc       {sum}, 0",
+                "vpcmpeqb  {vt}, {d}, ymmword ptr [{os} + {i}]",
+                "vpmovmskb {t}, {vt}",
+                "cmp       {t}, 1",
+                "adc       {sum}, 0",
+                "cmp       {i}, 32",
+                "jg        4b",               // Loop
+                "jne       2f",               // Is zero
+                "3:",
+                "vpcmpeqb  {vt}, {d}, ymmword ptr [{os}]",
+                "vpmovmskb {t}, {vt}",
+                "cmp       {t}, 1",
+                "adc       {sum}, 0",
+                "2:",
+                os = in(reg) holes,
+                d = in(ymm_reg) d,
+                i = inout(reg) holes_i => _,
+                sum = inout(reg) sum,
+                t = out(reg) _,
+                vt = out(ymm_reg) _,
+                options(nostack),
+            );
             let d = _mm256_and_si256(d, _mm256_set1_epi8(KEPT_BITS));
             let d = _mm256_or_si256(
                 d,
@@ -69,12 +96,39 @@ unsafe fn part1_inner(s: &[u8]) -> u64 {
             *keys.get_unchecked_mut(keys_i) = d;
             keys_i += 1;
         } else {
-            for i in 0..keys_i {
-                let o = *keys.get_unchecked(i);
-                let collisions = _mm256_cmpeq_epi8(d, o);
-                let collisions = _mm256_movemask_epi8(collisions);
-                sum += (collisions == 0) as u64;
-            }
+            std::arch::asm!(
+                "test      {i}, {i}",
+                "je        2f",               // Jump on empty
+                "cmp       {i}, 1",
+                "je        3f",               // Jump to one case
+                "shl       {i}, 5",
+                "4:",
+                "add       {i}, -64",
+                "vpcmpeqb  {vt}, {d}, ymmword ptr [{os} + {i} + 32]",
+                "vpmovmskb {t}, {vt}",
+                "cmp       {t}, 1",
+                "adc       {sum}, 0",
+                "vpcmpeqb  {vt}, {d}, ymmword ptr [{os} + {i}]",
+                "vpmovmskb {t}, {vt}",
+                "cmp       {t}, 1",
+                "adc       {sum}, 0",
+                "cmp       {i}, 32",
+                "jg        4b",               // Loop
+                "jne       2f",               // Is zero
+                "3:",
+                "vpcmpeqb  {vt}, {d}, ymmword ptr [{os}]",
+                "vpmovmskb {t}, {vt}",
+                "cmp       {t}, 1",
+                "adc       {sum}, 0",
+                "2:",
+                os = in(reg) keys,
+                d = in(ymm_reg) d,
+                i = inout(reg) keys_i => _,
+                sum = inout(reg) sum,
+                t = out(reg) _,
+                vt = out(ymm_reg) _,
+                options(nostack),
+            );
             let d = _mm256_and_si256(d, _mm256_set1_epi8(KEPT_BITS));
             let d = _mm256_or_si256(
                 d,
