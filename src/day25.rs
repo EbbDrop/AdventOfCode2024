@@ -8,7 +8,12 @@ pub fn part1(s: &str) -> u64 {
     unsafe { part1_inner(s) }
 }
 
-const DS: usize = 6 * 7 + 1;
+#[cfg(not(test))]
+const SIZE: usize = 500;
+#[cfg(test)]
+const SIZE: usize = 5;
+
+const DS: usize = 7 * 6 + 1;
 
 #[inline(always)]
 unsafe fn part1_inner(s: &[u8]) -> u64 {
@@ -17,8 +22,8 @@ unsafe fn part1_inner(s: &[u8]) -> u64 {
     let mut keys = heapless::Vec::<u16, 512>::new();
     let mut holes = heapless::Vec::<u16, 512>::new();
 
-    let mut i = 0;
-    while i < s.len() {
+    for i in 0..SIZE {
+        let i = i * DS;
         let is_key = *s.get_unchecked(i) == b'.';
 
         let d = s
@@ -61,18 +66,6 @@ unsafe fn part1_inner(s: &[u8]) -> u64 {
             );
             let collisions = _mm256_movemask_epi8(collisions);
             sum += (collisions == 0) as u64;
-
-            // let mut fd = [0u8; 256 / 8];
-            // fd.as_mut_ptr().cast::<__m256i>().write_unaligned(d);
-            // println!("{:?}", String::from_utf8_lossy(&fd));
-            // let mut fo = [0u8; 256 / 8];
-            // fo.as_mut_ptr().cast::<__m256i>().write_unaligned(o);
-            // println!("{:?}", String::from_utf8_lossy(&fo));
-            // let mut fsum = [0u8; 256 / 8];
-            // fsum.as_mut_ptr()
-            //     .cast::<__m256i>()
-            //     .write_unaligned(collisions);
-            // println!("{:?}", &fsum);
         }
 
         if is_key {
@@ -80,8 +73,6 @@ unsafe fn part1_inner(s: &[u8]) -> u64 {
         } else {
             holes.push_unchecked(i as u16);
         }
-
-        i += DS;
     }
 
     sum
